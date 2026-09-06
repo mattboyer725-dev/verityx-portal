@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, Shield } from "lucide-react";
 import { getCoreStatus } from "@/lib/live-api";
 import { CORE_SHA, CORE_VERSION, LOCAL_CORE } from "@/lib/core-ledger";
+import { SiteNav } from "@/components/site-nav";
 
 export const Route = createFileRoute("/core")({
   loader: async () => {
@@ -46,25 +47,9 @@ function CoreStatus() {
 
   return (
     <main className="min-h-dvh bg-ink text-paper">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Link to="/" className="font-display text-xl tracking-tight">
-          VerityX
-        </Link>
-        <nav className="flex items-center gap-2 text-sm">
-          <Link to="/desk" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
-            Desk
-          </Link>
-          <Link to="/work" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
-            OS
-          </Link>
-          <a
-            href="https://github.com/mattboyer725-dev/verityx-local-core"
-            className="flex h-11 items-center rounded-[8px] border border-line px-4 text-sm text-paper hover:bg-raised"
-          >
-            GitHub
-          </a>
-        </nav>
-      </header>
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
+        <SiteNav tone="ink" />
+      </div>
 
       <section className="mx-auto grid max-w-6xl gap-10 px-6 pb-10 pt-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
         <div>

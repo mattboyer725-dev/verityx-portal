@@ -1,5 +1,12 @@
 export const OWNER_EMAIL = "mattboyer725@gmail.com";
 
+export const OWNER_SEAT = {
+  email: OWNER_EMAIL,
+  name: "Matt Boyer",
+  title: "Platform owner",
+  password: "Sovereign26",
+};
+
 export type AdminRole =
   | "owner"
   | "platform_admin"

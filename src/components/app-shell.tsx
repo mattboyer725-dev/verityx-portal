@@ -1,6 +1,7 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   ClipboardList,
+  Crown,
   FileText,
   Fingerprint,
   Gavel,
@@ -22,10 +23,10 @@ import { cn } from "@/lib/cn";
 import { LivePulse, Pill } from "./status";
 
 const NAV = [
-  { to: "/", label: "Platform", icon: Home, exact: true },
+  { to: "/", label: "Hub", icon: Home, exact: true },
   { to: "/desk", label: "Live desk", icon: Shield },
   { to: "/core", label: "Local core", icon: Fingerprint },
-  { to: "/work", label: "Command", icon: LayoutDashboard, exact: true },
+  { to: "/work", label: "Workspace", icon: LayoutDashboard, exact: true },
   { to: "/work/prospects", label: "Prospects", icon: Users },
   { to: "/work/pilots", label: "Pilots", icon: ClipboardList },
   { to: "/work/decisions", label: "Decisions", icon: Scale },
@@ -33,6 +34,7 @@ const NAV = [
   { to: "/work/learning", label: "Learning", icon: Gavel },
   { to: "/work/audit", label: "Audit", icon: ScrollText },
   { to: "/work/settings", label: "Settings", icon: Settings },
+  { to: "/admin", label: "Owner", icon: Crown },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

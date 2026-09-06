@@ -18,6 +18,7 @@ import { issueDeskToken } from "@/lib/oidc";
 import type { LiveBundle } from "@/lib/feeds";
 import { VxMark } from "@/components/vx-mark";
 import { Spark } from "@/components/spark";
+import { SiteNav } from "@/components/site-nav";
 import { SESSION_KEY, type DeskSession } from "@/lib/session";
 import { OWNER_EMAIL } from "@/lib/admin";
 
@@ -113,6 +114,9 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
 
   return (
     <div className="gate">
+      <div className="gate-nav">
+        <SiteNav tone="linen" />
+      </div>
       <section className="gate-left">
         <div>
           <div className="vx-brand">
@@ -391,6 +395,12 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
             {BUYER.name}
             <small>{BUYER.title}</small>
           </div>
+          <Link className="vx-btn vx-btn-ghost" to="/">
+            Hub
+          </Link>
+          <Link className="vx-btn vx-btn-ghost" to="/core">
+            Core
+          </Link>
           <Link className="vx-btn vx-btn-ghost" to="/admin">
             Command
           </Link>

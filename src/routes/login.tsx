@@ -6,8 +6,10 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { ErrorNote } from "@/components/page-header";
+import { SiteNav } from "@/components/site-nav";
 import { MIN_PASSWORD_LENGTH } from "@/lib/verityx/constants";
 import { normalizeEmail, safeAppPath } from "@/lib/verityx/format";
+import { enterOwnerSeat } from "@/lib/owner-enter";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
@@ -29,7 +31,20 @@ function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to={dest} replace />;
+  if (user && !busy) return <Navigate to={dest} replace />;
+
+  async function enterOwner() {
+    setError(null);
+    setBusy(true);
+    try {
+      await enterOwnerSeat();
+      queryClient.clear();
+      await navigate({ to: "/admin", replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open command");
+      setBusy(false);
+    }
+  }
 
   async function returnToPlatform() {
     queryClient.clear();
@@ -95,9 +110,11 @@ function Login() {
         <p className="text-xs text-mute">v1.0-soft-prod · Customer Zero OS</p>
       </section>
 
-      <section className="flex items-center justify-center px-6 py-16">
+      <section className="flex items-center justify-center px-6 py-10 sm:py-16">
         <div className="w-full max-w-sm">
-          <p className="mb-2 font-display text-2xl lg:hidden">VerityX</p>
+          <div className="mb-8 lg:hidden">
+            <SiteNav tone="ink" />
+          </div>
           <h2 className="font-display text-3xl tracking-tight">
             {mode === "in" ? "Sign in" : "Create a workspace"}
           </h2>
@@ -137,6 +154,15 @@ function Login() {
               {busy ? "Working…" : mode === "in" ? "Enter platform" : "Create workspace"}
             </Button>
           </form>
+
+          <button
+            type="button"
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-[8px] border border-line text-sm text-paper hover:bg-raised"
+            disabled={busy}
+            onClick={() => void enterOwner()}
+          >
+            {busy ? "Opening…" : "Enter as owner"}
+          </button>
 
           <button
             type="button"
@@ -182,16 +208,9 @@ function Login() {
             <Link to="/core" className="block text-mute hover:text-paper">
               Verify the signed core →
             </Link>
-            <button
-              type="button"
-              className="block text-mute hover:text-paper"
-              onClick={() => {
-                const google = GROK_PROVIDERS.find((p) => p.idp === "google");
-                if (google) signIn(google.providerId, { callbackURL: "/admin", errorCallbackURL: "/login" });
-              }}
-            >
-              Owner command (Google) →
-            </button>
+            <Link to="/admin" className="block text-mute hover:text-paper">
+              Owner command →
+            </Link>
           </div>
         </div>
       </section>

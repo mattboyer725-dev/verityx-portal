@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { UserButton } from "@/lib/auth/gates";
-import { GROK_PROVIDERS, signIn } from "@/lib/auth/client";
+import { GROK_PROVIDERS, authEnabled, signIn } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
   ACCESS_MATRIX,
   ADMIN_ROLES,
   OWNER_EMAIL,
+  OWNER_SEAT,
   can,
   type AdminPerm,
   type Presence,
@@ -21,6 +23,8 @@ import {
   type SeatRow,
 } from "@/lib/admin-api";
 import { VxMark } from "@/components/vx-mark";
+import { SiteNav } from "@/components/site-nav";
+import { enterOwnerSeat } from "@/lib/owner-enter";
 
 type Panel =
   | "command"
@@ -116,26 +120,49 @@ function uaShort(ua: string | null) {
 }
 
 export function AdminPage() {
-  const { user, isPending } = useCurrentUserState();
-
-  if (isPending) {
-    return (
-      <div className="login-wrap">
-        <div className="login-card vx-skel" aria-hidden="true">
-          <div className="vx-skel-bar" />
-          <div className="vx-skel-bar wide" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) return <AdminSignIn />;
-  return <AdminConsole />;
+  const { user } = useCurrentUserState();
+  if (user) return <AdminConsole />;
+  return <AdminSignIn />;
 }
 
 function AdminSignIn() {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function enterOwner() {
+    setBusy(true);
+    setErr("");
+    try {
+      if (!authEnabled) {
+        setErr("Sign-in is disabled in this build.");
+        setBusy(false);
+        return;
+      }
+      await enterOwnerSeat();
+      queryClient.clear();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not open command.");
+      setBusy(false);
+    }
+  }
+
+  async function oauth(providerId: string) {
+    setErr("");
+    try {
+      await signIn(providerId, { callbackURL: "/admin", errorCallbackURL: "/admin" });
+    } catch (e) {
+      setErr(
+        e instanceof Error
+          ? e.message
+          : "Google / X sign-in needs a pop-up. Use Enter as owner instead.",
+      );
+    }
+  }
+
   return (
-    <div className="login-wrap">
+    <div className="login-wrap login-solo">
+      <SiteNav tone="linen" />
       <div className="login-card">
         <div className="vx-brand">
           <VxMark />
@@ -146,26 +173,49 @@ function AdminSignIn() {
         </div>
         <h1>Enter platform command</h1>
         <p>
-          Operator control for identities, seats, live desk activity, agents, gates, sessions, keys, and the
-          sealed ledger. Owner seat is {OWNER_EMAIL}. Continue with Google using that Gmail.
+          Identities, seats, live desk, agents, gates, and the sealed ledger. One click opens the owner seat — no
+          pop-up.
         </p>
-        <div className="vx-stack">
+        <div className="seat-card">
+          <div className="vx-avatar">MB</div>
+          <div className="who">
+            <strong>{OWNER_SEAT.name}</strong>
+            <span>{OWNER_SEAT.title}</span>
+            <span className="mono">{OWNER_SEAT.email}</span>
+          </div>
+        </div>
+        {err ? <p className="login-err">{err}</p> : null}
+        <button
+          className="vx-btn vx-btn-primary"
+          type="button"
+          style={{ width: "100%" }}
+          disabled={busy}
+          onClick={() => void enterOwner()}
+        >
+          {busy ? "Opening command…" : "Enter as owner"}
+        </button>
+        <div className="vx-stack" style={{ marginTop: "0.75rem" }}>
           {GROK_PROVIDERS.map((p) => (
             <button
               key={p.providerId}
               type="button"
-              className={p.idp === "google" ? "vx-btn vx-btn-primary" : "vx-btn vx-btn-ghost"}
+              className="vx-btn vx-btn-ghost"
               style={{ width: "100%" }}
-              onClick={() => signIn(p.providerId, { callbackURL: "/admin" })}
+              disabled={busy}
+              onClick={() => void oauth(p.providerId)}
             >
               Continue with {p.label}
             </button>
           ))}
         </div>
         <p className="hint">
-          <Link to="/">Platform hub</Link>
+          <Link to="/">Hub</Link>
           {" · "}
-          <Link to="/desk">Siemens Gamesa live desk</Link>
+          <Link to="/desk">Desk</Link>
+          {" · "}
+          <Link to="/core">Core</Link>
+          {" · "}
+          <Link to="/login">OS sign-in</Link>
         </p>
       </div>
     </div>
@@ -184,7 +234,10 @@ function AdminConsole() {
 
   async function refresh() {
     try {
-      const next = await getAdminState();
+      const next = await Promise.race([
+        getAdminState(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("timeout")), 8000)),
+      ]);
       if (!next.ok) {
         setDenied(next.actor.reason || "Access denied.");
         setState(null);
@@ -195,7 +248,7 @@ function AdminConsole() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load command.";
       if (msg.toLowerCase().includes("unauthorized")) {
-        setLoadErr("Session expired. Sign in with Google again.");
+        setLoadErr("Session expired. Use Enter as owner.");
       } else {
         setLoadErr(msg);
       }
@@ -227,16 +280,17 @@ function AdminConsole() {
 
   if (loadErr) {
     return (
-      <div className="login-wrap">
+      <div className="login-wrap login-solo">
+        <SiteNav tone="linen" />
         <div className="login-card">
           <h1>Command unavailable</h1>
           <p>{loadErr}</p>
           <div className="vx-actions">
-            <Link className="vx-btn vx-btn-ghost" to="/login">
-              Sign in
-            </Link>
+            <button className="vx-btn vx-btn-primary" type="button" onClick={() => void refresh()}>
+              Try again
+            </button>
             <Link className="vx-btn vx-btn-ghost" to="/">
-              Platform hub
+              Hub
             </Link>
           </div>
         </div>
@@ -246,7 +300,8 @@ function AdminConsole() {
 
   if (denied) {
     return (
-      <div className="login-wrap">
+      <div className="login-wrap login-solo">
+        <SiteNav tone="linen" />
         <div className="login-card">
           <div className="vx-brand">
             <VxMark />
@@ -257,14 +312,14 @@ function AdminConsole() {
           </div>
           <h1>No command seat</h1>
           <p>
-            {denied} Platform owner is {OWNER_EMAIL}. A buyer or viewer identity cannot enter this surface.
+            {denied} Platform owner is {OWNER_EMAIL}.
           </p>
           <div className="vx-actions">
             <Link className="vx-btn vx-btn-primary" to="/desk">
               Open desk
             </Link>
             <Link className="vx-btn vx-btn-ghost" to="/">
-              Platform hub
+              Hub
             </Link>
           </div>
         </div>
@@ -321,8 +376,14 @@ function AdminConsole() {
         </label>
         <div className="vx-user">
           <UserButton />
+          <Link className="vx-btn vx-btn-ghost" to="/">
+            Hub
+          </Link>
           <Link className="vx-btn vx-btn-ghost" to="/desk">
             Desk
+          </Link>
+          <Link className="vx-btn vx-btn-ghost" to="/core">
+            Core
           </Link>
           <Link className="vx-btn vx-btn-ghost" to="/work">
             OS

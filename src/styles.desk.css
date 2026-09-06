@@ -1,7 +1,8 @@
 /* Light editorial plane for /desk and /admin. Tokens scoped so Customer Zero OS keeps ink/paper. */
 .vx-shell,
 .login-wrap,
-.vx-desk {
+.vx-desk,
+.gate {
   --color-bg: #f3eee6;
   --color-surface: #faf7f1;
   --color-surface-2: #fffdf8;
