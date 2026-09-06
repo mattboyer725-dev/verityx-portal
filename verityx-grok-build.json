@@ -1,0 +1,134 @@
+{
+  "product": "VerityX Sovereign Live Desk",
+  "tenant": "SIEMENS-GAMESA",
+  "persona": {
+    "name": "Elena Hartmann",
+    "title": "Head of Magnetics Procurement",
+    "email": "elena.hartmann@siemensgamesa.com",
+    "password": "demo2026"
+  },
+  "targets": {
+    "github": "mattboyer725-dev/verityx-portal",
+    "vercelProject": "verityx-live-desk"
+  },
+  "agents": [
+    {
+      "id": "INGEST",
+      "exists": true,
+      "role": "Pull SAP / Ariba / quote",
+      "built": true
+    },
+    {
+      "id": "ORACLE",
+      "exists": true,
+      "role": "Attach market prints",
+      "built": true
+    },
+    {
+      "id": "CONSENSUS",
+      "exists": true,
+      "role": "CoV + MAD filter",
+      "built": true
+    },
+    {
+      "id": "RISK",
+      "exists": true,
+      "role": "Anomaly vs proposed",
+      "built": true
+    },
+    {
+      "id": "PROVENANCE",
+      "exists": true,
+      "role": "N-tier mineral passport",
+      "built": true
+    },
+    {
+      "id": "SCREEN",
+      "exists": true,
+      "role": "ESG / export / financial",
+      "built": true
+    },
+    {
+      "id": "COMPLIANCE",
+      "exists": true,
+      "role": "CBAM / dual-use gate",
+      "built": true
+    },
+    {
+      "id": "SEAL",
+      "exists": true,
+      "role": "PBFT + hash chain",
+      "built": true
+    },
+    {
+      "id": "LEDGER",
+      "exists": true,
+      "role": "Append-only tip",
+      "built": true
+    },
+    {
+      "id": "EVIDENCE",
+      "exists": true,
+      "role": "Exportable packet",
+      "built": true
+    },
+    {
+      "id": "AUTH",
+      "exists": true,
+      "role": "Demo seat gate",
+      "built": true
+    }
+  ],
+  "tasks": [
+    {
+      "id": "T1",
+      "status": "DONE",
+      "title": "Replace stub index.html with elite desk UI"
+    },
+    {
+      "id": "T2",
+      "status": "DONE",
+      "title": "Demo login gate"
+    },
+    {
+      "id": "T3",
+      "status": "DONE",
+      "title": "Siemens Gamesa PO queue"
+    },
+    {
+      "id": "T4",
+      "status": "DONE",
+      "title": "Verify pipeline from PO line"
+    },
+    {
+      "id": "T5",
+      "status": "DONE",
+      "title": "Build every agent with exists=false"
+    },
+    {
+      "id": "T6",
+      "status": "DONE",
+      "title": "N-tier provenance map"
+    },
+    {
+      "id": "T7",
+      "status": "DONE",
+      "title": "Screens + alerts"
+    },
+    {
+      "id": "T8",
+      "status": "DONE",
+      "title": "Hash chain + evidence export"
+    },
+    {
+      "id": "T9",
+      "status": "DONE",
+      "title": "Push full tree to GitHub"
+    },
+    {
+      "id": "T10",
+      "status": "DONE",
+      "title": "Deploy full tree to Vercel verityx-live-desk"
+    }
+  ]
+}

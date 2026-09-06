@@ -3,15 +3,131 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VerityX Sovereign — Live Portal</title>
+  <title>VerityX Sovereign — Live Desk</title>
+  <meta name="description" content="One provable version of reality for Siemens Gamesa procurement — consensus, provenance, and sealed evidence on the live PO line." />
+  <meta name="theme-color" content="#07090c" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./desk.css" />
 </head>
-<body style="margin:0;background:#07090c;color:#e8eef5;font-family:Inter,system-ui,sans-serif">
-  <div style="padding:40px;max-width:720px">
-    <div style="color:#00ffff;letter-spacing:.2em">VERITYX SOVEREIGN</div>
-    <h1>Live portal is on this repo.</h1>
-    <p>Full elite desk UI is in the downloadable package and in local artifacts.</p>
-    <p>API routes: <code>/api/health</code> <code>/api/scenarios</code> <code>/api/verify</code></p>
-    <p>Demo login: elena.hartmann@siemensgamesa.com / demo2026</p>
+<body>
+  <div class="login" id="login" hidden>
+    <form class="login-card" id="loginForm">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 28 10v12L16 29 4 22V10L16 3z" stroke="currentColor" stroke-width="1.5"/><path d="M11 12 16 22 21 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="word"><strong>VERITYX</strong><span>Sovereign · live desk</span></div>
+      </div>
+      <h1>Enter the magnetics desk</h1>
+      <p>Siemens Gamesa procurement verification. Consensus, n-tier provenance, and a sealed evidence packet on the live PO line.</p>
+      <label for="email">Corporate ID</label>
+      <input id="email" type="email" autocomplete="username" value="elena.hartmann@siemensgamesa.com" />
+      <label for="password">Passphrase</label>
+      <input id="password" type="password" autocomplete="current-password" />
+      <p class="err" id="loginErr"></p>
+      <button class="btn primary" type="submit" style="width:100%;margin-top:1rem">Open desk</button>
+      <p class="hint">Demo seat · elena.hartmann@siemensgamesa.com · demo2026</p>
+    </form>
   </div>
+
+  <div class="shell" id="app" hidden>
+    <header class="top">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 28 10v12L16 29 4 22V10L16 3z" stroke="currentColor" stroke-width="1.5"/><path d="M11 12 16 22 21 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="word"><strong>VERITYX</strong><span>Sovereign v5 · live desk</span></div>
+      </div>
+      <div class="live">LIVE · PBFT 27</div>
+      <div class="user">
+        <div class="avatar">EH</div>
+        <div>Elena Hartmann<small>Head of Magnetics Procurement · SIEMENS-GAMESA</small></div>
+        <button class="btn ghost" type="button" id="signOut">Sign out</button>
+      </div>
+    </header>
+    <div class="body">
+      <aside class="side">
+        <div class="label">Desks</div>
+        <button class="side-btn on" type="button" data-desk="all">All POs<span class="mono" id="cAll">0</span></button>
+        <button class="side-btn" type="button" data-desk="metals">Metals<span class="mono" id="cMetals">0</span></button>
+        <button class="side-btn" type="button" data-desk="energy">Power electronics<span class="mono" id="cEnergy">0</span></button>
+        <button class="side-btn" type="button" data-desk="composites">Composites<span class="mono" id="cComp">0</span></button>
+        <div class="label">Flags</div>
+        <button class="side-btn" type="button" data-flag="hold">Hold / disputed<span class="mono" id="cHold">0</span></button>
+        <button class="side-btn" type="button" data-flag="clear">Release<span class="mono" id="cClear">0</span></button>
+        <div class="label">Agents</div>
+        <div id="agentList"></div>
+      </aside>
+      <main class="main">
+        <div class="kpis">
+          <div class="kpi"><div class="k">Open POs</div><div class="v" id="kpiN">0</div><div class="s">Siemens Gamesa magnetics + towers</div></div>
+          <div class="kpi"><div class="k">Hold</div><div class="v" id="kpiHold" style="color:var(--red)">0</div><div class="s">anomaly ≥ 8% or export watch</div></div>
+          <div class="kpi"><div class="k">Gross overpay</div><div class="v" id="kpiSave">€0</div><div class="s">proposed − consensus market</div></div>
+          <div class="kpi"><div class="k">Mean CoV confidence</div><div class="v" id="kpiCov">—</div><div class="s">MAD-filtered prints</div></div>
+        </div>
+        <section class="card">
+          <div class="card-h">Live PO queue<span id="note">Idle · select a PO and verify</span></div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead><tr><th>PO</th><th>Commodity</th><th class="hide-sm">Supplier</th><th>Proposed</th><th>Market</th><th>CoV</th><th>Gate</th></tr></thead>
+              <tbody id="poBody"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-h">
+            <div id="pipeTitle">Verify</div>
+            <div style="display:flex;gap:.4rem">
+              <button class="btn ghost" type="button" id="btnPacket" disabled>Packet</button>
+              <button class="btn ghost" type="button" id="btnExport" disabled>Export</button>
+              <button class="btn primary" type="button" id="btnVerify">Verify PO</button>
+            </div>
+          </div>
+          <div class="pipe" id="pipe"></div>
+          <div id="detail" hidden>
+            <div class="split">
+              <div>
+                <div class="card-h">Oracle prints<span id="dropN"></span></div>
+                <div id="oracles"></div>
+              </div>
+              <div>
+                <div class="card-h">Seal<span>2f+1=19</span></div>
+                <div id="sealBody" style="padding:.7rem .85rem;font-size:.8rem"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="card">
+          <div class="card-h">Competitive takeaways<span>baked into agents — not a slide</span></div>
+          <div id="notes"></div>
+        </section>
+      </main>
+      <aside class="rail">
+        <div class="label">Provenance</div>
+        <div class="tier-map" id="tiers"></div>
+        <div class="label">Screens</div>
+        <div id="screens"></div>
+        <div id="alerts"></div>
+        <div class="label">Compliance</div>
+        <div id="comp"></div>
+        <div class="label">Ledger tip</div>
+        <div style="padding:0 .65rem" class="hash" id="tip">GENESIS</div>
+        <div style="padding:.35rem .65rem" class="hash" id="tipMeta">depth 0 · intact</div>
+      </aside>
+    </div>
+    <footer class="status">
+      <span>API <strong id="stApi">booting</strong></span>
+      <span>Engine <strong>CoV + MAD + PBFT analog</strong></span>
+      <span>Tenant <strong>SIEMENS-GAMESA</strong></span>
+      <span>Seat <strong>elena.hartmann@siemensgamesa.com</strong></span>
+      <span>Fake remaining <strong>live SAP / EcoVadis / Circulor / 27-node cluster</strong></span>
+    </footer>
+    <div class="drawer" id="drawer">
+      <div class="drawer-panel" role="dialog" aria-label="Evidence packet">
+        <div class="card-h" style="padding-left:0">Evidence packet<button class="btn ghost" type="button" id="closeDrawer">Close</button></div>
+        <pre class="hash" id="packetPre" style="white-space:pre-wrap;line-height:1.55"></pre>
+      </div>
+    </div>
+  </div>
+  <script src="./desk.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
-const { competitionNotes } = require('./lib/agents');
+const { cors, competitionNotes } = require('./lib/agents');
 module.exports = (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  cors(res);
   res.status(200).json(competitionNotes());
 };

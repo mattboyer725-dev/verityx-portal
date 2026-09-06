@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#07090C"/>
+  <circle cx="196" cy="315" r="168" fill="#00E5E5" fill-opacity="0.05"/>
+  <g fill="none" stroke="#00E5E5" transform="translate(196 315)">
+    <path
+      stroke-width="7.5"
+      stroke-linejoin="miter"
+      stroke-miterlimit="2.4"
+      d="M0 -108 L93.53 -54 V54 L0 108 L-93.53 54 V-54 Z"/>
+    <path
+      stroke-width="10"
+      stroke-linecap="square"
+      stroke-linejoin="miter"
+      d="M-47.5 -44 L0 52 L47.5 -44"/>
+  </g>
+  <line x1="332" y1="236" x2="332" y2="394" stroke="#00E5E5" stroke-width="1" stroke-opacity="0.38"/>
+  <text
+    x="368"
+    y="292"
+    fill="#F4FFFF"
+    font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
+    font-size="46"
+    font-weight="700"
+    letter-spacing="8">VERITYX SOVEREIGN</text>
+  <text
+    x="368"
+    y="338"
+    fill="#8FB8BA"
+    font-family="Liberation Sans, DejaVu Sans, Arial, Helvetica, sans-serif"
+    font-size="20"
+    font-weight="400"
+    letter-spacing="0.6">Live desk · Siemens Gamesa procurement verification</text>
+  <rect x="368" y="360" width="72" height="2" fill="#00E5E5"/>
+  <text
+    x="368"
+    y="402"
+    fill="#00E5E5"
+    font-family="Liberation Mono, DejaVu Sans Mono, ui-monospace, monospace"
+    font-size="15"
+    font-weight="400"
+    letter-spacing="1.4">One provable version of reality.</text>
+</svg>
