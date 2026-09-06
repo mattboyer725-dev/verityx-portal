@@ -56,6 +56,8 @@ $('drawer').addEventListener('click', (e) => { if (e.target === $('drawer')) $('
 $('btnPacket').addEventListener('click', () => { if (state.packet) $('drawer').classList.add('open'); });
 $('btnExport').addEventListener('click', exportPacket);
 $('btnVerify').addEventListener('click', () => verify(state.selected));
+$('btnHold').addEventListener('click', () => writeback('HOLD'));
+$('btnRelease').addEventListener('click', () => writeback('RELEASE'));
 
 document.querySelectorAll('[data-desk]').forEach((b) => b.addEventListener('click', () => {
   state.desk = b.dataset.desk; state.flag = 'all';
@@ -220,6 +222,15 @@ function exportPacket() {
   a.href = url; a.download = state.packet.scenario.id + '-verityx-packet.json'; a.click();
   URL.revokeObjectURL(url);
   $('note').textContent = 'EVIDENCE · packet downloaded';
+}
+
+async function writeback(action) {
+  try {
+    const rec = await api('/api/writeback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scenarioId: state.selected, action }) });
+    $('note').textContent = `WRITEBACK · SAP analog ${rec.action} · ${rec.doc}`;
+  } catch (err) {
+    $('note').textContent = 'Writeback failed · ' + String(err.message || err).slice(0, 80);
+  }
 }
 
 if (hasSession()) showDesk(); else showLogin();

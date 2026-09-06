@@ -12,20 +12,24 @@ const SCENARIOS = [
 const CHAIN = [];
 const AGENTS = [
   {id:'INGEST',exists:true,role:'Pull SAP / Ariba / quote'},
-  {id:'ORACLE',exists:false,role:'Attach market prints'},
+  {id:'INTAKE',exists:true,role:'Accept a new PO into the desk'},
+  {id:'ORACLE',exists:true,role:'Attach / refresh market prints'},
+  {id:'DUAL_SOURCE',exists:true,role:'Quote vs oracle spread'},
   {id:'CONSENSUS',exists:true,role:'CoV + MAD filter'},
   {id:'RISK',exists:true,role:'Anomaly vs proposed'},
-  {id:'PROVENANCE',exists:false,role:'N-tier mineral passport'},
-  {id:'SCREEN',exists:false,role:'ESG / export / financial'},
-  {id:'COMPLIANCE',exists:false,role:'CBAM / dual-use gate'},
+  {id:'PROVENANCE',exists:true,role:'N-tier mineral passport'},
+  {id:'SCREEN',exists:true,role:'ESG / export / financial'},
+  {id:'COMPLIANCE',exists:true,role:'CBAM / dual-use gate'},
   {id:'SEAL',exists:true,role:'PBFT + hash chain'},
-  {id:'LEDGER',exists:false,role:'Append-only tip'},
-  {id:'EVIDENCE',exists:false,role:'Exportable packet'},
-  {id:'AUTH',exists:false,role:'Demo seat gate'}
+  {id:'LEDGER',exists:true,role:'Append-only tip'},
+  {id:'MERKLE',exists:true,role:'Inclusion proof'},
+  {id:'EVIDENCE',exists:true,role:'Exportable packet'},
+  {id:'WRITEBACK',exists:true,role:'SAP hold / release analog'},
+  {id:'AUTH',exists:true,role:'Demo seat gate'}
 ];
 
 function median(s){const n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;}
-function madFilter(values){if(values.length<3)return values;const sorted=[...values].sort((a,b)=>a-b);const med=median(sorted);const mad=median(sorted.map(v=>Math.abs(v-med)));if(mad===0)return values;const f=values.filter(v=>(0.6745*Math.abs(v-med))/mad<=3.5);return f.length>=2?f:values;}
+function madFilter(values){if(values.length<3)return values;const sorted=[...values].sort((a,b)=>a-b);const med=median(sorted);const mad=median(sorted.map(v=>Math.abs(v-med)).sort((a,b)=>a-b));if(mad===0)return values;const f=values.filter(v=>(0.6745*Math.abs(v-med))/mad<=3.5);return f.length>=2?f:values;}
 function stdev(values){const m=values.reduce((a,b)=>a+b,0)/values.length;return Math.sqrt(values.reduce((a,b)=>a+(b-m)**2,0)/(values.length-1));}
 
 function consensusAgent(observations){
@@ -111,4 +115,78 @@ function competitionNotes(){
 }
 function cors(res){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');}
 
-module.exports={SCENARIOS,CHAIN,AGENTS,runPipeline,consensusAgent,competitionNotes,provenanceAgent,screenAgent,ledgerAgent,authAgent,cors};
+function sha(s){return crypto.createHash('sha256').update(s).digest('hex');}
+function merkleRoot(leaves){
+  if(!leaves.length)return{root:'GENESIS',layers:[]};
+  let layer=leaves.map((x)=>x);
+  const layers=[layer];
+  while(layer.length>1){
+    const next=[];
+    for(let i=0;i<layer.length;i+=2){
+      const a=layer[i];
+      const b=layer[i+1]||layer[i];
+      next.push(sha(a+b));
+    }
+    layer=next;
+    layers.push(layer);
+  }
+  return{root:layer[0],layers:layers.length};
+}
+function merkleInclusion(leaf){
+  const leaves=CHAIN.map((b)=>b.hash);
+  const idx=leaves.indexOf(leaf);
+  if(idx<0)return{ok:false,leaf,error:'leaf not on chain'};
+  const proof=[];
+  let layer=leaves.slice();
+  let i=idx;
+  while(layer.length>1){
+    const sib=i%2===0?(layer[i+1]||layer[i]):layer[i-1];
+    proof.push({position:i%2===0?'right':'left',hash:sib});
+    const next=[];
+    for(let k=0;k<layer.length;k+=2){
+      const a=layer[k];
+      const b=layer[k+1]||layer[k];
+      next.push(sha(a+b));
+    }
+    i=Math.floor(i/2);
+    layer=next;
+  }
+  return{ok:true,leaf,index:idx,root:layer[0],proof};
+}
+function oracleRefreshAgent(id){
+  const scenario=SCENARIOS.find(s=>s.id===id)||SCENARIOS[0];
+  const consensus=consensusAgent(scenario.observations);
+  return{agent:'ORACLE',...oracleAgent(scenario,consensus),refreshedAt:new Date().toISOString(),fake:'not a live Argus/LME socket'};
+}
+function dualSourceAgent(id){
+  const scenario=SCENARIOS.find(s=>s.id===id)||SCENARIOS[0];
+  const consensus=consensusAgent(scenario.observations);
+  const quote=scenario.proposed;
+  const market=consensus.market;
+  const spread=market?((quote-market)/market)*100:0;
+  return{agent:'DUAL_SOURCE',id:scenario.id,quote,market:Math.round(market),spreadPct:Number(spread.toFixed(1)),verdict:Math.abs(spread)>=8?'SPREAD_ALERT':'ALIGNED',sources:scenario.observationSources};
+}
+function intakeAgent(body){
+  const id=body.id||('SG-INTK-'+Date.now().toString().slice(-6));
+  const observations=Array.isArray(body.observations)?body.observations.map(Number):[body.proposed||0];
+  const row={id,desk:body.desk||'metals',title:body.title||'Intake PO',supplier:body.supplier||'Unknown',proposed:Number(body.proposed)||0,observations,observationSources:body.observationSources||['intake'],assumptions:body.assumptions||['ingested via desk'],tenant:'SIEMENS-GAMESA',commodity:body.commodity||'unspecified',po:body.po||id,plant:body.plant||'Hamburg, DE',buyer:body.buyer||'Elena Hartmann',currency:'EUR',due:body.due||new Date().toISOString().slice(0,10),tiers:body.tiers||[],screens:body.screens||{exportPermit:'CLEAR',esg:'MED',financial:'MED',dualUse:'CLEAR'}};
+  const existing=SCENARIOS.findIndex(s=>s.id===row.id);
+  if(existing>=0)SCENARIOS[existing]=row; else SCENARIOS.push(row);
+  return{agent:'INTAKE',accepted:true,scenario:row};
+}
+function evidencePacket(id){
+  const packet=runPipeline(id);
+  return evidenceAgent(packet);
+}
+const WRITEBACKS=[];
+function sapWriteback(id,action){
+  const scenario=SCENARIOS.find(s=>s.id===id)||SCENARIOS[0];
+  const consensus=consensusAgent(scenario.observations);
+  const risk=riskAgent(scenario,consensus);
+  const resolved=action==='release'||action==='RELEASE_PO'?'RELEASE':action==='hold'||action==='HOLD_PO'||action==='block'?'HOLD':String(action).toUpperCase();
+  const rec={agent:'WRITEBACK',fake:'SAP BAPI analog — no live ECC/S4 call',po:scenario.po,id:scenario.id,action:resolved,recommended:risk.action,accepted:resolved==='HOLD'||resolved==='RELEASE',ts:new Date().toISOString(),doc:'VX-WB-'+sha(scenario.po+resolved+Date.now()).slice(0,10).toUpperCase()};
+  WRITEBACKS.push(rec);
+  return rec;
+}
+
+module.exports={SCENARIOS,CHAIN,AGENTS,WRITEBACKS,runPipeline,consensusAgent,competitionNotes,provenanceAgent,screenAgent,ledgerAgent,authAgent,cors,oracleRefreshAgent,dualSourceAgent,intakeAgent,merkleRoot,merkleInclusion,evidencePacket,sapWriteback,riskAgent,oracleAgent,ingestAgent};
