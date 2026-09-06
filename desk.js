@@ -233,6 +233,7 @@ async function boot() {
       api('/api/competition').catch(() => []),
       api('/api/health').catch(() => ({ status: 'local' })),
     ]);
+    if (!Array.isArray(rows) || !rows.length || rows[0].proposed == null) throw new Error('scenarios');
     state.rows = rows;
     state.agents = agents;
     state.notes = notes;
