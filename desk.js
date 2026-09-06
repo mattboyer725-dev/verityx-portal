@@ -73,18 +73,24 @@ document.querySelectorAll('[data-flag]').forEach((b) => b.addEventListener('clic
 }));
 
 async function boot() {
-  const [rows, agents, notes, health] = await Promise.all([
-    api('/api/scenarios'),
-    api('/api/agents').catch(() => []),
-    api('/api/competition').catch(() => []),
-    api('/api/health').catch(() => ({ status: 'local' })),
-  ]);
-  state.rows = rows;
-  state.agents = agents;
-  state.notes = notes;
-  state.selected = rows[0]?.id;
-  $('stApi').textContent = health.status || 'ok';
-  renderAll();
+  try {
+    const [rows, agents, notes, health] = await Promise.all([
+      api('/api/scenarios'),
+      api('/api/agents').catch(() => []),
+      api('/api/competition').catch(() => []),
+      api('/api/health').catch(() => ({ status: 'local' })),
+    ]);
+    state.rows = rows;
+    state.agents = agents;
+    state.notes = notes;
+    state.selected = rows[0]?.id;
+    $('stApi').textContent = health.status || 'ok';
+    renderAll();
+  } catch (err) {
+    $('stApi').textContent = 'client';
+    $('note').textContent = 'API offline · client consensus engine';
+    throw err;
+  }
 }
 
 function filtered() {
