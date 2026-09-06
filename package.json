@@ -1,0 +1,6 @@
+{
+  "name": "verityx-portal",
+  "private": true,
+  "version": "1.0.0",
+  "description": "VerityX Sovereign live portal — frontend + serverless agents"
+}
