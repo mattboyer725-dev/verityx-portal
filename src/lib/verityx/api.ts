@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import type { EvidenceItem, Outcome, Pilot, ProspectStage } from "./types";
+import type { EvidenceItem, Outcome, OutreachChannel, Pilot, ProspectStage } from "./types";
 
 export const getWorkspace = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -45,6 +45,7 @@ export const createProspect = createServerFn({ method: "POST" })
     companyName: string;
     contactName?: string;
     contactEmail?: string;
+    contactRole?: string;
     sector?: string;
     region?: string;
     stage?: ProspectStage;
@@ -62,6 +63,7 @@ export const patchProspect = createServerFn({ method: "POST" })
     companyName?: string;
     contactName?: string;
     contactEmail?: string;
+    contactRole?: string;
     sector?: string;
     region?: string;
     stage?: ProspectStage;
@@ -262,4 +264,19 @@ export const loadSampleWalkthrough = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const ops = await import("./ops.server");
     return ops.loadSampleWalkthrough(context.userId);
+  });
+
+export const loadOwnBook = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ops = await import("./ops.server");
+    return ops.loadOwnBook(context.userId);
+  });
+
+export const logOutreach = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string; channel?: OutreachChannel; subject?: string; body?: string }) => data)
+  .handler(async ({ context, data }) => {
+    const ops = await import("./ops.server");
+    return ops.logOutreach(context.userId, data);
   });

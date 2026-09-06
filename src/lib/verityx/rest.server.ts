@@ -2,7 +2,7 @@ import { UnauthorizedError } from "@/lib/auth/verify.server";
 import { CrossSiteRequestError } from "@/lib/auth/isolation.server";
 import * as ops from "./ops.server";
 import { corsHeaders, matchPath } from "./http";
-import type { EvidenceItem, Outcome, Pilot, ProspectStage } from "./types";
+import type { EvidenceItem, Outcome, OutreachChannel, Pilot, ProspectStage } from "./types";
 
 function jsonError(request: Request, err: unknown): Response {
   let status = 400;
@@ -80,6 +80,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
         companyName: string;
         contactName?: string;
         contactEmail?: string;
+        contactRole?: string;
         sector?: string;
         region?: string;
         stage?: ProspectStage;
@@ -97,6 +98,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
         companyName?: string;
         contactName?: string;
         contactEmail?: string;
+        contactRole?: string;
         sector?: string;
         region?: string;
         stage?: ProspectStage;
@@ -149,6 +151,16 @@ export async function dispatchRest(request: Request): Promise<Response> {
 
     if (path === "/api/sample" && method === "POST") {
       return json(request, await ops.loadSampleWalkthrough(userId), 201);
+    }
+
+    if (path === "/api/book" && method === "POST") {
+      return json(request, await ops.loadOwnBook(userId), 201);
+    }
+
+    const contact = matchPath(path, "/api/prospects/:id/contact");
+    if (contact && method === "POST") {
+      const body = await readJson<{ channel?: OutreachChannel; subject?: string; body?: string }>(request);
+      return json(request, await ops.logOutreach(userId, { id: contact.id, ...body }), 201);
     }
 
     const checkout = matchPath(path, "/api/billing/pilot-checkout/:pilotId");

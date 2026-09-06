@@ -71,13 +71,31 @@ export type Prospect = {
   companyName: string;
   contactName: string;
   contactEmail: string;
+  contactRole: string;
   sector: string;
   region: string;
   stage: ProspectStage;
   notes: string;
+  bookKey: string | null;
+  lastContactedAt: string | null;
+  outreachCount: number;
   isSample: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+export type OutreachChannel = "email" | "call" | "note";
+
+export type OutreachEvent = {
+  id: string;
+  organizationId: string;
+  userId: string;
+  prospectId: string;
+  channel: OutreachChannel;
+  subject: string;
+  body: string;
+  status: string;
+  createdAt: string;
 };
 
 export type Pilot = {
@@ -184,6 +202,7 @@ export type Dashboard = {
     reports: number;
     outcomes: number;
     feedback: number;
+    needsContact: number;
   };
   revenueUsd: number;
   loop: { stage: string; complete: boolean; detail: string }[];

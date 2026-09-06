@@ -30,6 +30,23 @@ function Command() {
     }
   }
 
+  async function openBook() {
+    setBusy(true);
+    try {
+      const result = await mutate.loadOwnBook();
+      toast.success(
+        result.created
+          ? `VerityX book opened — ${result.created} companies filed`
+          : `VerityX book already on file — ${result.total} companies`,
+      );
+      await navigate({ to: "/work/prospects" });
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading && !data) {
     return (
       <div className="space-y-4">
@@ -53,11 +70,14 @@ function Command() {
       <PageHeader
         kicker="Command"
         title="The file of record"
-        description="Live workspace metrics from your tenant database. Take one real prospect through a paid, evidence-backed pilot."
+        description="Live workspace metrics from your tenant database. Finish a prospect, contact them, then take a paid, evidence-backed pilot."
         actions={
           <>
+            <Button onClick={openBook} disabled={busy}>
+              {busy ? "Opening…" : "Open VerityX book"}
+            </Button>
             <Link to="/work/prospects">
-              <Button>New prospect</Button>
+              <Button variant="ghost">New prospect</Button>
             </Link>
             <Button variant="ghost" onClick={loadSample} disabled={busy}>
               {busy ? "Loading…" : "Load sample walkthrough"}
@@ -69,11 +89,11 @@ function Command() {
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {[
           ["Prospects", String(data.counts.prospects)],
+          ["Need contact", String(data.counts.needsContact)],
           ["Paid pilots", String(data.counts.paidPilots)],
           ["Unpaid", String(data.counts.unpaidPilots)],
           ["Pilot revenue", money(data.revenueUsd)],
           ["Reports", String(data.counts.reports)],
-          ["Pending BLOCK", String(data.counts.pendingApprovals)],
         ].map(([k, v]) => (
           <div key={k} className="panel p-5">
             <p className="text-[11px] uppercase tracking-[0.16em] text-mute">{k}</p>
@@ -101,11 +121,16 @@ function Command() {
       {empty ? (
         <EmptyState
           title="No customer file yet"
-          body="Create a prospect or load the labeled Harborline sample to walk the $2,500 / 72-hour loop without inventing live intelligence."
+          body="Open the VerityX book of business — sixteen magnetics, wind, and rare-earth companies — then finish each file and contact them. Or load the labeled Harborline sample."
           action={
-            <Button onClick={loadSample} disabled={busy}>
-              Load sample walkthrough
-            </Button>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button onClick={openBook} disabled={busy}>
+                Open VerityX book
+              </Button>
+              <Button variant="ghost" onClick={loadSample} disabled={busy}>
+                Load sample walkthrough
+              </Button>
+            </div>
           }
         />
       ) : (

@@ -16,7 +16,7 @@
     "preview:stop": "node scripts/preview.mjs stop",
     "typecheck": "tsc --noEmit",
     "check:auth": "node scripts/check-auth-invariant.mjs",
-    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/verityx/decision-engine.test.ts src/lib/verityx/rbac.test.ts src/lib/verityx/billing.test.ts src/lib/verityx/format.test.ts src/lib/verityx/http.test.ts src/lib/core-ledger.test.ts",
+    "test": "node --test 'scripts/**/*.test.mjs' && node --experimental-strip-types --test src/lib/app-data/app-data.test.ts src/lib/auth/gate-identity.test.ts src/lib/auth/sign-in-gate.test.ts src/lib/verityx/decision-engine.test.ts src/lib/verityx/rbac.test.ts src/lib/verityx/billing.test.ts src/lib/verityx/format.test.ts src/lib/verityx/http.test.ts src/lib/verityx/book.test.ts src/lib/core-ledger.test.ts",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

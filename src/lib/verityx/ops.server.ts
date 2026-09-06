@@ -14,12 +14,14 @@ import {
   type StripeLikeEvent,
 } from "./billing";
 import { newId } from "./format";
+import { VERITYX_BOOK, outreachCopy } from "./book";
 import { allowedOrigin } from "./http";
 import {
   mapAudit,
   mapDecision,
   mapFeedback,
   mapOutcome,
+  mapOutreach,
   mapPilot,
   mapProspect,
   mapReport,
@@ -32,6 +34,8 @@ import type {
   EvidenceItem,
   Feedback,
   Outcome,
+  OutreachChannel,
+  OutreachEvent,
   Pilot,
   Prospect,
   ProspectStage,
@@ -93,6 +97,17 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
     const [reports] = await sql<{ n: number }>`select count(*)::int as n from reports where organization_id = ${org}`;
     const [outcomes] = await sql<{ n: number }>`select count(*)::int as n from outcomes where organization_id = ${org}`;
     const [feedbackN] = await sql<{ n: number }>`select count(*)::int as n from feedback where organization_id = ${org}`;
+    const [needsContact] = await sql<{ n: number }>`
+      select count(*)::int as n from prospects
+      where organization_id = ${org}
+        and is_sample = false
+        and outreach_count = 0
+        and stage not in ('won', 'lost')
+    `;
+    const [contacted] = await sql<{ n: number }>`
+      select count(*)::int as n from prospects
+      where organization_id = ${org} and outreach_count > 0
+    `;
     const [rev] = await sql<{ n: number }>`select coalesce(sum(price_usd),0)::int as n from pilots where organization_id = ${org} and payment_status = 'paid'`;
     const recentProspects = await sql`select * from prospects where organization_id = ${org} order by updated_at desc limit 5`;
     const recentPilots = await sql`
@@ -127,7 +142,11 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
         case "prospect":
           return { stage, complete: prospectN > 0, detail: `${prospectN} on file` };
         case "discovery":
-          return { stage, complete: prospectN > 0, detail: "Discovery notes live on the prospect" };
+          return {
+            stage,
+            complete: (contacted?.n ?? 0) > 0,
+            detail: (contacted?.n ?? 0) ? `${contacted?.n} contacted` : "Contact the prospect, then convert",
+          };
         case "pilot":
           return { stage, complete: pilotN > 0, detail: `${pilotN} pilots` };
         case "payment":
@@ -162,6 +181,7 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
         reports: reportN,
         outcomes: outcomeN,
         feedback: feedbackCount,
+        needsContact: needsContact?.n ?? 0,
       },
       revenueUsd: rev?.n ?? 0,
       loop,
@@ -192,13 +212,20 @@ export async function getProspect(userId: string, data: { id: string }) {
     const prospect = await scopedProspect(actor.organizationId, data.id);
     const sql = await getSql();
     const pilots = await sql`select * from pilots where organization_id = ${actor.organizationId} and prospect_id = ${data.id} order by created_at desc`;
-    return { prospect, pilots: pilots.map(mapPilot) };
+    const outreach = await sql`
+      select * from outreach_events
+      where organization_id = ${actor.organizationId} and prospect_id = ${data.id}
+      order by created_at desc
+      limit 40
+    `;
+    return { prospect, pilots: pilots.map(mapPilot), outreach: outreach.map(mapOutreach) };
 }
 
 export async function createProspect(userId: string, data: {
     companyName: string;
     contactName?: string;
     contactEmail?: string;
+    contactRole?: string;
     sector?: string;
     region?: string;
     stage?: ProspectStage;
@@ -214,11 +241,11 @@ export async function createProspect(userId: string, data: {
     await sql`
       insert into prospects (
         id, organization_id, user_id, company_name, contact_name, contact_email,
-        sector, region, stage, notes
+        contact_role, sector, region, stage, notes
       ) values (
         ${id}, ${actor.organizationId}, ${actor.userId}, ${name},
         ${data.contactName?.trim() ?? ""}, ${(data.contactEmail ?? "").trim().toLowerCase()},
-        ${data.sector?.trim() ?? ""}, ${data.region?.trim() ?? ""},
+        ${data.contactRole?.trim() ?? ""}, ${data.sector?.trim() ?? ""}, ${data.region?.trim() ?? ""},
         ${data.stage ?? "lead"}, ${data.notes?.trim() ?? ""}
       )
     `;
@@ -231,6 +258,7 @@ export async function patchProspect(userId: string, data: {
     companyName?: string;
     contactName?: string;
     contactEmail?: string;
+    contactRole?: string;
     sector?: string;
     region?: string;
     stage?: ProspectStage;
@@ -250,6 +278,7 @@ export async function patchProspect(userId: string, data: {
     if (data.companyName !== undefined) add("company_name", data.companyName.trim());
     if (data.contactName !== undefined) add("contact_name", data.contactName.trim());
     if (data.contactEmail !== undefined) add("contact_email", data.contactEmail.trim().toLowerCase());
+    if (data.contactRole !== undefined) add("contact_role", data.contactRole.trim());
     if (data.sector !== undefined) add("sector", data.sector.trim());
     if (data.region !== undefined) add("region", data.region.trim());
     if (data.stage !== undefined) add("stage", data.stage);
@@ -958,4 +987,104 @@ export async function loadSampleWalkthrough(userId: string) {
       prospect: await scopedProspect(actor.organizationId, prospectId),
       pilot: await scopedPilot(actor.organizationId, pilotId),
     };
+}
+
+export async function logOutreach(
+  userId: string,
+  data: {
+    id: string;
+    channel?: OutreachChannel;
+    subject?: string;
+    body?: string;
+  },
+): Promise<{ prospect: Prospect; outreach: OutreachEvent }> {
+  const actor = await ensureActor(userId);
+  assertCan(actor.role, "prospect.write");
+  await mutateGuard(actor, "prospect.contact");
+  const prospect = await scopedProspect(actor.organizationId, data.id);
+  const channel: OutreachChannel = data.channel ?? "email";
+  if (channel === "email" && !prospect.contactEmail.trim()) {
+    throw new Error("Add a contact email before logging outreach");
+  }
+  const sender =
+    (await listMembersForOrg(actor.organizationId)).find((m) => m.userId === actor.userId)?.name ?? "Matt Boyer";
+  const generated = outreachCopy({
+    companyName: prospect.companyName,
+    contactName: prospect.contactName,
+    senderName: sender,
+  });
+  const subject = (data.subject ?? generated.subject).trim();
+  const body = (data.body ?? generated.body).trim();
+  if (!subject || !body) throw new Error("Outreach subject and body are required");
+  const eventId = newId();
+  const sql = await getSql();
+  await sql`
+    insert into outreach_events (
+      id, organization_id, user_id, prospect_id, channel, subject, body, status
+    ) values (
+      ${eventId}, ${actor.organizationId}, ${actor.userId}, ${prospect.id},
+      ${channel}, ${subject}, ${body}, ${"logged"}
+    )
+  `;
+  const nextStage = prospect.stage === "lead" ? "qualified" : prospect.stage;
+  await sql`
+    update prospects
+    set outreach_count = outreach_count + 1,
+        last_contacted_at = now(),
+        stage = ${nextStage},
+        updated_at = now()
+    where id = ${prospect.id} and organization_id = ${actor.organizationId}
+  `;
+  await writeAudit(actor, "prospect.contact", "prospect", prospect.id, { channel, subject });
+  const rows = await sql`select * from outreach_events where id = ${eventId} limit 1`;
+  return {
+    prospect: await scopedProspect(actor.organizationId, prospect.id),
+    outreach: mapOutreach(rows[0]!),
+  };
+}
+
+export async function loadOwnBook(userId: string) {
+  const actor = await ensureActor(userId);
+  assertCan(actor.role, "prospect.write");
+  await mutateGuard(actor, "book.load");
+  const sql = await getSql();
+  const existing = await sql<{ book_key: string }>`
+    select book_key from prospects
+    where organization_id = ${actor.organizationId}
+      and book_key is not null and book_key <> ''
+  `;
+  const have = new Set(existing.map((r) => r.book_key));
+  let created = 0;
+  for (const row of VERITYX_BOOK) {
+    if (have.has(row.key)) continue;
+    const id = newId();
+    await sql`
+      insert into prospects (
+        id, organization_id, user_id, company_name, contact_name, contact_email,
+        contact_role, sector, region, stage, notes, is_sample, book_key
+      ) values (
+        ${id}, ${actor.organizationId}, ${actor.userId}, ${row.companyName},
+        ${row.contactName}, ${row.contactEmail}, ${row.contactRole},
+        ${row.sector}, ${row.region}, ${row.stage}, ${row.notes},
+        ${false}, ${row.key}
+      )
+    `;
+    created += 1;
+  }
+  await writeAudit(actor, "book.load", "prospect", actor.organizationId, {
+    created,
+    total: VERITYX_BOOK.length,
+  });
+  const prospects = await sql`
+    select * from prospects
+    where organization_id = ${actor.organizationId}
+      and book_key is not null
+    order by company_name asc
+  `;
+  return {
+    created,
+    existing: VERITYX_BOOK.length - created,
+    total: VERITYX_BOOK.length,
+    prospects: prospects.map(mapProspect),
+  };
 }

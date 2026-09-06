@@ -5,6 +5,7 @@ import type {
   EvidenceItem,
   Feedback,
   Outcome,
+  OutreachEvent,
   Pilot,
   Prospect,
   Report,
@@ -20,10 +21,14 @@ export function mapProspect(r: Row): Prospect {
     companyName: String(r.company_name ?? ""),
     contactName: String(r.contact_name ?? ""),
     contactEmail: String(r.contact_email ?? ""),
+    contactRole: String(r.contact_role ?? ""),
     sector: String(r.sector ?? ""),
     region: String(r.region ?? ""),
     stage: r.stage as Prospect["stage"],
     notes: String(r.notes ?? ""),
+    bookKey: r.book_key ? String(r.book_key) : null,
+    lastContactedAt: isoOrNull(r.last_contacted_at),
+    outreachCount: Number(r.outreach_count ?? 0),
     isSample: asBoolean(r.is_sample),
     createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at),
@@ -104,6 +109,20 @@ export function mapFeedback(r: Row): Feedback {
     kind: String(r.kind ?? ""),
     rating: r.rating == null ? null : Number(r.rating),
     comment: String(r.comment ?? ""),
+    createdAt: iso(r.created_at),
+  };
+}
+
+export function mapOutreach(r: Row): OutreachEvent {
+  return {
+    id: String(r.id),
+    organizationId: String(r.organization_id),
+    userId: String(r.user_id),
+    prospectId: String(r.prospect_id),
+    channel: (r.channel as OutreachEvent["channel"]) || "email",
+    subject: String(r.subject ?? ""),
+    body: String(r.body ?? ""),
+    status: String(r.status ?? "logged"),
     createdAt: iso(r.created_at),
   };
 }

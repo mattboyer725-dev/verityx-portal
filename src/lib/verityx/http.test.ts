@@ -32,6 +32,8 @@ describe("allowedOrigin", () => {
 
 describe("matchPath", () => {
   it("extracts params and rejects length mismatches", () => {
+    assert.deepEqual(matchPath("/api/prospects/abc/contact", "/api/prospects/:id/contact"), { id: "abc" });
+    assert.equal(matchPath("/api/prospects/abc/contact", "/api/prospects/:id"), null);
     assert.deepEqual(matchPath("/api/pilots/abc", "/api/pilots/:id"), { id: "abc" });
     assert.equal(matchPath("/api/pilots", "/api/pilots/:id"), null);
     assert.equal(matchPath("/api/other/abc", "/api/pilots/:id"), null);

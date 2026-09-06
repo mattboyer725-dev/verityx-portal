@@ -24,6 +24,8 @@ import {
   listProspects,
   listReports,
   loadSampleWalkthrough,
+  loadOwnBook,
+  logOutreach,
   patchDecision,
   patchPilot,
   patchProspect,
@@ -32,7 +34,7 @@ import {
   updateOrg,
   upsertOutcome,
 } from "./api";
-import type { EvidenceItem, Outcome, Pilot, ProspectStage } from "./types";
+import type { EvidenceItem, Outcome, OutreachChannel, Pilot, ProspectStage } from "./types";
 import { errorMessage } from "./use-loader";
 
 export const vxKeys = {
@@ -245,6 +247,7 @@ export function useLiveMutations() {
       companyName: string;
       contactName?: string;
       contactEmail?: string;
+      contactRole?: string;
       sector?: string;
       region?: string;
       stage?: ProspectStage;
@@ -255,6 +258,7 @@ export function useLiveMutations() {
       companyName?: string;
       contactName?: string;
       contactEmail?: string;
+      contactRole?: string;
       sector?: string;
       region?: string;
       stage?: ProspectStage;
@@ -296,6 +300,9 @@ export function useLiveMutations() {
     }) => upsertOutcome({ data }).then(after),
     updateOrg: (data: { name?: string }) => updateOrg({ data }).then(after),
     loadSample: () => loadSampleWalkthrough().then(after),
+    loadOwnBook: () => loadOwnBook().then(after),
+    logOutreach: (data: { id: string; channel?: OutreachChannel; subject?: string; body?: string }) =>
+      logOutreach({ data }).then(after),
     invalidate,
   };
 }
