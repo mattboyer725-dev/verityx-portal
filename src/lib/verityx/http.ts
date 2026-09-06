@@ -14,13 +14,10 @@ function isTrustedHost(host: string): boolean {
   if (host.endsWith(".grok-sandbox.com") || host.endsWith(".grok.me")) return true;
   if (!host.endsWith(".vercel.app")) return false;
   return (
-    host === "verityx-portal.vercel.app" ||
-    host === "verityx-sovereign-desk.vercel.app" ||
-    host === "verityx-sgre-live.vercel.app" ||
-    host === "vxsg-desk-20260906.vercel.app" ||
-    host === "verityx-live-core.vercel.app" ||
-    host.startsWith("verityx-") ||
-    host.startsWith("vxsg-")
+    host === "verityx.vercel.app" ||
+    host.startsWith("verityx") ||
+    host.startsWith("vxsg-") ||
+    host.startsWith("vx-")
   );
 }
 

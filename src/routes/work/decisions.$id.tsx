@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
+import { MissingRecord, PageHeader, Skeleton } from "@/components/page-header";
 import { Pill } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Field, Textarea } from "@/components/ui/field";
@@ -42,8 +42,8 @@ function DecisionDetail() {
   }
 
   if (loading && !data) return <Skeleton className="h-64" />;
-  if (error) return <ErrorNote message={error} />;
-  if (!data) return null;
+  if (error) return <MissingRecord message={error} to="/work/decisions" label="Back to decisions" />;
+  if (!data) return <MissingRecord message="Decision not found" to="/work/decisions" label="Back to decisions" />;
   const { decision, pilot } = data;
 
   return (

@@ -14,6 +14,7 @@ import {
   type StripeLikeEvent,
 } from "./billing";
 import { newId } from "./format";
+import { allowedOrigin } from "./http";
 import {
   mapAudit,
   mapDecision,
@@ -385,13 +386,9 @@ export async function createCheckout(userId: string, data: { pilotId: string; or
     } catch {
       throw new Error("Invalid origin");
     }
-    const host = origin.hostname;
-    const allowed =
-      host === "localhost" ||
-      host === "127.0.0.1" ||
-      host.endsWith(".grok-sandbox.com") ||
-      host.endsWith(".grok.me");
-    if (!allowed) throw new Error("Origin is not allowlisted");
+    if (!allowedOrigin(origin.origin, process.env.FRONTEND_ORIGINS)) {
+      throw new Error("Origin is not allowlisted");
+    }
 
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(key);

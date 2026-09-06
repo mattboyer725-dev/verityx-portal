@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
@@ -6,7 +7,16 @@ export const Route = createFileRoute("/work")({ component: WorkLayout });
 
 function WorkLayout() {
   const { user, isPending } = useCurrentUserState();
-  if (isPending) {
+  const [gaveUp, setGaveUp] = useState(false);
+
+  useEffect(() => {
+    if (!isPending) return;
+    const t = window.setTimeout(() => setGaveUp(true), 2500);
+    return () => window.clearTimeout(t);
+  }, [isPending]);
+
+  if (user) return <AppShell />;
+  if (isPending && !gaveUp) {
     return (
       <div className="min-h-dvh bg-ink">
         <div className="hidden lg:block">
@@ -26,6 +36,5 @@ function WorkLayout() {
       </div>
     );
   }
-  if (!user) return <Navigate to="/login" />;
-  return <AppShell />;
+  return <Navigate to="/login" search={{ redirect: "/work" }} />;
 }

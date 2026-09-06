@@ -32,7 +32,7 @@ export async function hydrateCoreLedger() {
   try {
     const sql = await Promise.race([
       getSql(),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
     ]);
     if (sql) {
       const rows = await sql<Record<string, unknown>>`select * from core_events order by timestamp asc`;

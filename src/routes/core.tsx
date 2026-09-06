@@ -8,7 +8,10 @@ import { SiteNav } from "@/components/site-nav";
 export const Route = createFileRoute("/core")({
   loader: async () => {
     try {
-      return await getCoreStatus();
+      return await Promise.race([
+        getCoreStatus(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+      ]);
     } catch {
       return null;
     }

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
+import { MissingRecord, PageHeader, Skeleton } from "@/components/page-header";
 import { Pill, SampleTag } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
@@ -81,8 +81,8 @@ function ProspectDetail() {
   }
 
   if (loading && !data) return <Skeleton className="h-64" />;
-  if (error) return <ErrorNote message={error} />;
-  if (!data) return null;
+  if (error) return <MissingRecord message={error} to="/work/prospects" label="Back to prospects" />;
+  if (!data) return <MissingRecord message="Prospect not found" to="/work/prospects" label="Back to prospects" />;
   const { prospect, pilots } = data;
 
   return (

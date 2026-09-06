@@ -29,8 +29,37 @@ function withBudget<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   ]);
 }
 
+async function hydrateIfDurable() {
+  if (typeof process === "undefined") return;
+  if (!process.env.DATABASE_URL?.trim()) return;
+  try {
+    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
+    await Promise.race([
+      hydrateCoreLedger(),
+      new Promise<void>((resolve) => setTimeout(resolve, 2800)),
+    ]);
+  } catch {
+    /* in-memory genesis is enough */
+  }
+}
+
+async function persistIfDurable() {
+  if (typeof process === "undefined") return;
+  if (!process.env.DATABASE_URL?.trim()) return;
+  try {
+    const { persistCoreLedger } = await import("@/lib/core-store.server");
+    await Promise.race([
+      persistCoreLedger(),
+      new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+    ]);
+  } catch {
+    /* best-effort */
+  }
+}
+
 async function coreSlice() {
   try {
+    await hydrateIfDurable();
     await ensureGenesis();
     const core = await merkleSnapshot();
     const chain = await verifyChain();
@@ -57,7 +86,7 @@ async function coreSlice() {
 export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async () => {
   seedAll();
   const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
-  const core = await withBudget(coreSlice(), 250, undefined);
+  const core = await withBudget(coreSlice(), 3200, undefined);
   return {
     ...live,
     sapCount: listSapPos().length,
@@ -81,7 +110,9 @@ export const runLiveVerify = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     seedAll();
     const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
-    return runPipeline(data.id, live);
+    const packet = await runPipeline(data.id, live);
+    await persistIfDurable();
+    return packet;
   });
 
 export const postSapWriteback = createServerFn({ method: "POST" })
@@ -136,6 +167,7 @@ export const oidcWellKnown = createServerFn({ method: "GET" }).handler(async () 
 export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oidcJwks());
 
 export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
+  await hydrateIfDurable();
   await ensureGenesis();
   const [chain, snap, doc] = await Promise.all([verifyChain(), merkleSnapshot(), doctor()]);
   let proof: Awaited<ReturnType<typeof merkleProofAt>> | null = null;

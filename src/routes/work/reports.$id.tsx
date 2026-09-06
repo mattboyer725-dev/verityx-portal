@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
+import { MissingRecord, PageHeader, Skeleton } from "@/components/page-header";
 import { Pill, SampleTag } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { formatWhen } from "@/lib/verityx/format";
@@ -35,8 +35,8 @@ function ReportDetail() {
   }
 
   if (loading && !data) return <Skeleton className="h-64" />;
-  if (error) return <ErrorNote message={error} />;
-  if (!data) return null;
+  if (error) return <MissingRecord message={error} to="/work/reports" label="Back to reports" />;
+  if (!data) return <MissingRecord message="Report not found" to="/work/reports" label="Back to reports" />;
   const { report, prospect, decision, pilot } = data;
 
   return (

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
+import { MissingRecord, PageHeader, Skeleton } from "@/components/page-header";
 import { SlaClock } from "@/components/sla-clock";
 import { Pill, SampleTag } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -361,8 +361,8 @@ function PilotDetail() {
   }
 
   if (loading && !data) return <Skeleton className="h-64" />;
-  if (error) return <ErrorNote message={error} />;
-  if (!data) return null;
+  if (error) return <MissingRecord message={error} to="/work/pilots" label="Back to pilots" />;
+  if (!data) return <MissingRecord message="Pilot not found" to="/work/pilots" label="Back to pilots" />;
   const { pilot, prospect, stripeConfigured } = data;
   const decisions = data.decisions ?? [];
   const reports = data.reports ?? [];

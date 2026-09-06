@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { EmptyState, ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
 import { Pill } from "@/components/status";
+import { Button } from "@/components/ui/button";
 import { formatWhen } from "@/lib/verityx/format";
 import { useDecisionsLive } from "@/lib/verityx/live";
 
@@ -21,6 +22,11 @@ function DecisionsPage() {
         <EmptyState
           title="No decisions yet"
           body="Open a paid pilot and attach named-source evidence. The engine will not invent a BLOCK from keywords."
+          action={
+            <Link to="/work/pilots">
+              <Button>Open pilots</Button>
+            </Link>
+          }
         />
       ) : null}
       {data && data.length > 0 ? (

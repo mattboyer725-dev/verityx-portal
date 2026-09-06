@@ -48,23 +48,44 @@ function Home() {
           </p>
         </Link>
 
-        <Link
-          to={user ? "/work" : "/login"}
-          className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
-            <p className="mt-3 text-sm leading-relaxed text-mute">
-              Prospect → payment → evidence → human-approved decision → PDF. {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}
-              -hour target. Tenant-isolated. BLOCK never auto-applies.
+        {user ? (
+          <Link
+            to="/work"
+            className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
+          >
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</p>
+              <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
+              <p className="mt-3 text-sm leading-relaxed text-mute">
+                Prospect → payment → evidence → human-approved decision → PDF. {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}
+                -hour target. Tenant-isolated. BLOCK never auto-applies.
+              </p>
+            </div>
+            <p className="mt-8 flex items-center gap-2 text-sm text-paper">
+              Open workspace
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </p>
-          </div>
-          <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-            {user ? "Open workspace" : "Sign in to OS"}
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </p>
-        </Link>
+          </Link>
+        ) : (
+          <Link
+            to="/login"
+            search={{ redirect: "/work" }}
+            className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
+          >
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</p>
+              <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
+              <p className="mt-3 text-sm leading-relaxed text-mute">
+                Prospect → payment → evidence → human-approved decision → PDF. {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}
+                -hour target. Tenant-isolated. BLOCK never auto-applies.
+              </p>
+            </div>
+            <p className="mt-8 flex items-center gap-2 text-sm text-paper">
+              Sign in to OS
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            </p>
+          </Link>
+        )}
 
         <Link
           to="/core"

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
 
 export function PageHeader({
   kicker,
@@ -49,6 +50,25 @@ export function ErrorNote({ message }: { message: string | null }) {
     <p className="rounded-[12px] border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad" role="alert">
       {message}
     </p>
+  );
+}
+
+export function MissingRecord({
+  message,
+  to,
+  label,
+}: {
+  message: string;
+  to: "/work/prospects" | "/work/pilots" | "/work/decisions" | "/work/reports";
+  label: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <ErrorNote message={message} />
+      <Link to={to} className="text-sm text-mute hover:text-paper">
+        {label} →
+      </Link>
+    </div>
   );
 }
 

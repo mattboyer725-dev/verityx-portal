@@ -51,6 +51,9 @@
   min-height: 56px;
   border-bottom: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
   background: var(--color-surface);
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 
 .vx-brand {
@@ -644,7 +647,10 @@
 
 .drawer {
   position: fixed;
-  inset: 0;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(26, 22, 18, 0.45);
   display: none;
   z-index: 40;

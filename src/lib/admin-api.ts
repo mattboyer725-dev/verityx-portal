@@ -756,7 +756,11 @@ export { getDeskControls, recordDeskEvent } from "@/lib/desk-ops";
 export const getAdminState = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<AdminState> => {
-    const sql = await getSql();
+    const sql = await Promise.race([
+      getSql(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 4500)),
+    ]);
+    if (!sql) throw new Error("Command database is warming. Try again.");
     const actor = await resolveActor(sql, context.userId);
     if (!actor.allowed) return { ok: false, actor };
     return loadSnapshot(sql, actor);

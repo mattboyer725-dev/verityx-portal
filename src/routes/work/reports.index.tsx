@@ -42,7 +42,15 @@ function ReportsPage() {
       {loading && !data ? <Skeleton className="h-40" /> : null}
       <ErrorNote message={error} />
       {data && data.length === 0 ? (
-        <EmptyState title="No reports issued" body="Generate one from a paid pilot after an evidence-backed decision." />
+        <EmptyState
+          title="No reports issued"
+          body="Generate one from a paid pilot after an evidence-backed decision."
+          action={
+            <Link to="/work/pilots">
+              <Button>Open pilots</Button>
+            </Link>
+          }
+        />
       ) : null}
       {data && data.length > 0 ? (
         <ul className="panel divide-y divide-line">
