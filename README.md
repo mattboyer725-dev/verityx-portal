@@ -2,7 +2,7 @@
 
 Three planes, one product.
 
-**Live:** [verityx-sovereign-desk.vercel.app](https://verityx-sovereign-desk.vercel.app) · also [verityx-sgre-live](https://verityx-sgre-live.vercel.app) · [vxsg-desk-20260906](https://vxsg-desk-20260906.vercel.app)
+**Live:** [verityx-portal.vercel.app](https://verityx-portal.vercel.app) · [verityx-sovereign-desk](https://verityx-sovereign-desk.vercel.app) · [verityx-sgre-live](https://verityx-sgre-live.vercel.app)
 
 | Surface | Who | Path |
 |---|---|---|
