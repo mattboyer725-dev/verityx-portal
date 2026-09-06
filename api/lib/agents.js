@@ -1,121 +1,19 @@
 const crypto = require('crypto');
-
 const SCENARIOS = [
-  {
-    id: 'SG-4782',
-    desk: 'metals',
-    title: 'Rare Earth Permanent Magnets',
-    supplier: 'Nanjing RareTech Ltd.',
-    proposed: 6950000,
-    observations: [5680000, 5712000, 5594000, 5748000, 8120000],
-    assumptions: ['China processing share ~90%', 'Q4 2026 delivery lock', 'No EU dual-source'],
-    tenant: 'SIEMENS-GAMESA'
-  },
-  {
-    id: 'SG-5191',
-    desk: 'metals',
-    title: 'Neodymium Alloy Procurement',
-    supplier: 'Baotou Rare Earth Co.',
-    proposed: 12400000,
-    observations: [10350000, 10420000, 10180000, 10660000],
-    assumptions: ['Single-origin melt lot', 'Quality cert dispute in SAP'],
-    tenant: 'SIEMENS-GAMESA'
-  },
-  {
-    id: 'SG-6033',
-    desk: 'metals',
-    title: 'Offshore Generator Copper CTC',
-    supplier: 'Nordic Conductor AB',
-    proposed: 4820000,
-    observations: [4610000, 4598000, 4632000, 4605000],
-    assumptions: ['EU origin claimed', 'Recycled content 18%'],
-    tenant: 'SIEMENS-GAMESA'
-  }
+  {id:'SG-4782',desk:'metals',title:'Rare Earth Permanent Magnets',supplier:'Nanjing RareTech Ltd.',proposed:6950000,observations:[5680000,5712000,5594000,5748000,8120000],assumptions:['China processing share ~90%'],tenant:'SIEMENS-GAMESA',commodity:'NdFeB magnet',tiers:[{tier:0,role:'Mine',name:'Bayan Obo analog lot',country:'CN',evidence:'lot weighbridge'},{tier:1,role:'Separator',name:'Inner Mongolia REE mill',country:'CN',evidence:'assay cert'},{tier:2,role:'Magnet OEM',name:'Nanjing RareTech Ltd.',country:'CN',evidence:'quote + ISO 9001'},{tier:3,role:'OEM plant',name:'Siemens Gamesa',country:'ES/DE',evidence:'SAP PO'}],screens:{exportPermit:'WATCH',esg:'HIGH',financial:'MED',dualUse:'CLEAR'}},
+  {id:'SG-5191',desk:'metals',title:'Neodymium Alloy Procurement',supplier:'Baotou Rare Earth Co.',proposed:12400000,observations:[10350000,10420000,10180000,10660000],assumptions:['Single-origin melt lot'],tenant:'SIEMENS-GAMESA',commodity:'NdPr alloy',tiers:[{tier:0,role:'Mine',name:'Baotou pit feed',country:'CN',evidence:'origin declaration'},{tier:1,role:'Alloy',name:'Baotou Rare Earth Co.',country:'CN',evidence:'melt heat number'},{tier:2,role:'OEM plant',name:'Siemens Gamesa',country:'DK',evidence:'Ariba RFQ'}],screens:{exportPermit:'WATCH',esg:'MED',financial:'HIGH',dualUse:'CLEAR'}},
+  {id:'SG-6033',desk:'metals',title:'Offshore Generator Copper CTC',supplier:'Nordic Conductor AB',proposed:4820000,observations:[4610000,4598000,4632000,4605000],assumptions:['EU origin claimed'],tenant:'SIEMENS-GAMESA',commodity:'Cu CTC',tiers:[{tier:0,role:'Cathode',name:'Boliden analog',country:'SE',evidence:'LME warrant'},{tier:1,role:'Drawer',name:'Nordic Conductor AB',country:'SE',evidence:'mill cert'},{tier:2,role:'OEM plant',name:'Siemens Gamesa',country:'GB',evidence:'SAP GR'}],screens:{exportPermit:'CLEAR',esg:'LOW',financial:'LOW',dualUse:'CLEAR'}}
 ];
-
-function madFilter(values) {
-  if (values.length < 3) return values;
-  const sorted = [...values].sort((a, b) => a - b);
-  const med = median(sorted);
-  const mad = median(sorted.map((v) => Math.abs(v - med)));
-  if (mad === 0) return values;
-  const filtered = values.filter((v) => (0.6745 * Math.abs(v - med)) / mad <= 3.5);
-  return filtered.length >= 2 ? filtered : values;
-}
-
-function median(sorted) {
-  const n = sorted.length;
-  return n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
-}
-
-function stdev(values) {
-  const m = values.reduce((a, b) => a + b, 0) / values.length;
-  const varSum = values.reduce((a, b) => a + (b - m) ** 2, 0) / (values.length - 1);
-  return Math.sqrt(varSum);
-}
-
-function consensusAgent(observations) {
-  if (!observations || observations.length < 2) {
-    return { confidence: 0, cv: 0, verdict: 'INSUFFICIENT_DATA', market: 0 };
-  }
-  const filtered = madFilter(observations);
-  const market = filtered.reduce((a, b) => a + b, 0) / filtered.length;
-  if (Math.abs(market) < 0.01) {
-    return { confidence: 0, cv: 0, verdict: 'INSUFFICIENT_DATA', market: 0 };
-  }
-  const sd = stdev(filtered);
-  const cv = sd / Math.abs(market);
-  const confidence = Math.max(0, Math.min(1, 1 - cv));
-  const verdict = confidence >= 0.8 ? 'VERIFIED' : 'DISPUTED';
-  return { confidence, cv, verdict, market, n: filtered.length, dropped: observations.length - filtered.length };
-}
-
-function ingestAgent(scenario) {
-  return {
-    agent: 'INGEST',
-    sources: ['SAP S/4HANA', 'Ariba PO', 'LBMA / COMEX analog', 'Supplier quote', 'Internal category model'],
-    observations: scenario.observations,
-    ts: new Date().toISOString()
-  };
-}
-
-function riskAgent(scenario, consensus) {
-  const savings = Math.max(0, scenario.proposed - consensus.market);
-  const anomaly = ((scenario.proposed - consensus.market) / consensus.market) * 100;
-  let level = 'MED';
-  if (anomaly >= 18 || consensus.verdict !== 'VERIFIED') level = 'CRITICAL';
-  else if (anomaly >= 8) level = 'HIGH';
-  return { agent: 'RISK', level, anomalyPct: Number(anomaly.toFixed(1)), savings: Math.round(savings) };
-}
-
-function sealAgent(scenario, consensus, risk) {
-  const payload = JSON.stringify({
-    id: scenario.id,
-    market: Math.round(consensus.market),
-    proposed: scenario.proposed,
-    confidence: Number(consensus.confidence.toFixed(4)),
-    verdict: consensus.verdict
-  });
-  const hash = crypto.createHash('sha256').update(payload).digest('hex');
-  return {
-    agent: 'SEAL',
-    algorithm: 'Hybrid PBFT + CoV economic validation',
-    block: 'VX-BLK-' + hash.slice(0, 12).toUpperCase(),
-    hash,
-    nodes: 27,
-    quorum: '2f+1=19',
-    finality: 'immediate',
-    ts: new Date().toISOString()
-  };
-}
-
-function runPipeline(scenarioId) {
-  const scenario = SCENARIOS.find((s) => s.id === scenarioId) || SCENARIOS[0];
-  const ingest = ingestAgent(scenario);
-  const consensus = consensusAgent(scenario.observations);
-  const risk = riskAgent(scenario, consensus);
-  const seal = sealAgent(scenario, consensus, risk);
-  return { scenario, ingest, consensus, risk, seal, message: 'One provable version of reality established.' };
-}
-
-module.exports = { SCENARIOS, runPipeline, consensusAgent };
+const CHAIN=[];
+function median(s){const n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;}
+function madFilter(values){if(values.length<3)return values;const sorted=[...values].sort((a,b)=>a-b);const med=median(sorted);const mad=median(sorted.map(v=>Math.abs(v-med)));if(mad===0)return values;const f=values.filter(v=>(0.6745*Math.abs(v-med))/mad<=3.5);return f.length>=2?f:values;}
+function stdev(values){const m=values.reduce((a,b)=>a+b,0)/values.length;return Math.sqrt(values.reduce((a,b)=>a+(b-m)**2,0)/(values.length-1));}
+function consensusAgent(observations){if(!observations||observations.length<2)return{confidence:0,cv:0,verdict:'INSUFFICIENT_DATA',market:0};const filtered=madFilter(observations);const market=filtered.reduce((a,b)=>a+b,0)/filtered.length;if(Math.abs(market)<0.01)return{confidence:0,cv:0,verdict:'INSUFFICIENT_DATA',market:0};const cv=stdev(filtered)/Math.abs(market);const confidence=Math.max(0,Math.min(1,1-cv));return{confidence,cv,verdict:confidence>=0.8?'VERIFIED':'DISPUTED',market,n:filtered.length,dropped:observations.length-filtered.length};}
+function ingestAgent(scenario){return{agent:'INGEST',sources:['SAP S/4HANA','Ariba','market oracles','supplier quote'],observations:scenario.observations,ts:new Date().toISOString()};}
+function riskAgent(scenario,consensus){const savings=Math.max(0,scenario.proposed-consensus.market);const anomaly=((scenario.proposed-consensus.market)/consensus.market)*100;let level='MED';if(anomaly>=18||consensus.verdict!=='VERIFIED'||scenario.screens.exportPermit==='WATCH')level='CRITICAL';else if(anomaly>=8||scenario.screens.esg==='HIGH')level='HIGH';return{agent:'RISK',level,anomalyPct:Number(anomaly.toFixed(1)),savings:Math.round(savings),screens:scenario.screens};}
+function sealAgent(scenario,consensus){const prev=CHAIN.length?CHAIN[CHAIN.length-1].hash:'GENESIS';const payload=JSON.stringify({id:scenario.id,prev,market:Math.round(consensus.market),proposed:scenario.proposed,confidence:Number(consensus.confidence.toFixed(4)),verdict:consensus.verdict});const hash=crypto.createHash('sha256').update(payload).digest('hex');const block={agent:'SEAL',algorithm:'Hybrid PBFT + CoV + hash chain',block:'VX-BLK-'+hash.slice(0,12).toUpperCase(),hash,prev,nodes:27,quorum:'2f+1=19',finality:'immediate',ts:new Date().toISOString()};CHAIN.push(block);return block;}
+function provenanceAgent(scenario){return{agent:'PROVENANCE',pattern:'Circulor/Minespider digital passport analog',commodity:scenario.commodity,tiers:scenario.tiers,custody:scenario.tiers.map((t,i)=>({step:i+1,from:t.name,event:t.role+' handoff',evidence:t.evidence,country:t.country}))};}
+function screenAgent(scenario){return{agent:'SCREEN',pattern:'EcoVadis + Prewave + RapidRatings analog',screens:scenario.screens,alerts:[scenario.screens.exportPermit!=='CLEAR'&&{type:'EXPORT',text:'China rare-earth export permit lag'},scenario.screens.esg==='HIGH'&&{type:'ESG',text:'Processing-stage ESG concentration'},scenario.screens.financial==='HIGH'&&{type:'FIN',text:'Supplier financial opacity'}].filter(Boolean)};}
+function runPipeline(scenarioId){const scenario=SCENARIOS.find(s=>s.id===scenarioId)||SCENARIOS[0];const ingest=ingestAgent(scenario);const consensus=consensusAgent(scenario.observations);const risk=riskAgent(scenario,consensus);const provenance=provenanceAgent(scenario);const screen=screenAgent(scenario);const seal=sealAgent(scenario,consensus);return{scenario,ingest,consensus,risk,provenance,screen,seal,chainDepth:CHAIN.length,message:'One provable version of reality established.'};}
+function competitionNotes(){return[{name:'SAP Ariba / Coupa / GEP',take:'Embed verify inside the PO path, not a side dashboard.'},{name:'EcoVadis / Prewave',take:'Continuous ESG and media-risk screens.'},{name:'Resilinc / Everstream / Sayari',take:'N-tier map with evidence.'},{name:'Circulor / Minespider / Everledger',take:'Lot-level mineral passport + custody events.'},{name:'RapidRatings / D&B',take:'Financial health as a first-class screen.'},{name:'Sourcemap / Altana',take:'Exportable evidence packet.'},{name:'Hyperledger supply-chain samples',take:'Permissioned events, not public PoW.'},{name:'verityx-local-core',take:'Append-only hash chain + Merkle inclusion.'}];}
+module.exports={SCENARIOS,CHAIN,runPipeline,consensusAgent,competitionNotes,provenanceAgent,screenAgent};
