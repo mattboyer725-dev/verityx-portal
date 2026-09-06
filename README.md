@@ -2,6 +2,8 @@
 
 Three planes plus a signed continuity core. One product.
 
+**Live:** [verityx-portal.vercel.app](https://verityx-portal.vercel.app) · [sovereign desk](https://verityx-sovereign-desk.vercel.app) · [sgre-live](https://verityx-sgre-live.vercel.app) · [vxsg-desk](https://vxsg-desk-20260906.vercel.app) · [live-core](https://verityx-live-core.vercel.app)
+
 **Hub:** `/` · **Desk:** `/desk` · **OS:** `/work` · **Core:** `/core` · **Command:** `/admin`
 
 | Surface | Who | Path |
@@ -11,7 +13,7 @@ Three planes plus a signed continuity core. One product.
 | Local Core | HMAC + Merkle doctor (v1.6.0 `319af22`) | `/core` |
 | Owner command | mattboyer725@gmail.com | `/admin` |
 
-Source: [mattboyer725-dev/verityx-portal](https://github.com/mattboyer725-dev/verityx-portal)
+Source: [mattboyer725-dev/verityx-portal](https://github.com/mattboyer725-dev/verityx-portal) · Release [v1.0-soft-prod](https://github.com/mattboyer725-dev/verityx-portal/releases/tag/v1.0-soft-prod)
 
 ## What is live
 

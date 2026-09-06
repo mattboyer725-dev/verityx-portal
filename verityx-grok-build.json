@@ -10,7 +10,15 @@
   ],
   "targets": {
     "github": "mattboyer725-dev/verityx-portal",
-    "vercelProject": "verityx-portal"
+    "githubRelease": "v1.0-soft-prod",
+    "vercelProject": "verityx-portal",
+    "live": [
+      "https://verityx-portal.vercel.app",
+      "https://verityx-sovereign-desk.vercel.app",
+      "https://verityx-sgre-live.vercel.app",
+      "https://vxsg-desk-20260906.vercel.app",
+      "https://verityx-live-core.vercel.app"
+    ]
   },
   "agents": [
     { "id": "INGEST", "exists": true, "role": "SAP OData + TED", "built": true },
