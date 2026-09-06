@@ -2,6 +2,8 @@
 
 Three planes, one product.
 
+**Live:** [verityx-sovereign-desk.vercel.app](https://verityx-sovereign-desk.vercel.app) · also [verityx-sgre-live](https://verityx-sgre-live.vercel.app) · [vxsg-desk-20260906](https://vxsg-desk-20260906.vercel.app)
+
 | Surface | Who | Path |
 |---|---|---|
 | Magnetics desk | Elena Hartmann, Siemens Gamesa | `/desk` |
@@ -14,7 +16,7 @@ Hub: `/`.
 
 - 11-agent PO pipeline: INGEST → ORACLE → CONSENSUS → RISK → PROVENANCE → SCREEN → COMPLIANCE → SEAL → LEDGER → EVIDENCE → AUTH
 - Customer Zero OS advisory rules (`rules-v1.0-soft-prod`) run on every verify. BLOCK never auto-applies.
-- HMAC-SHA256 + domain-separated Merkle from [verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) v1.6.0 (`319af22`), now persisted to Postgres (Neon / PGLite) — not only in-memory.
+- HMAC-SHA256 + domain-separated Merkle from [verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) v1.6.0 (`319af22`), persisted to Postgres (Neon / PGLite).
 - $2,500 / 72-hour pilot loop: prospect → payment → evidence → human-approved decision → PDF.
 - Tenant isolation on every OS query. Stripe checkout + signed webhook + manual admin path.
 
