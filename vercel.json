@@ -2,10 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "functions": {
-    "api/**": {
-      "maxDuration": 30
-    }
-  }
+  "installCommand": "npm install"
 }
