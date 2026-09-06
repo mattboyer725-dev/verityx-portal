@@ -22,15 +22,12 @@ function Home() {
           <Link to="/core" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
             Core
           </Link>
-          {user || isPending ? (
-            <Link to="/work" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
-              OS
-            </Link>
-          ) : (
-            <Link to="/login" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
-              OS
-            </Link>
-          )}
+          <Link
+            to={user ? "/work" : "/login"}
+            className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex"
+          >
+            OS
+          </Link>
           {isPending ? (
             <span className="h-11 w-24 animate-pulse rounded-[8px] bg-raised" aria-hidden />
           ) : user ? (
@@ -81,45 +78,23 @@ function Home() {
           </p>
         </Link>
 
-        {isPending ? (
-          <div className="panel vx-enter h-64 animate-pulse bg-graphite" aria-hidden />
-        ) : user ? (
-          <Link
-            to="/work"
-            className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-          >
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</p>
-              <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
-              <p className="mt-3 text-sm leading-relaxed text-mute">
-                Prospect → payment → evidence → human-approved decision → PDF. {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}
-                -hour target. Tenant-isolated. BLOCK never auto-applies.
-              </p>
-            </div>
-            <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-              Open workspace
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        <Link
+          to={user ? "/work" : "/login"}
+          className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
+        >
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
+            <p className="mt-3 text-sm leading-relaxed text-mute">
+              Prospect → payment → evidence → human-approved decision → PDF. {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}
+              -hour target. Tenant-isolated. BLOCK never auto-applies.
             </p>
-          </Link>
-        ) : (
-          <Link
-            to="/login"
-            className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-          >
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</p>
-              <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
-              <p className="mt-3 text-sm leading-relaxed text-mute">
-                Prospect → payment → evidence → human-approved decision → PDF. {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}
-                -hour target. Tenant-isolated. BLOCK never auto-applies.
-              </p>
-            </div>
-            <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-              Sign in to OS
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </p>
-          </Link>
-        )}
+          </div>
+          <p className="mt-8 flex items-center gap-2 text-sm text-paper">
+            {user ? "Open workspace" : "Sign in to OS"}
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </p>
+        </Link>
 
         <Link
           to="/core"
@@ -129,8 +104,8 @@ function Home() {
             <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Local Core</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Proof</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              Live doctor against v1.6.0 SHA 319af22. HMAC chain, Merkle inclusion, Postgres persistence. Not a mesh
-              peer.
+              Live doctor against v1.6.0 SHA 319af22. HMAC chain, Merkle inclusion. In-memory on the edge, durable when
+              Postgres is up. Not a mesh peer.
             </p>
           </div>
           <p className="mt-8 flex items-center gap-2 text-sm text-paper">

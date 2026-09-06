@@ -10,8 +10,8 @@ import {
   type PipelineResult,
   type Scenario,
 } from "@/lib/engine";
-import { getDeskControls, recordDeskEvent } from "@/lib/admin-api";
-import { oidcToken, postSapWriteback, runLiveVerify } from "@/lib/live-api";
+import { getDeskControls, recordDeskEvent } from "@/lib/desk-ops";
+import { postSapWriteback, runLiveVerify } from "@/lib/live-api";
 import { deskKeys, useDeskTape } from "@/lib/desk-live";
 import { useQueryClient } from "@tanstack/react-query";
 import { issueDeskToken } from "@/lib/oidc";
@@ -91,39 +91,18 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
     }
     setBusy(true);
     setErr("");
-    let access = "";
-    let iss = "";
-    let sub = "";
-    try {
-      const tok = await Promise.race([
-        oidcToken({ data: { seat: true } }),
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
-      ]);
-      if (tok && tok.ok && "access_token" in tok) {
-        access = tok.access_token;
-        iss = tok.claims.iss;
-        sub = tok.claims.sub;
-      }
-    } catch {
-      /* local issuer */
-    }
-    if (!access) {
-      const local = await issueDeskToken(BUYER.email, BUYER.password);
-      if (!local) {
-        setBusy(false);
-        setErr("Seat could not be signed. Try again.");
-        return;
-      }
-      access = local.access_token;
-      iss = String(local.claims.iss || "");
-      sub = String(local.claims.sub || "");
+    const local = await issueDeskToken(BUYER.email, BUYER.password);
+    if (!local) {
+      setBusy(false);
+      setErr("Seat could not be signed. Try again.");
+      return;
     }
     const session: DeskSession = {
       email: BUYER.email,
       at: Date.now(),
-      access_token: access,
-      iss,
-      sub,
+      access_token: local.access_token,
+      iss: String(local.claims.iss || ""),
+      sub: String(local.claims.sub || ""),
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     void recordDeskEvent({
@@ -158,7 +137,7 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
                 Core {tape.core.ok ? "HMAC ok" : "break"} · {tape.core.leaf_count} leaves
               </span>
             ) : null}
-            {!tape ? <span className="tape-chip">Connecting LME · Argus · ECB…</span> : null}
+            {!tape?.lme && !tape?.fx ? <span className="tape-chip">LME · Argus · ECB standby</span> : null}
           </div>
         </div>
         <p className="hint">SAP · Ariba · LME · Argus · EcoVadis · Circulor · PBFT 27 · Local Core HMAC · Okta</p>
@@ -430,7 +409,7 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
             LME Cu cash <b>{live.lme.copperUsdMt.toFixed(0)}</b> USD/mt {chg(live.lme.copperChangePct)}
           </span>
         ) : (
-          <span>Connecting LME…</span>
+          <span>LME Cu cash standby</span>
         )}
         {live?.lme ? (
           <span>

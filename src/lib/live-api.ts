@@ -29,21 +29,6 @@ function withBudget<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   ]);
 }
 
-async function hydrateCoreSoft(ms = 400) {
-  void withBudget(
-    (async () => {
-      try {
-        const { hydrateCoreLedger } = await import("@/lib/core-store.server");
-        await hydrateCoreLedger();
-      } catch {
-        await ensureGenesis();
-      }
-    })(),
-    ms,
-    undefined,
-  );
-}
-
 async function coreSlice() {
   try {
     await ensureGenesis();
@@ -71,9 +56,8 @@ async function coreSlice() {
 
 export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async () => {
   seedAll();
-  void hydrateCoreSoft(400);
-  const live = await withBudget(fetchLiveBundle(), 5500, fallbackBundle());
-  const core = await withBudget(coreSlice(), 400, undefined);
+  const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
+  const core = await withBudget(coreSlice(), 250, undefined);
   return {
     ...live,
     sapCount: listSapPos().length,
@@ -96,16 +80,8 @@ export const runLiveVerify = createServerFn({ method: "POST" })
   .validator((data: unknown) => z.object({ id: z.string().min(1).max(40) }).parse(data))
   .handler(async ({ data }) => {
     seedAll();
-    void hydrateCoreSoft(400);
-    const live = await withBudget(fetchLiveBundle(), 5500, fallbackBundle());
-    const result = await runPipeline(data.id, live);
-    try {
-      const { persistCoreLedger } = await import("@/lib/core-store.server");
-      void persistCoreLedger();
-    } catch {
-      /* durable write is best-effort */
-    }
-    return result;
+    const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
+    return runPipeline(data.id, live);
   });
 
 export const postSapWriteback = createServerFn({ method: "POST" })
@@ -160,12 +136,7 @@ export const oidcWellKnown = createServerFn({ method: "GET" }).handler(async () 
 export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oidcJwks());
 
 export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
-    await withBudget(hydrateCoreLedger(), 1500, undefined);
-  } catch {
-    await ensureGenesis().catch(() => undefined);
-  }
+  await ensureGenesis();
   const [chain, snap, doc] = await Promise.all([verifyChain(), merkleSnapshot(), doctor()]);
   let proof: Awaited<ReturnType<typeof merkleProofAt>> | null = null;
   if (snap.leaf_count > 0) {
@@ -184,4 +155,3 @@ export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () 
     core: LOCAL_CORE,
   };
 });
-

@@ -24,9 +24,15 @@ function CoreStatus() {
   const seed = Route.useLoaderData();
   const q = useQuery({
     queryKey: ["core-status"],
-    queryFn: () => getCoreStatus(),
+    queryFn: () =>
+      Promise.race([
+        getCoreStatus(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("core-timeout")), 4000)),
+      ]),
     initialData: seed ?? undefined,
     refetchInterval: 12_000,
+    retry: 0,
+    enabled: typeof window !== "undefined",
   });
   const data = q.data;
   const ok = Boolean(data?.chain.ok && data?.doctor.overall === "ok");
