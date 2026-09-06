@@ -1,61 +1,179 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { GROK_PROVIDERS, authEnabled, signIn } from "@/lib/auth/client";
+import { useState } from "react";
+import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { VxMark } from "@/components/vx-mark";
-import { OWNER_EMAIL } from "@/lib/admin";
+import { Button } from "@/components/ui/button";
+import { Field, Input } from "@/components/ui/field";
+import { ErrorNote } from "@/components/page-header";
+import { MIN_PASSWORD_LENGTH } from "@/lib/verityx/constants";
+import { normalizeEmail } from "@/lib/verityx/format";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
 function Login() {
   const { user, isPending } = useCurrentUserState();
+  const [mode, setMode] = useState<"in" | "up">("in");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   if (isPending) {
-    return (
-      <div className="login-wrap">
-        <div className="login-card vx-skel" aria-hidden="true">
-          <div className="vx-skel-bar" />
-        </div>
-      </div>
-    );
+    return <div className="min-h-dvh bg-ink" />;
+  }
+  if (user) return <Navigate to="/work" />;
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const normalized = normalizeEmail(email);
+    if (!normalized || !normalized.includes("@")) {
+      setError("Enter a valid email.");
+      return;
+    }
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    if (!authEnabled) {
+      setError("Sign-in is disabled.");
+      return;
+    }
+    setBusy(true);
+    try {
+      if (mode === "up") {
+        const { error: err } = await authClient.signUp.email({
+          email: normalized,
+          password,
+          name: name.trim() || normalized.split("@")[0],
+          callbackURL: "/work",
+        });
+        if (err) throw new Error(err.message ?? "Could not create the workspace");
+      } else {
+        const { error: err } = await authClient.signIn.email({
+          email: normalized,
+          password,
+          callbackURL: "/work",
+        });
+        if (err) throw new Error(err.message ?? "Could not sign in");
+      }
+      window.location.assign("/work");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+      setBusy(false);
+    }
   }
 
-  if (user) return <Navigate to="/admin" />;
-
   return (
-    <div className="login-wrap">
-      <div className="login-card">
-        <div className="vx-brand">
-          <VxMark />
-          <div className="vx-word">
-            <strong>VERITYX</strong>
-            <span>Sovereign · command</span>
+    <main className="grid min-h-dvh bg-ink lg:grid-cols-2">
+      <section className="relative hidden flex-col justify-between border-r border-line px-12 py-12 lg:flex">
+        <Link to="/" className="font-display text-2xl tracking-tight">
+          VerityX
+        </Link>
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-mute">Supply chain risk audit</p>
+          <h1 className="mt-4 max-w-md font-display text-5xl leading-[1.1] text-paper">
+            One paying pilot. A decision you can defend.
+          </h1>
+          <p className="mt-6 max-w-sm text-sm leading-relaxed text-mute">
+            $2,500 · 72-hour target · advisory only. Evidence in, human approval for BLOCK, no fabricated
+            intelligence.
+          </p>
+        </div>
+        <p className="text-xs text-mute">v1.0-soft-prod · Customer Zero OS</p>
+      </section>
+
+      <section className="flex items-center justify-center px-6 py-16">
+        <div className="w-full max-w-sm">
+          <p className="mb-2 font-display text-2xl lg:hidden">VerityX</p>
+          <h2 className="font-display text-3xl tracking-tight">
+            {mode === "in" ? "Sign in" : "Create a workspace"}
+          </h2>
+          <p className="mt-2 text-sm text-mute">
+            {mode === "in" ? "Continue a pilot already in motion." : "Register the organization that will own the first customer."}
+          </p>
+
+          <form className="mt-8 space-y-4" onSubmit={onSubmit}>
+            {mode === "up" ? (
+              <Field label="Your name">
+                <Input value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+              </Field>
+            ) : null}
+            <Field label="Work email">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+            </Field>
+            <Field label="Password" hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={mode === "up" ? "new-password" : "current-password"}
+                minLength={MIN_PASSWORD_LENGTH}
+                required
+              />
+            </Field>
+            <ErrorNote message={error} />
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? "Working…" : mode === "in" ? "Enter workspace" : "Create workspace"}
+            </Button>
+          </form>
+
+          <button
+            type="button"
+            className="mt-4 text-sm text-mute hover:text-paper"
+            onClick={() => {
+              setMode(mode === "in" ? "up" : "in");
+              setError(null);
+            }}
+          >
+            {mode === "in" ? "Need a workspace? Register" : "Already registered? Sign in"}
+          </button>
+
+          {authEnabled ? (
+            <div className="mt-8">
+              <p className="mb-3 text-center text-[11px] uppercase tracking-[0.16em] text-mute">Or continue with</p>
+              <div className="space-y-2">
+                {GROK_PROVIDERS.map((p) => (
+                  <Button
+                    key={p.providerId}
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    onClick={() => signIn(p.providerId, { callbackURL: "/work" })}
+                  >
+                    Continue with {p.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-6 text-sm text-mute">Sign-in is disabled.</p>
+          )}
+
+          <div className="mt-8 space-y-2 border-t border-line pt-6 text-sm">
+            <Link to="/desk" className="block text-mute hover:text-paper">
+              Open the Siemens Gamesa magnetics desk →
+            </Link>
+            <button
+              type="button"
+              className="block text-mute hover:text-paper"
+              onClick={() => {
+                const google = GROK_PROVIDERS.find((p) => p.idp === "google");
+                if (google) signIn(google.providerId, { callbackURL: "/admin" });
+              }}
+            >
+              Owner command (Google) →
+            </button>
           </div>
         </div>
-        <h1>Owner command</h1>
-        <p>
-          Continue with Google as {OWNER_EMAIL}. The live magnetics desk is a separate one-click Siemens Gamesa seat.
-        </p>
-        {authEnabled ? (
-          <div className="vx-stack">
-            {GROK_PROVIDERS.map((p) => (
-              <button
-                key={p.providerId}
-                type="button"
-                className={p.idp === "google" ? "vx-btn vx-btn-primary" : "vx-btn vx-btn-ghost"}
-                style={{ width: "100%" }}
-                onClick={() => signIn(p.providerId, { callbackURL: "/admin" })}
-              >
-                Continue with {p.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="login-err">Sign-in is disabled.</p>
-        )}
-        <p className="hint">
-          <Link to="/">Back to live desk</Link>
-        </p>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

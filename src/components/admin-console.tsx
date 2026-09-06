@@ -163,7 +163,7 @@ function AdminSignIn() {
           ))}
         </div>
         <p className="hint">
-          <Link to="/">Siemens Gamesa live desk</Link>
+          <Link to="/desk">Siemens Gamesa live desk</Link>
         </p>
       </div>
     </div>
@@ -253,7 +253,7 @@ function AdminConsole() {
             {denied} Platform owner is {OWNER_EMAIL}. A buyer or viewer identity cannot enter this surface.
           </p>
           <div className="vx-actions">
-            <Link className="vx-btn vx-btn-primary" to="/">
+            <Link className="vx-btn vx-btn-primary" to="/desk">
               Open desk
             </Link>
           </div>
@@ -311,8 +311,11 @@ function AdminConsole() {
         </label>
         <div className="vx-user">
           <UserButton />
-          <Link className="vx-btn vx-btn-ghost" to="/">
+          <Link className="vx-btn vx-btn-ghost" to="/desk">
             Desk
+          </Link>
+          <Link className="vx-btn vx-btn-ghost" to="/work">
+            OS
           </Link>
         </div>
       </header>

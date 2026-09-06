@@ -15,6 +15,8 @@ import {
 } from "@/lib/core-ledger";
 import { runPbft, PBFT_N, PBFT_QUORUM, clusterSnapshot, type PbftRound } from "@/lib/pbft";
 import { getAriba, getSapPo, seedSapPo, sapWriteback as postSap, sapWritebackLog as sapLog, type SapPO, type AribaRfq } from "@/lib/sap";
+import { evaluateDecision, type Evaluation } from "@/lib/verityx/decision-engine";
+import type { EvidenceItem } from "@/lib/verityx/types";
 
 export type ScreenLevel = "CLEAR" | "LOW" | "MED" | "HIGH" | "WATCH";
 
@@ -660,6 +662,68 @@ export function sapWritebackLog() {
   return sapLog();
 }
 
+function advisoryFromScreen(
+  scenario: Scenario,
+  screen: ReturnType<typeof screenAgent>,
+  live?: LiveBundle,
+): Evaluation | null {
+  const observedAt = (live?.sanctions.ts || live?.quotes[scenario.oracleSymbol]?.ts || new Date().toISOString()).slice(
+    0,
+    10,
+  );
+  const items: EvidenceItem[] = [];
+  if (screen.sanctions.matched) {
+    items.push({
+      id: "sanctions",
+      kind: "sanctions_screening",
+      title: `UN screening · ${scenario.supplier}`,
+      sourceName: "UN Consolidated List",
+      sourceUrl: "https://scsanctions.un.org/",
+      observedAt,
+      excerpt: screen.alerts.find((a) => a.type === "SANCTIONS")?.text || "Named sanctions match on supplier.",
+      confidence: "high",
+    });
+  }
+  for (const a of screen.alerts.filter((x) => x.type === "MEDIA")) {
+    items.push({
+      id: `media-${items.length}`,
+      kind: "media_report",
+      title: a.text,
+      sourceName: "Prewave / Google News RSS",
+      sourceUrl: "https://news.google.com/",
+      observedAt,
+      excerpt: a.text,
+      confidence: "medium",
+    });
+  }
+  if (screen.financial) {
+    items.push({
+      id: "tape",
+      kind: "financial_signal",
+      title: `${screen.financial.symbol} ${screen.financial.price}`,
+      sourceName: screen.financial.source || "Yahoo Finance",
+      sourceUrl: "https://finance.yahoo.com/",
+      observedAt,
+      excerpt: `${scenario.supplier} listed tape ${screen.financial.symbol} ${screen.financial.changePct.toFixed(2)}%.`,
+      confidence: "medium",
+    });
+  }
+  if (!items.length) {
+    items.push({
+      id: "po",
+      kind: "operational_event",
+      title: `${scenario.po} ${scenario.title}`,
+      sourceName: "SAP analog PO tape",
+      sourceUrl: "",
+      observedAt,
+      excerpt: `${scenario.supplier} · ${scenario.commodity} · proposed ${scenario.proposed} ${scenario.currency}.`,
+      confidence: "medium",
+    });
+  }
+  const ev = evaluateDecision(items);
+  return "error" in ev ? null : ev;
+}
+
 export type PipelineResult = {
   scenario: Scenario;
   ingest: ReturnType<typeof ingestAgent>;
@@ -679,6 +743,7 @@ export type PipelineResult = {
   chainDepth: number;
   live: LiveBundle | null;
   message: string;
+  advisory: Evaluation | null;
 };
 
 export async function runPipeline(scenarioId: string, live?: LiveBundle): Promise<PipelineResult> {
@@ -698,6 +763,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   const compliance = complianceAgent(scenario);
   const dual = dualSourceAgent(scenario, consensus);
   const seal = await sealAgent(scenario, consensus);
+  const advisory = advisoryFromScreen(scenario, screen, live);
   const artifact = await appendCoreEvent(
     "artifact.record",
     {
@@ -743,7 +809,8 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
     ariba: getAriba(scenario.po),
     chainDepth: CHAIN.length,
     live: live || null,
-    message: `${risk.action.replace("_", " ")} · ${consensus.verdict} · ${tape} · PBFT ${seal.pbft.commitOk}/${PBFT_N} · core ${ledger.depth} HMAC.`,
+    advisory,
+    message: `${risk.action.replace("_", " ")} · ${consensus.verdict} · ${tape} · PBFT ${seal.pbft.commitOk}/${PBFT_N} · core ${ledger.depth} HMAC · OS ${advisory?.proposedAction ?? "MONITOR"}.`,
   };
 }
 

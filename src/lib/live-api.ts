@@ -25,9 +25,14 @@ function seedAll() {
 export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async () => {
   seedAll();
   try {
-    await ensureGenesis();
+    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
+    await hydrateCoreLedger();
   } catch {
-    /* genesis is best-effort */
+    try {
+      await ensureGenesis();
+    } catch {
+      /* genesis is best-effort */
+    }
   }
   let live: Awaited<ReturnType<typeof fetchLiveBundle>>;
   try {
@@ -84,8 +89,21 @@ export const runLiveVerify = createServerFn({ method: "POST" })
   .validator((data: unknown) => z.object({ id: z.string().min(1).max(40) }).parse(data))
   .handler(async ({ data }) => {
     seedAll();
+    try {
+      const { hydrateCoreLedger } = await import("@/lib/core-store.server");
+      await hydrateCoreLedger();
+    } catch {
+      await ensureGenesis();
+    }
     const live = await fetchLiveBundle();
-    return runPipeline(data.id, live);
+    const result = await runPipeline(data.id, live);
+    try {
+      const { persistCoreLedger } = await import("@/lib/core-store.server");
+      await persistCoreLedger();
+    } catch {
+      /* durable write is best-effort */
+    }
+    return result;
   });
 
 export const postSapWriteback = createServerFn({ method: "POST" })

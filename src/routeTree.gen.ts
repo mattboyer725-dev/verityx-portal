@@ -11,8 +11,27 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as DeskRouteImport } from './routes/desk'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as WorkRouteImport } from './routes/work'
+import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as HealthLiveRouteImport } from './routes/health.live'
+import { Route as HealthReadyRouteImport } from './routes/health.ready'
+import { Route as WorkIndexRouteImport } from './routes/work/index'
+import { Route as WorkAuditRouteImport } from './routes/work/audit'
+import { Route as WorkLearningRouteImport } from './routes/work/learning'
+import { Route as WorkSettingsRouteImport } from './routes/work/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
+import { Route as WorkDecisionsIndexRouteImport } from './routes/work/decisions.index'
+import { Route as WorkDecisionsIdRouteImport } from './routes/work/decisions.$id'
+import { Route as WorkPilotsIndexRouteImport } from './routes/work/pilots.index'
+import { Route as WorkPilotsIdRouteImport } from './routes/work/pilots.$id'
+import { Route as WorkProspectsIndexRouteImport } from './routes/work/prospects.index'
+import { Route as WorkProspectsIdRouteImport } from './routes/work/prospects.$id'
+import { Route as WorkReportsIndexRouteImport } from './routes/work/reports.index'
+import { Route as WorkReportsIdRouteImport } from './routes/work/reports.$id'
+import { Route as ApiBillingStripeWebhookRouteImport } from './routes/api.billing.stripe.webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -24,49 +43,276 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeskRoute = DeskRouteImport.update({
+  id: '/desk',
+  path: '/desk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
+} as any)
+const WorkRoute = WorkRouteImport.update({
+  id: '/work',
+  path: '/work',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSplatRoute = ApiSplatRouteImport.update({
+  id: '/api/$',
+  path: '/api/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthLiveRoute = HealthLiveRouteImport.update({
+  id: '/health/live',
+  path: '/health/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthReadyRoute = HealthReadyRouteImport.update({
+  id: '/health/ready',
+  path: '/health/ready',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkIndexRoute = WorkIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkAuditRoute = WorkAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkLearningRoute = WorkLearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkSettingsRoute = WorkSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => WorkRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthMeRoute = ApiAuthMeRouteImport.update({
+  id: '/api/auth/me',
+  path: '/api/auth/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkDecisionsIndexRoute = WorkDecisionsIndexRouteImport.update({
+  id: '/decisions/',
+  path: '/decisions/',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkDecisionsIdRoute = WorkDecisionsIdRouteImport.update({
+  id: '/decisions/$id',
+  path: '/decisions/$id',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkPilotsIndexRoute = WorkPilotsIndexRouteImport.update({
+  id: '/pilots/',
+  path: '/pilots/',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkPilotsIdRoute = WorkPilotsIdRouteImport.update({
+  id: '/pilots/$id',
+  path: '/pilots/$id',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkProspectsIndexRoute = WorkProspectsIndexRouteImport.update({
+  id: '/prospects/',
+  path: '/prospects/',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkProspectsIdRoute = WorkProspectsIdRouteImport.update({
+  id: '/prospects/$id',
+  path: '/prospects/$id',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkReportsIndexRoute = WorkReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkReportsIdRoute = WorkReportsIdRouteImport.update({
+  id: '/reports/$id',
+  path: '/reports/$id',
+  getParentRoute: () => WorkRoute,
+} as any)
+const ApiBillingStripeWebhookRoute = ApiBillingStripeWebhookRouteImport.update({
+  id: '/api/billing/stripe/webhook',
+  path: '/api/billing/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/desk': typeof DeskRoute
   '/login': typeof LoginRoute
+  '/work': typeof WorkRouteWithChildren
+  '/api/$': typeof ApiSplatRoute
+  '/health/live': typeof HealthLiveRoute
+  '/health/ready': typeof HealthReadyRoute
+  '/work/audit': typeof WorkAuditRoute
+  '/work/learning': typeof WorkLearningRoute
+  '/work/settings': typeof WorkSettingsRoute
+  '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/work/decisions/$id': typeof WorkDecisionsIdRoute
+  '/work/pilots/$id': typeof WorkPilotsIdRoute
+  '/work/prospects/$id': typeof WorkProspectsIdRoute
+  '/work/reports/$id': typeof WorkReportsIdRoute
+  '/work/decisions/': typeof WorkDecisionsIndexRoute
+  '/work/pilots/': typeof WorkPilotsIndexRoute
+  '/work/prospects/': typeof WorkProspectsIndexRoute
+  '/work/reports/': typeof WorkReportsIndexRoute
+  '/api/billing/stripe/webhook': typeof ApiBillingStripeWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/desk': typeof DeskRoute
   '/login': typeof LoginRoute
+  '/api/$': typeof ApiSplatRoute
+  '/health/live': typeof HealthLiveRoute
+  '/health/ready': typeof HealthReadyRoute
+  '/work/audit': typeof WorkAuditRoute
+  '/work/learning': typeof WorkLearningRoute
+  '/work/settings': typeof WorkSettingsRoute
+  '/work': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/work/decisions/$id': typeof WorkDecisionsIdRoute
+  '/work/pilots/$id': typeof WorkPilotsIdRoute
+  '/work/prospects/$id': typeof WorkProspectsIdRoute
+  '/work/reports/$id': typeof WorkReportsIdRoute
+  '/work/decisions': typeof WorkDecisionsIndexRoute
+  '/work/pilots': typeof WorkPilotsIndexRoute
+  '/work/prospects': typeof WorkProspectsIndexRoute
+  '/work/reports': typeof WorkReportsIndexRoute
+  '/api/billing/stripe/webhook': typeof ApiBillingStripeWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/desk': typeof DeskRoute
   '/login': typeof LoginRoute
+  '/work': typeof WorkRouteWithChildren
+  '/api/$': typeof ApiSplatRoute
+  '/health/live': typeof HealthLiveRoute
+  '/health/ready': typeof HealthReadyRoute
+  '/work/audit': typeof WorkAuditRoute
+  '/work/learning': typeof WorkLearningRoute
+  '/work/settings': typeof WorkSettingsRoute
+  '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/auth/me': typeof ApiAuthMeRoute
+  '/work/decisions/$id': typeof WorkDecisionsIdRoute
+  '/work/pilots/$id': typeof WorkPilotsIdRoute
+  '/work/prospects/$id': typeof WorkProspectsIdRoute
+  '/work/reports/$id': typeof WorkReportsIdRoute
+  '/work/decisions/': typeof WorkDecisionsIndexRoute
+  '/work/pilots/': typeof WorkPilotsIndexRoute
+  '/work/prospects/': typeof WorkProspectsIndexRoute
+  '/work/reports/': typeof WorkReportsIndexRoute
+  '/api/billing/stripe/webhook': typeof ApiBillingStripeWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/login' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/desk'
+    | '/login'
+    | '/work'
+    | '/api/$'
+    | '/health/live'
+    | '/health/ready'
+    | '/work/audit'
+    | '/work/learning'
+    | '/work/settings'
+    | '/work/'
+    | '/api/auth/$'
+    | '/api/auth/me'
+    | '/work/decisions/$id'
+    | '/work/pilots/$id'
+    | '/work/prospects/$id'
+    | '/work/reports/$id'
+    | '/work/decisions/'
+    | '/work/pilots/'
+    | '/work/prospects/'
+    | '/work/reports/'
+    | '/api/billing/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/login' | '/api/auth/$'
-  id: '__root__' | '/' | '/admin' | '/login' | '/api/auth/$'
+  to:
+    | '/'
+    | '/admin'
+    | '/desk'
+    | '/login'
+    | '/api/$'
+    | '/health/live'
+    | '/health/ready'
+    | '/work/audit'
+    | '/work/learning'
+    | '/work/settings'
+    | '/work'
+    | '/api/auth/$'
+    | '/api/auth/me'
+    | '/work/decisions/$id'
+    | '/work/pilots/$id'
+    | '/work/prospects/$id'
+    | '/work/reports/$id'
+    | '/work/decisions'
+    | '/work/pilots'
+    | '/work/prospects'
+    | '/work/reports'
+    | '/api/billing/stripe/webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/desk'
+    | '/login'
+    | '/work'
+    | '/api/$'
+    | '/health/live'
+    | '/health/ready'
+    | '/work/audit'
+    | '/work/learning'
+    | '/work/settings'
+    | '/work/'
+    | '/api/auth/$'
+    | '/api/auth/me'
+    | '/work/decisions/$id'
+    | '/work/pilots/$id'
+    | '/work/prospects/$id'
+    | '/work/reports/$id'
+    | '/work/decisions/'
+    | '/work/pilots/'
+    | '/work/prospects/'
+    | '/work/reports/'
+    | '/api/billing/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  DeskRoute: typeof DeskRoute
   LoginRoute: typeof LoginRoute
+  WorkRoute: typeof WorkRouteWithChildren
+  ApiSplatRoute: typeof ApiSplatRoute
+  HealthLiveRoute: typeof HealthLiveRoute
+  HealthReadyRoute: typeof HealthReadyRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiAuthMeRoute: typeof ApiAuthMeRoute
+  ApiBillingStripeWebhookRoute: typeof ApiBillingStripeWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -85,12 +331,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/desk': {
+      id: '/desk'
+      path: '/desk'
+      fullPath: '/desk'
+      preLoaderRoute: typeof DeskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/work': {
+      id: '/work'
+      path: '/work'
+      fullPath: '/work'
+      preLoaderRoute: typeof WorkRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/$': {
+      id: '/api/$'
+      path: '/api/$'
+      fullPath: '/api/$'
+      preLoaderRoute: typeof ApiSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health/live': {
+      id: '/health/live'
+      path: '/health/live'
+      fullPath: '/health/live'
+      preLoaderRoute: typeof HealthLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health/ready': {
+      id: '/health/ready'
+      path: '/health/ready'
+      fullPath: '/health/ready'
+      preLoaderRoute: typeof HealthReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/work/': {
+      id: '/work/'
+      path: '/'
+      fullPath: '/work/'
+      preLoaderRoute: typeof WorkIndexRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/audit': {
+      id: '/work/audit'
+      path: '/audit'
+      fullPath: '/work/audit'
+      preLoaderRoute: typeof WorkAuditRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/learning': {
+      id: '/work/learning'
+      path: '/learning'
+      fullPath: '/work/learning'
+      preLoaderRoute: typeof WorkLearningRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/settings': {
+      id: '/work/settings'
+      path: '/settings'
+      fullPath: '/work/settings'
+      preLoaderRoute: typeof WorkSettingsRouteImport
+      parentRoute: typeof WorkRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -99,14 +408,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/me': {
+      id: '/api/auth/me'
+      path: '/api/auth/me'
+      fullPath: '/api/auth/me'
+      preLoaderRoute: typeof ApiAuthMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/work/decisions/': {
+      id: '/work/decisions/'
+      path: '/decisions'
+      fullPath: '/work/decisions/'
+      preLoaderRoute: typeof WorkDecisionsIndexRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/decisions/$id': {
+      id: '/work/decisions/$id'
+      path: '/decisions/$id'
+      fullPath: '/work/decisions/$id'
+      preLoaderRoute: typeof WorkDecisionsIdRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/pilots/': {
+      id: '/work/pilots/'
+      path: '/pilots'
+      fullPath: '/work/pilots/'
+      preLoaderRoute: typeof WorkPilotsIndexRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/pilots/$id': {
+      id: '/work/pilots/$id'
+      path: '/pilots/$id'
+      fullPath: '/work/pilots/$id'
+      preLoaderRoute: typeof WorkPilotsIdRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/prospects/': {
+      id: '/work/prospects/'
+      path: '/prospects'
+      fullPath: '/work/prospects/'
+      preLoaderRoute: typeof WorkProspectsIndexRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/prospects/$id': {
+      id: '/work/prospects/$id'
+      path: '/prospects/$id'
+      fullPath: '/work/prospects/$id'
+      preLoaderRoute: typeof WorkProspectsIdRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/reports/': {
+      id: '/work/reports/'
+      path: '/reports'
+      fullPath: '/work/reports/'
+      preLoaderRoute: typeof WorkReportsIndexRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/reports/$id': {
+      id: '/work/reports/$id'
+      path: '/reports/$id'
+      fullPath: '/work/reports/$id'
+      preLoaderRoute: typeof WorkReportsIdRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/api/billing/stripe/webhook': {
+      id: '/api/billing/stripe/webhook'
+      path: '/api/billing/stripe/webhook'
+      fullPath: '/api/billing/stripe/webhook'
+      preLoaderRoute: typeof ApiBillingStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface WorkRouteChildren {
+  WorkAuditRoute: typeof WorkAuditRoute
+  WorkLearningRoute: typeof WorkLearningRoute
+  WorkSettingsRoute: typeof WorkSettingsRoute
+  WorkIndexRoute: typeof WorkIndexRoute
+  WorkDecisionsIdRoute: typeof WorkDecisionsIdRoute
+  WorkPilotsIdRoute: typeof WorkPilotsIdRoute
+  WorkProspectsIdRoute: typeof WorkProspectsIdRoute
+  WorkReportsIdRoute: typeof WorkReportsIdRoute
+  WorkDecisionsIndexRoute: typeof WorkDecisionsIndexRoute
+  WorkPilotsIndexRoute: typeof WorkPilotsIndexRoute
+  WorkProspectsIndexRoute: typeof WorkProspectsIndexRoute
+  WorkReportsIndexRoute: typeof WorkReportsIndexRoute
+}
+
+const WorkRouteChildren: WorkRouteChildren = {
+  WorkAuditRoute: WorkAuditRoute,
+  WorkLearningRoute: WorkLearningRoute,
+  WorkSettingsRoute: WorkSettingsRoute,
+  WorkIndexRoute: WorkIndexRoute,
+  WorkDecisionsIdRoute: WorkDecisionsIdRoute,
+  WorkPilotsIdRoute: WorkPilotsIdRoute,
+  WorkProspectsIdRoute: WorkProspectsIdRoute,
+  WorkReportsIdRoute: WorkReportsIdRoute,
+  WorkDecisionsIndexRoute: WorkDecisionsIndexRoute,
+  WorkPilotsIndexRoute: WorkPilotsIndexRoute,
+  WorkProspectsIndexRoute: WorkProspectsIndexRoute,
+  WorkReportsIndexRoute: WorkReportsIndexRoute,
+}
+
+const WorkRouteWithChildren = WorkRoute._addFileChildren(WorkRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  DeskRoute: DeskRoute,
   LoginRoute: LoginRoute,
+  WorkRoute: WorkRouteWithChildren,
+  ApiSplatRoute: ApiSplatRoute,
+  HealthLiveRoute: HealthLiveRoute,
+  HealthReadyRoute: HealthReadyRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiAuthMeRoute: ApiAuthMeRoute,
+  ApiBillingStripeWebhookRoute: ApiBillingStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

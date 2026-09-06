@@ -185,6 +185,10 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
           </button>
           <p className="hint">
             <Link to="/admin">Owner command · {OWNER_EMAIL}</Link>
+            {" · "}
+            <Link to="/work">Customer Zero OS</Link>
+            {" · "}
+            <Link to="/">Hub</Link>
           </p>
         </div>
       </section>
@@ -407,6 +411,9 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
           </div>
           <Link className="vx-btn vx-btn-ghost" to="/admin">
             Command
+          </Link>
+          <Link className="vx-btn vx-btn-ghost" to="/work">
+            OS
           </Link>
           <button className="vx-btn vx-btn-ghost" type="button" onClick={signOut}>
             Sign out
@@ -697,6 +704,7 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
                   ["09", "LEDGER", view ? `HMAC ${view.ledger.depth}` : live?.core ? `HMAC ${live.core.leaf_count}` : "GENESIS"],
                   ["10", "EVIDENCE", view ? "ready" : "awaiting"],
                   ["11", "AUTH", "Okta RS256"],
+                  ["12", "OS", view?.advisory ? view.advisory.proposedAction : "advisory"],
                 ] as const
               ).map(([n, t, d]) => (
                 <div key={t} className={`vx-step ${view ? "on" : ""}`}>

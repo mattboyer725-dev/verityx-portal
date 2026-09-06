@@ -417,6 +417,16 @@ export async function ensureGenesis() {
   );
 }
 
+export function dumpLog(): CoreEvent[] {
+  return LOG.slice();
+}
+
+export function loadLog(events: CoreEvent[]) {
+  if (LOG.length || !events.length) return;
+  LOG.push(...events);
+  seeded = true;
+}
+
 export function __resetForTests() {
   LOG.length = 0;
   seeded = false;
