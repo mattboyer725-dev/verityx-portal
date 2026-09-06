@@ -10,12 +10,17 @@ export type DeskTape = Awaited<ReturnType<typeof getLiveSnapshot>>;
 export function useDeskTape(enabled = true) {
   return useQuery({
     queryKey: deskKeys.tape,
-    queryFn: () => getLiveSnapshot(),
+    queryFn: () =>
+      Promise.race([
+        getLiveSnapshot(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("tape-timeout")), 7000)),
+      ]),
     enabled,
     refetchInterval: 15_000,
     refetchOnWindowFocus: true,
     staleTime: 5_000,
     placeholderData: keepPreviousData,
+    retry: 1,
   });
 }
 

@@ -82,9 +82,6 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
         setAnnounce(c.announce);
       })
       .catch(() => setMaintenance(false));
-    clientBudget(getLiveSnapshot(), 7000)
-      .then(setTape)
-      .catch(() => setTape(null));
   }, []);
 
   async function enterSeat() {
@@ -232,15 +229,6 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
         setAnnounce(c.announce);
       })
       .catch(() => setFrozen(false));
-    clientBudget(getLiveSnapshot(), 7000)
-      .then(setLive)
-      .catch(() => setLive(null));
-    const t = setInterval(() => {
-      clientBudget(getLiveSnapshot(), 7000)
-        .then(setLive)
-        .catch(() => undefined);
-    }, 60_000);
-    return () => clearInterval(t);
   }, []);
 
   const sapMap = useMemo(() => {
