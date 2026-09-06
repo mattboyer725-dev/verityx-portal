@@ -153,7 +153,13 @@ function renderPipe() {
     ['02','ORACLE', p ? p.oracle.prints.length + ' prints' : c.observations.length + ' prints'],
     ['03','CONSENSUS', p ? p.consensus.verdict : c.verdict],
     ['04','RISK', p ? p.risk.action : c.action],
-    ['05','SEAL', p ? p.seal.block : 'awaiting'],
+    ['05','PROVENANCE', (p ? p.provenance.tiers : c.tiers).length + '-tier'],
+    ['06','SCREEN', p ? (p.screen.alerts.length + ' alerts') : 'pre-screen'],
+    ['07','COMPLIANCE', p ? p.compliance.gate : 'awaiting'],
+    ['08','SEAL', p ? p.seal.block : 'awaiting'],
+    ['09','LEDGER', p ? ('depth ' + p.ledger.depth) : 'GENESIS'],
+    ['10','EVIDENCE', p ? 'packet ready' : 'awaiting'],
+    ['11','AUTH', 'demo seat'],
   ];
   $('pipe').innerHTML = steps.map(([n,t,d]) => `<div class="step ${p ? 'on' : ''}"><div class="n">${n}</div><div class="t">${t}</div><div class="d">${d}</div></div>`).join('');
   if (p) {
@@ -164,8 +170,8 @@ function renderPipe() {
       <div class="hash" style="margin-top:8px">${p.seal.hash}</div>
       <div class="hash">merkle ${p.seal.merkle}</div>
       <div class="hash">prev ${p.seal.prev}</div>`;
-    $('dropN').textContent = `dropped ${p.consensus.dropped} · n=${p.consensus.n}`;
-    $('packetPre').textContent = JSON.stringify({ message: p.message, po: p.scenario.po, verdict: p.consensus.verdict, confidence: Number(p.consensus.confidence.toFixed(4)), market: Math.round(p.consensus.market), proposed: p.scenario.proposed, risk: p.risk, compliance: p.compliance, seal: p.seal, provenance: p.provenance.custody }, null, 2);
+    $('dropN').textContent = `dropped ${p.consensus.dropped} · n=${p.consensus.n}` + (p.dual ? ` · dual ${p.dual.verdict} ${p.dual.spreadPct}%` : '');
+    $('packetPre').textContent = JSON.stringify({ message: p.message, po: p.scenario.po, verdict: p.consensus.verdict, confidence: Number(p.consensus.confidence.toFixed(4)), market: Math.round(p.consensus.market), proposed: p.scenario.proposed, risk: p.risk, compliance: p.compliance, dual: p.dual, merkle: p.merkle, auth: p.auth, seal: p.seal, provenance: p.provenance.custody }, null, 2);
   } else $('detail').hidden = true;
   $('btnPacket').disabled = !p;
   $('btnExport').disabled = !p;
@@ -190,6 +196,13 @@ function renderRail() {
     $('comp').innerHTML = '';
     $('tip').textContent = 'GENESIS';
     $('tipMeta').textContent = 'depth 0 · intact';
+  }
+  if ($('tiersM')) {
+    $('tiersM').innerHTML = $('tiers').innerHTML;
+    $('screensM').innerHTML = $('screens').innerHTML;
+    $('alertsM').innerHTML = $('alerts').innerHTML;
+    $('compM').innerHTML = $('comp').innerHTML;
+    $('tipM').textContent = $('tip').textContent + ' · ' + $('tipMeta').textContent;
   }
 }
 

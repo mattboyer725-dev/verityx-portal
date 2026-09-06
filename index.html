@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="./desk.css" />
 </head>
 <body>
-  <div class="login" id="login" hidden>
+  <div class="login" id="login">
     <form class="login-card" id="loginForm">
       <div class="brand">
         <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 28 10v12L16 29 4 22V10L16 3z" stroke="currentColor" stroke-width="1.5"/><path d="M11 12 16 22 21 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -76,7 +76,7 @@
         <section class="card">
           <div class="card-h">
             <div id="pipeTitle">Verify</div>
-            <div style="display:flex;gap:.4rem">
+            <div style="display:flex;flex-wrap:wrap;gap:.4rem">
               <button class="btn ghost" type="button" id="btnPacket" disabled>Packet</button>
               <button class="btn ghost" type="button" id="btnExport" disabled>Export</button>
               <button class="btn ghost" type="button" id="btnHold">Hold in SAP</button>
@@ -97,6 +97,14 @@
               </div>
             </div>
           </div>
+        </section>
+        <section class="card mobile-rail" id="mobileRail">
+          <div class="label">Provenance / screens</div>
+          <div class="tier-map" id="tiersM"></div>
+          <div id="screensM"></div>
+          <div id="alertsM"></div>
+          <div id="compM"></div>
+          <div class="hash" id="tipM" style="padding:.5rem .65rem">GENESIS</div>
         </section>
         <section class="card">
           <div class="card-h">Competitive takeaways<span>baked into agents — not a slide</span></div>
@@ -130,6 +138,11 @@
       </div>
     </div>
   </div>
+  <noscript>
+    <p style="padding:2rem;color:#e8eef5;background:#07090c;font-family:sans-serif">
+      VerityX Sovereign live desk requires JavaScript. Demo seat: elena.hartmann@siemensgamesa.com / demo2026
+    </p>
+  </noscript>
   <script src="./desk.js"></script>
 </body>
 </html>

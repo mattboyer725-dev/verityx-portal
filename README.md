@@ -21,6 +21,10 @@ Not a stub. Verify sits on the PO line: ingest SAP/Ariba analogs, MAD-filter poi
 | `/api/alerts` | GET | SCREEN |
 | `/api/agents` | GET | roster |
 | `/api/ledger` | GET | LEDGER |
+| `/api/oracle` | GET/POST | ORACLE |
+| `/api/packet` | GET | EVIDENCE |
+| `/api/merkle` | GET | inclusion proof |
+| `/api/writeback` | POST | SAP analog |
 | `/api/competition` | GET | takeaways |
 
 ## Agents built (all `exists=false` shipped)
@@ -34,9 +38,3 @@ INGEST · ORACLE · CONSENSUS · RISK · PROVENANCE · SCREEN · COMPLIANCE · S
 - EcoVadis / Prewave / RapidRatings / Circulor / Minespider are analog screens and passports
 - 27-node PBFT is in-process (quorum `2f+1=19`), not a real cluster
 - Demo login is a hardcoded seat, not Okta
-
-## Local
-
-```bash
-npx vercel dev
-```
