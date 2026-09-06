@@ -8,6 +8,7 @@ Three planes, one product.
 |---|---|---|
 | Magnetics desk | Elena Hartmann, Siemens Gamesa | `/desk` |
 | Customer Zero OS | Founder / analyst workspace | `/work` |
+| Local Core | HMAC + Merkle doctor (v1.6.0 `319af22`) | `/core` |
 | Owner command | mattboyer725@gmail.com | `/admin` |
 
 Hub: `/`.

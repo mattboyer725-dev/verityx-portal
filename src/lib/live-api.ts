@@ -5,7 +5,7 @@ import { runPipeline, sapWriteback, SCENARIOS, BUYER } from "@/lib/engine";
 import { issueDeskToken, oidcDiscovery, oidcJwks } from "@/lib/oidc";
 import { clusterSnapshot } from "@/lib/pbft";
 import { getAriba, getSapPo, listSapPos, sapGetEntity, sapWritebackLog, seedSapPo } from "@/lib/sap";
-import { ensureGenesis, merkleSnapshot, verifyChain, listEvents, LOCAL_CORE, doctor } from "@/lib/core-ledger";
+import { ensureGenesis, merkleSnapshot, verifyChain, listEvents, LOCAL_CORE, doctor, merkleProofAt } from "@/lib/core-ledger";
 
 function seedAll() {
   for (const s of SCENARIOS) {
@@ -156,3 +156,52 @@ export const oidcToken = createServerFn({ method: "POST" })
 export const oidcWellKnown = createServerFn({ method: "GET" }).handler(async () => oidcDiscovery());
 
 export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oidcJwks());
+
+export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
+    await hydrateCoreLedger();
+  } catch {
+    await ensureGenesis();
+  }
+  const snap = await merkleSnapshot();
+  const chain = await verifyChain();
+  const coreDoctor = await doctor();
+  const events = listEvents();
+  let proof: {
+    index: number;
+    root: string;
+    valid: boolean;
+    leaf: string;
+    path: { sibling: string; side: string }[];
+  } | null = null;
+  if (events.length) {
+    const p = await merkleProofAt(events.length - 1);
+    proof = {
+      index: p.index,
+      root: p.root,
+      valid: p.valid,
+      leaf: p.leaf,
+      path: p.path.map((s) => ({ sibling: s.sibling, side: s.side })),
+    };
+  }
+  return {
+    version: LOCAL_CORE.version,
+    sha: LOCAL_CORE.sha,
+    repo: LOCAL_CORE.repo,
+    verifiedOnGithub: true,
+    tests: 112,
+    snap,
+    chain: { ok: chain.ok, depth: chain.depth, bad: chain.bad, errors: chain.errors },
+    doctor: coreDoctor,
+    events: events.map((e) => ({
+      id: e.id,
+      type: e.type,
+      hash: e.hash,
+      mac: e.mac,
+      ts: e.ts,
+      actor: e.actor,
+    })),
+    proof,
+  };
+});

@@ -2,6 +2,7 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   ClipboardList,
   FileText,
+  Fingerprint,
   Gavel,
   LayoutDashboard,
   Menu,
@@ -21,6 +22,7 @@ import { Pill } from "./status";
 
 const NAV = [
   { to: "/desk", label: "Live desk", icon: Shield },
+  { to: "/core", label: "Local Core", icon: Fingerprint },
   { to: "/work", label: "Command", icon: LayoutDashboard, exact: true },
   { to: "/work/prospects", label: "Prospects", icon: Users },
   { to: "/work/pilots", label: "Pilots", icon: ClipboardList },

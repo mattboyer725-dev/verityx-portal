@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CoreRouteImport } from './routes/core'
 import { Route as DeskRouteImport } from './routes/desk'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as WorkRouteImport } from './routes/work'
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoreRoute = CoreRouteImport.update({
+  id: '/core',
+  path: '/core',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DeskRoute = DeskRouteImport.update({
@@ -152,6 +158,7 @@ const ApiBillingStripeWebhookRoute = ApiBillingStripeWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/core': typeof CoreRoute
   '/desk': typeof DeskRoute
   '/login': typeof LoginRoute
   '/work': typeof WorkRouteWithChildren
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/core': typeof CoreRoute
   '/desk': typeof DeskRoute
   '/login': typeof LoginRoute
   '/api/$': typeof ApiSplatRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/core': typeof CoreRoute
   '/desk': typeof DeskRoute
   '/login': typeof LoginRoute
   '/work': typeof WorkRouteWithChildren
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/core'
     | '/desk'
     | '/login'
     | '/work'
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/core'
     | '/desk'
     | '/login'
     | '/api/$'
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/core'
     | '/desk'
     | '/login'
     | '/work'
@@ -304,6 +316,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  CoreRoute: typeof CoreRoute
   DeskRoute: typeof DeskRoute
   LoginRoute: typeof LoginRoute
   WorkRoute: typeof WorkRouteWithChildren
@@ -329,6 +342,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/core': {
+      id: '/core'
+      path: '/core'
+      fullPath: '/core'
+      preLoaderRoute: typeof CoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/desk': {
@@ -516,6 +536,7 @@ const WorkRouteWithChildren = WorkRoute._addFileChildren(WorkRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  CoreRoute: CoreRoute,
   DeskRoute: DeskRoute,
   LoginRoute: LoginRoute,
   WorkRoute: WorkRouteWithChildren,

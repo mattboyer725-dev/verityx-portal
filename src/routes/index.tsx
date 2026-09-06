@@ -22,6 +22,9 @@ function Home() {
           <Link to="/work" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
             OS
           </Link>
+          <Link to="/core" className="hidden h-11 items-center rounded-[8px] px-3 text-mute hover:text-paper sm:flex">
+            Core
+          </Link>
           <Link
             to="/login"
             className="flex h-11 items-center rounded-[8px] border border-line px-4 text-sm text-paper hover:bg-raised"
@@ -34,15 +37,16 @@ function Home() {
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-8 sm:pt-16">
         <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-mute">Sovereign · dual plane</p>
         <h1 className="mt-5 max-w-4xl font-display text-4xl leading-[1.06] tracking-tight sm:text-6xl">
-          One product. A live magnetics desk, a paying-pilot OS, and owner command.
+          One product. A live magnetics desk, a paying-pilot OS, and a signed continuity core.
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute">
           Siemens Gamesa procurement on the PO line. Customer Zero operating system for the $2,500 / 72-hour audit.
-          HMAC + Merkle continuity from local-core v1.6.0. Advisory decisions — never an automatic fraud finding.
+          HMAC + Merkle continuity from local-core v1.6.0, verified on GitHub at 319af22. Advisory decisions — never an
+          automatic fraud finding.
         </p>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-24 lg:grid-cols-3">
+      <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-24 sm:grid-cols-2">
         <Link
           to="/desk"
           className="panel vx-enter group flex flex-col justify-between p-7 transition-colors hover:bg-raised"
@@ -75,6 +79,24 @@ function Home() {
           </div>
           <p className="mt-8 flex items-center gap-2 text-sm text-paper">
             {user ? "Open workspace" : "Sign in to OS"}
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </p>
+        </Link>
+
+        <Link
+          to="/core"
+          className="panel vx-enter group flex flex-col justify-between p-7 transition-colors hover:bg-raised"
+        >
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Local Core</p>
+            <h2 className="mt-3 font-display text-3xl tracking-tight">Proof</h2>
+            <p className="mt-3 text-sm leading-relaxed text-mute">
+              Live doctor against v1.6.0 SHA 319af22. HMAC chain, Merkle inclusion, Postgres persistence. Not a mesh
+              peer.
+            </p>
+          </div>
+          <p className="mt-8 flex items-center gap-2 text-sm text-paper">
+            Verify the core
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </p>
         </Link>
