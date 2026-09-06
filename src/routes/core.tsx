@@ -4,7 +4,16 @@ import { ArrowRight, Check, Shield } from "lucide-react";
 import { getCoreStatus } from "@/lib/live-api";
 import { CORE_SHA, CORE_VERSION, LOCAL_CORE } from "@/lib/core-ledger";
 
-export const Route = createFileRoute("/core")({ component: CoreStatus });
+export const Route = createFileRoute("/core")({
+  loader: async () => {
+    try {
+      return await getCoreStatus();
+    } catch {
+      return null;
+    }
+  },
+  component: CoreStatus,
+});
 
 function shortHash(h: string, n = 10) {
   if (!h) return "—";
@@ -12,13 +21,22 @@ function shortHash(h: string, n = 10) {
 }
 
 function CoreStatus() {
+  const seed = Route.useLoaderData();
   const q = useQuery({
     queryKey: ["core-status"],
     queryFn: () => getCoreStatus(),
+    initialData: seed ?? undefined,
     refetchInterval: 12_000,
   });
   const data = q.data;
-  const ok = data?.chain.ok && data?.doctor.overall === "ok";
+  const ok = Boolean(data?.chain.ok && data?.doctor.overall === "ok");
+  const statusLabel = ok
+    ? "Chain verified"
+    : q.isPending
+      ? "Hydrating ledger…"
+      : q.isError
+        ? "Doctor failed"
+        : "Checking…";
 
   return (
     <main className="min-h-dvh bg-ink text-paper">
@@ -57,7 +75,7 @@ function CoreStatus() {
           <div className="mt-8 flex flex-wrap gap-3">
             <span className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-ok/40 bg-ok/10 px-4 text-sm text-ok">
               <span className="size-1.5 rounded-full bg-ok" />
-              {ok ? "Chain verified" : q.isPending ? "Hydrating ledger…" : "Checking…"}
+              {statusLabel}
             </span>
             <span className="inline-flex h-11 items-center rounded-[8px] border border-line px-4 font-mono text-xs text-mute">
               {LOCAL_CORE.sha.slice(0, 12)}
@@ -192,7 +210,10 @@ function CoreStatus() {
               {data.proof.path.length} · {shortHash(data.proof.leaf, 12)}
             </p>
           ) : null}
-          {data?.chain.errors.length ? (
+          {q.isError ? (
+            <p className="mt-4 text-sm text-bad">Could not hydrate the signed log. Retrying…</p>
+          ) : null}
+          {data?.chain.errors?.length ? (
             <p className="mt-4 text-sm text-bad">{data.chain.errors.join(" · ")}</p>
           ) : null}
         </div>

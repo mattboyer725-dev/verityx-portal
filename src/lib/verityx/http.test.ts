@@ -15,6 +15,14 @@ describe("allowedOrigin", () => {
     assert.equal(allowedOrigin("https://evil.example", ""), false);
   });
 
+  it("allows the live Vercel product hosts", () => {
+    assert.equal(allowedOrigin("https://verityx-portal.vercel.app", ""), true);
+    assert.equal(allowedOrigin("https://verityx-sovereign-desk.vercel.app", undefined), true);
+    assert.equal(allowedOrigin("https://vxsg-desk-20260906.vercel.app", ""), true);
+    assert.equal(allowedOrigin("https://verityx-portal-abc-mattboyer725-4868s-projects.vercel.app", ""), true);
+    assert.equal(allowedOrigin("https://unrelated.vercel.app", ""), false);
+  });
+
   it("never treats a missing origin as allowed", () => {
     assert.equal(allowedOrigin("", ""), false);
   });

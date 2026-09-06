@@ -9,6 +9,21 @@ export function originHost(origin: string): string | null {
   }
 }
 
+function isTrustedHost(host: string): boolean {
+  if (LOCAL_HOSTS.has(host)) return true;
+  if (host.endsWith(".grok-sandbox.com") || host.endsWith(".grok.me")) return true;
+  if (!host.endsWith(".vercel.app")) return false;
+  return (
+    host === "verityx-portal.vercel.app" ||
+    host === "verityx-sovereign-desk.vercel.app" ||
+    host === "verityx-sgre-live.vercel.app" ||
+    host === "vxsg-desk-20260906.vercel.app" ||
+    host === "verityx-live-core.vercel.app" ||
+    host.startsWith("verityx-") ||
+    host.startsWith("vxsg-")
+  );
+}
+
 export function allowedOrigin(origin: string, envAllow?: string | null): boolean {
   if (!origin) return false;
   const configured = (envAllow ?? "")
@@ -18,11 +33,7 @@ export function allowedOrigin(origin: string, envAllow?: string | null): boolean
   if (configured.length > 0) return configured.includes(origin);
   const host = originHost(origin);
   if (!host) return false;
-  return (
-    LOCAL_HOSTS.has(host) ||
-    host.endsWith(".grok-sandbox.com") ||
-    host.endsWith(".grok.me")
-  );
+  return isTrustedHost(host);
 }
 
 export function corsHeaders(

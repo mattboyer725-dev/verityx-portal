@@ -194,11 +194,13 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
             {maintenance ? "Desk in maintenance" : busy ? "Signing seat…" : "Enter the desk"}
           </button>
           <p className="hint">
-            <Link to="/admin">Owner command · {OWNER_EMAIL}</Link>
+            <Link to="/">Hub</Link>
             {" · "}
             <Link to="/work">Customer Zero OS</Link>
             {" · "}
             <Link to="/core">Local Core</Link>
+            {" · "}
+            <Link to="/admin">Owner command · {OWNER_EMAIL}</Link>
           </p>
         </div>
       </section>

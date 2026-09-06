@@ -2,9 +2,9 @@
 
 Three planes plus a signed continuity core. One product.
 
-**Live:** [verityx-live-desk.vercel.app](https://verityx-live-desk.vercel.app) · [verityx-portal.vercel.app](https://verityx-portal.vercel.app) · [sovereign desk](https://verityx-sovereign-desk.vercel.app) · [sgre-live](https://verityx-sgre-live.vercel.app)
+**Live:** [verityx-portal.vercel.app](https://verityx-portal.vercel.app) · [sovereign desk](https://verityx-sovereign-desk.vercel.app) · [sgre-live](https://verityx-sgre-live.vercel.app) · [vxsg-desk](https://vxsg-desk-20260906.vercel.app) · [live-core](https://verityx-live-core.vercel.app)
 
-**Desk is `/` and `/desk`.** OS `/work` · Core `/core` · Command `/admin`
+**Hub:** `/` · **Desk:** `/desk` · **OS:** `/work` · **Core:** `/core` · **Command:** `/admin`
 
 | Surface | Who | Path |
 |---|---|---|

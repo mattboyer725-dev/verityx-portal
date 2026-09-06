@@ -160,8 +160,12 @@ export const oidcWellKnown = createServerFn({ method: "GET" }).handler(async () 
 export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oidcJwks());
 
 export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
-  void hydrateCoreSoft(600);
-  await ensureGenesis().catch(() => undefined);
+  try {
+    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
+    await withBudget(hydrateCoreLedger(), 1500, undefined);
+  } catch {
+    await ensureGenesis().catch(() => undefined);
+  }
   const [chain, snap, doc] = await Promise.all([verifyChain(), merkleSnapshot(), doctor()]);
   let proof: Awaited<ReturnType<typeof merkleProofAt>> | null = null;
   if (snap.leaf_count > 0) {

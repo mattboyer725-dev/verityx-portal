@@ -17,7 +17,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  const { user, isPending } = useCurrentUserState();
+  const { user } = useCurrentUserState();
   const { redirect } = Route.useSearch();
   const dest = safeAppPath(redirect);
   const navigate = useNavigate();
@@ -29,9 +29,6 @@ function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (isPending) {
-    return <div className="min-h-dvh bg-ink" />;
-  }
   if (user) return <Navigate to={dest} replace />;
 
   async function returnToPlatform() {
