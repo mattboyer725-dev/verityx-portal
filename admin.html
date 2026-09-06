@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VerityX Sovereign — Command</title>
+  <meta name="description" content="Platform command for VerityX Sovereign — owner, seats, agents, and sealed ledger control." />
+  <meta name="theme-color" content="#07090c" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+:root{--bg:#07090c;--surface:#0e131a;--surface-2:#141b24;--line:#243041;--fg:#e8eef5;--muted:#8b97a8;--faint:#5d6a7a;--cyan:#00e5e5;--cyan-dim:#0a3d3d;--amber:#f5a524;--red:#ff5c6a;--green:#3dd68c;--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:var(--sans)}
+button:not(:disabled),[role=button]{cursor:pointer}
+.login{min-height:100dvh;display:grid;place-items:center;padding:1.25rem;background:radial-gradient(800px 400px at 50% 0,rgba(0,229,229,.1),transparent 60%),var(--bg)}
+.login-card{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);border-radius:.75rem;padding:1.5rem}
+.login-card h1{font-size:1.35rem;font-weight:600;margin:.7rem 0 .3rem}
+.login-card p{color:var(--muted);font-size:.88rem;line-height:1.5;margin-bottom:1.1rem}
+.login-card label{display:block;font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:.7rem 0 .3rem}
+.login-card input{width:100%;min-height:44px;background:var(--bg);border:1px solid var(--line);border-radius:.375rem;color:var(--fg);padding:0 .75rem;font-size:.92rem}
+.hint{margin-top:.85rem;font-size:.72rem;color:var(--faint);font-family:var(--mono)}.hint a{color:var(--cyan);text-decoration:none}
+.err{color:var(--red);font-size:.8rem}
+.brand{display:flex;align-items:center;gap:.7rem;min-height:44px}.mark{width:28px;height:28px;color:var(--cyan)}
+.word{display:flex;flex-direction:column;line-height:1.1}.word strong{letter-spacing:.18em;font-size:.78rem}.word span{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.shell{min-height:100dvh;display:grid;grid-template-rows:auto 1fr auto;background:radial-gradient(1200px 500px at 10% -10%,rgba(0,229,229,.07),transparent 55%),var(--bg)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem 1rem;border-bottom:1px solid var(--line);background:color-mix(in oklab,var(--surface) 88%,transparent)}
+.live{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;color:var(--green)}
+.live:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.live.hold{color:var(--red)}.live.hold:before{background:var(--red)}
+.user{display:flex;align-items:center;gap:.7rem;font-size:.82rem}
+.avatar{width:32px;height:32px;border-radius:999px;display:grid;place-items:center;background:var(--cyan-dim);color:var(--cyan);font-size:.7rem;font-weight:600}
+.body{display:grid;grid-template-columns:220px minmax(0,1fr);min-height:0}
+.side{background:var(--surface);border-right:1px solid var(--line);padding:.9rem .7rem;overflow:auto}
+.main{min-width:0;overflow:auto;padding:.9rem 1rem 1.4rem;display:flex;flex-direction:column;gap:.85rem}
+.label{font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:.85rem .35rem .4rem}
+.side-btn{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:40px;padding:0 .7rem;border-radius:.375rem;color:var(--muted);font-size:.84rem;text-align:left;background:transparent;border:0}
+.side-btn:hover,.side-btn.on{background:var(--surface-2);color:var(--fg)}.side-btn.on{box-shadow:inset 2px 0 0 var(--cyan)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:.5rem;padding:.75rem .85rem}
+.kpi .k{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.kpi .v{font-family:var(--mono);font-size:1.15rem;margin-top:.25rem}
+.kpi .s{font-size:.72rem;color:var(--muted);margin-top:.15rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:.5rem;overflow:hidden}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.65rem .85rem;border-bottom:1px solid var(--line);font-size:.82rem;font-weight:600}
+.card-h span{font-family:var(--mono);font-size:.62rem;font-weight:500;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{text-align:left;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding:.5rem .75rem;font-weight:500}
+td{padding:.55rem .75rem;border-top:1px solid var(--line)}
+.pill{display:inline-flex;align-items:center;min-height:22px;padding:0 .45rem;border-radius:999px;font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase}
+.ok{color:var(--green);background:color-mix(in oklab,var(--green) 16%,transparent)}
+.bad{color:var(--red);background:color-mix(in oklab,var(--red) 16%,transparent)}
+.mid{color:var(--amber);background:color-mix(in oklab,var(--amber) 16%,transparent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 .9rem;border-radius:.375rem;font-size:.8rem;font-weight:600;border:0}
+.btn.sm{min-height:36px;font-size:.75rem;padding:0 .7rem}
+.primary{background:var(--cyan);color:#041414}.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.pad{padding:.85rem}.copy{color:var(--muted);font-size:.88rem;line-height:1.5;margin:0 0 .85rem}
+.row{display:flex;justify-content:space-between;gap:.6rem;align-items:center;padding:.65rem .85rem;border-top:1px solid var(--line);font-size:.8rem}
+.status{display:flex;flex-wrap:wrap;gap:.85rem 1.1rem;padding:.45rem 1rem;border-top:1px solid var(--line);background:var(--surface);font-family:var(--mono);font-size:.62rem;color:var(--muted)}
+.status strong{color:var(--fg);font-weight:500}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;padding:.85rem}
+.form input,.form select{min-height:40px;background:var(--bg);border:1px solid var(--line);border-radius:.375rem;color:var(--fg);padding:0 .65rem}
+.form .btn{grid-column:1/-1}
+.sub{color:var(--muted);font-size:.7rem}
+.mono{font-family:var(--mono)}
+@media(max-width:720px){.body{grid-template-columns:1fr}.side{display:none}.kpis{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}.top{flex-wrap:wrap}}
+  </style>
+</head>
+<body>
+  <div class="login" id="gate">
+    <form class="login-card" id="gateForm">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 28 10v12L16 29 4 22V10L16 3z" stroke="currentColor" stroke-width="1.5"/><path d="M11 12 16 22 21 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="word"><strong>VERITYX</strong><span>Sovereign · command</span></div>
+      </div>
+      <h1>Platform owner</h1>
+      <p>Command is gated to mattboyer725@gmail.com. Enter that Gmail to open seats, agents, alerts, and desk freeze.</p>
+      <label for="email">Owner Gmail</label>
+      <input id="email" type="email" autocomplete="username" value="mattboyer725@gmail.com" />
+      <p class="err" id="gateErr"></p>
+      <button class="btn primary" type="submit" style="width:100%;margin-top:1rem">Enter command</button>
+      <p class="hint"><a href="./index.html">Back to live desk</a></p>
+    </form>
+  </div>
+
+  <div class="shell" id="app" hidden>
+    <header class="top">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 28 10v12L16 29 4 22V10L16 3z" stroke="currentColor" stroke-width="1.5"/><path d="M11 12 16 22 21 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="word"><strong>VERITYX</strong><span>Sovereign v5 · command</span></div>
+      </div>
+      <div class="live" id="live">LIVE · COMMAND</div>
+      <div class="user">
+        <div class="avatar">MB</div>
+        <div>Matt Boyer<small>Owner · mattboyer725@gmail.com</small></div>
+        <a class="btn ghost" href="./index.html">Desk</a>
+        <button class="btn ghost" type="button" id="leave">Leave</button>
+      </div>
+    </header>
+    <div class="body">
+      <aside class="side" id="side"></aside>
+      <main class="main" id="main"></main>
+    </div>
+    <footer class="status" id="status"></footer>
+  </div>
+  <script src="./admin.js"></script>
+</body>
+</html>

@@ -29,10 +29,35 @@ Command now includes:
 
 This static `/admin.html` remains an analog of the older command surface. Prefer the React `/admin` for operator work.
 
+## API
+
+| Route | Method | Agent |
+|---|---|---|
+| `/api/health` | GET | — |
+| `/api/auth` | POST | AUTH |
+| `/api/admin/session` | POST | owner command login |
+| `/api/admin` | GET/POST | command snapshot + mutations |
+| `/api/scenarios` | GET | CONSENSUS preview |
+| `/api/verify` | POST | full pipeline |
+| `/api/provenance` | GET | PROVENANCE |
+| `/api/alerts` | GET | SCREEN |
+| `/api/agents` | GET | roster |
+| `/api/ledger` | GET | LEDGER |
+| `/api/oracle` | GET/POST | ORACLE |
+| `/api/packet` | GET | EVIDENCE |
+| `/api/merkle` | GET | inclusion proof |
+| `/api/writeback` | POST | SAP analog |
+| `/api/competition` | GET | takeaways |
+
+## Agents built (all `exists=false` shipped)
+
+INGEST · ORACLE · CONSENSUS · RISK · PROVENANCE · SCREEN · COMPLIANCE · SEAL · LEDGER · EVIDENCE · AUTH
+
 ## Remaining fakes (honest)
 
 - SAP S/4HANA and Ariba are analog feeds, not a live tenant connection
 - Market oracles are scenario prints, not live LME/Argus sockets
+- EcoVadis / Prewave / RapidRatings / Circulor / Minespider are analog screens and passports
 - 27-node PBFT is in-process (quorum `2f+1=19`), not a real cluster
 - Demo buyer login is a hardcoded seat, not Okta
 - Portal `/admin` is an owner-email analog; the React app uses real Google sign-in

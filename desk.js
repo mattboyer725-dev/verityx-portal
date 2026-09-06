@@ -189,9 +189,13 @@ $('loginForm').addEventListener('submit', async (e) => {
   const email = $('email').value.trim().toLowerCase();
   const password = $('password').value;
   try {
-    const out = await api('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
-    if (!out.ok) throw new Error('bad');
-    localStorage.setItem(KEY, JSON.stringify({ email, at: Date.now() }));
+    const out = await api('/api/oidc/token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) }).catch(() => null);
+    const ok = out && (out.ok || out.access_token);
+    if (!ok) {
+      const auth = await api('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+      if (!auth.ok) throw new Error('bad');
+    }
+    localStorage.setItem(KEY, JSON.stringify({ email, at: Date.now(), access_token: out && out.access_token }));
     showDesk();
   } catch {
     if (email === EMAIL && password === PASS) {
@@ -227,11 +231,12 @@ document.querySelectorAll('[data-flag]').forEach((b) => b.addEventListener('clic
 
 async function boot() {
   try {
-    const [rows, agents, notes, health] = await Promise.all([
+    const [rows, agents, notes, health, live] = await Promise.all([
       api('/api/scenarios'),
       api('/api/agents').catch(() => []),
       api('/api/competition').catch(() => []),
       api('/api/health').catch(() => ({ status: 'local' })),
+      api('/api/live').catch(() => null),
     ]);
     if (!Array.isArray(rows) || !rows.length || rows[0].proposed == null) throw new Error('scenarios');
     state.rows = rows;
@@ -239,6 +244,11 @@ async function boot() {
     state.notes = notes;
     state.selected = rows[0]?.id;
     $('stApi').textContent = health.status || 'ok';
+    if (live && live.quotes && $('ticker')) {
+      const parts = Object.values(live.quotes).map((q) => q.symbol + ' <b>' + q.price + '</b> ' + q.currency);
+      if (live.fx) parts.push('USD/EUR <b>' + Number(live.fx.usdEur).toFixed(4) + '</b>');
+      $('ticker').innerHTML = parts.join(' · ');
+    }
     renderAll();
   } catch (err) {
     $('stApi').textContent = 'client';

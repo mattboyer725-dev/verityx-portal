@@ -14,6 +14,7 @@
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/router" },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/", "destination": "/index.html" }
   ]
 }

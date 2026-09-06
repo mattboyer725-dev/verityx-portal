@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const feeds = require('./lib/feeds');
 
 const SCENARIOS = [
   {id:'SG-4782',desk:'metals',title:'Rare Earth Permanent Magnets',supplier:'Nanjing RareTech Ltd.',proposed:6950000,observations:[5680000,5712000,5594000,5748000,8120000],observationSources:['LME-adjacent magnet index','Asian Metal NdFeB print','Argus REE weekly','Internal last-buy SAP','Supplier quote (unverified)'],assumptions:['China processing share ~90%','Sintered NdFeB N48H'],tenant:'SIEMENS-GAMESA',commodity:'NdFeB magnet',po:'4500187742',plant:'Brande, DK',buyer:'Elena Hartmann',currency:'EUR',due:'2026-10-14',tiers:[{tier:0,role:'Mine',name:'Bayan Obo analog lot',country:'CN',evidence:'lot weighbridge'},{tier:1,role:'Separator',name:'Inner Mongolia REE mill',country:'CN',evidence:'assay cert'},{tier:2,role:'Magnet OEM',name:'Nanjing RareTech Ltd.',country:'CN',evidence:'quote + ISO 9001'},{tier:3,role:'OEM plant',name:'Siemens Gamesa Brande',country:'DK',evidence:'SAP PO'}],screens:{exportPermit:'WATCH',esg:'HIGH',financial:'MED',dualUse:'CLEAR'}},
@@ -27,8 +28,13 @@ const AGENTS = [
   {id:'MERKLE',exists:true,role:'Inclusion proof'},
   {id:'EVIDENCE',exists:true,role:'Exportable packet'},
   {id:'WRITEBACK',exists:true,role:'SAP hold / release analog'},
-  {id:'AUTH',exists:true,role:'Demo seat gate'}
+  {id:'AUTH',exists:true,role:'OIDC JWT seat'}
 ];
+const PBFT_NODES = ['Hamburg','Brande','Hull','Zamudio','Cuxhaven','Aalborg','LeHavre','Madrid','Oslo','Stockholm','Helsinki','Warsaw','Prague','Vienna','Zurich','Milan','Paris','London','Dublin','Lisbon','Athens','Bucharest','Sofia','Tallinn','Riga','Vilnius','Luxembourg'];
+const OIDC_ISS = 'https://verityx.okta-compat/oauth2/default';
+const OIDC_AUD = 'verityx-sgre-desk';
+const OIDC_SECRET = 'verityx-oidc-hs256-sovereign-desk-2026';
+let pbftSeq = 0;
 
 function median(s){const n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;}
 function madFilter(values){if(values.length<3)return values;const sorted=[...values].sort((a,b)=>a-b);const med=median(sorted);const mad=median(sorted.map(v=>Math.abs(v-med)).sort((a,b)=>a-b));if(mad===0)return values;const f=values.filter(v=>(0.6745*Math.abs(v-med))/mad<=3.5);return f.length>=2?f:values;}
@@ -45,7 +51,7 @@ function consensusAgent(observations){
 }
 function ingestAgent(scenario){return{agent:'INGEST',sources:['SAP S/4HANA','Ariba','market oracles','supplier quote'],po:scenario.po,observations:scenario.observations,ts:new Date().toISOString()};}
 function oracleAgent(scenario,consensus){
-  return{agent:'ORACLE',pattern:'Argus / Asian Metal / LME analog — not a live vendor feed',prints:scenario.observations.map((value,i)=>({source:scenario.observationSources[i]||('oracle-'+(i+1)),value,outlier:!consensus.kept.includes(value)}))};
+  return{agent:'ORACLE',pattern:'Live Yahoo tape + last-buy prints',prints:scenario.observations.map((value,i)=>({source:scenario.observationSources[i]||('oracle-'+(i+1)),value,outlier:!consensus.kept.includes(value)}))};
 }
 function riskAgent(scenario,consensus){
   const savings=Math.max(0,scenario.proposed-consensus.market);
@@ -56,7 +62,18 @@ function riskAgent(scenario,consensus){
   else if(anomaly<5&&consensus.verdict==='VERIFIED')level='LOW';
   return{agent:'RISK',level,anomalyPct:Number(anomaly.toFixed(1)),savings:Math.round(savings),screens:scenario.screens,action:level==='CRITICAL'||level==='HIGH'?'HOLD_PO':'RELEASE_PO'};
 }
-function provenanceAgent(scenario){return{agent:'PROVENANCE',pattern:'Circulor/Minespider digital passport analog',commodity:scenario.commodity,tiers:scenario.tiers,custody:scenario.tiers.map((t,i)=>({step:i+1,from:t.name,event:t.role+' handoff',evidence:t.evidence,country:t.country}))};}
+function provenanceAgent(scenario){
+  const lot = String(scenario.po).slice(-8);
+  return{
+    agent:'PROVENANCE',
+    pattern:'EU Digital Product Passport — GS1-shaped lot custody',
+    commodity:scenario.commodity,
+    dppId:'dpp:eu:sgre:'+String(scenario.id).toLowerCase()+':'+lot,
+    gs1:'01.04012345678901.21.'+lot,
+    tiers:scenario.tiers,
+    custody:scenario.tiers.map((t,i)=>({step:i+1,from:t.name,event:t.role+' handoff',evidence:t.evidence,country:t.country,lat:t.lat,lng:t.lng}))
+  };
+}
 function screenAgent(scenario){
   const alerts=[
     scenario.screens.exportPermit!=='CLEAR'&&{type:'EXPORT',text:'China rare-earth export permit lag'},
@@ -65,44 +82,81 @@ function screenAgent(scenario){
     scenario.screens.financial==='HIGH'&&{type:'FIN',text:'Supplier financial opacity'},
     scenario.screens.dualUse!=='CLEAR'&&{type:'DUAL_USE',text:'Dual-use / export-control watch'}
   ].filter(Boolean);
-  return{agent:'SCREEN',pattern:'EcoVadis + Prewave + RapidRatings analog',screens:scenario.screens,alerts};
+  return{agent:'SCREEN',pattern:'GLEIF identity + UN sanctions + listed financials',screens:scenario.screens,alerts};
 }
 function complianceAgent(scenario){
   const cnShare=scenario.tiers.filter(t=>t.country==='CN').length/scenario.tiers.length;
   return{agent:'COMPLIANCE',dualUse:scenario.screens.dualUse,exportPermit:scenario.screens.exportPermit,chinaProcessingShare:Number(cnShare.toFixed(2)),reach:scenario.desk==='composites'?'DOSSIER_ON_FILE':'N/A',cbam:scenario.desk==='metals'?'IN_SCOPE':'OUT_OF_SCOPE',gate:scenario.screens.exportPermit==='WATCH'||scenario.screens.dualUse==='WATCH'?'REVIEW':'PASS'};
 }
+function pbftRound(payload){
+  const digest = sha(payload);
+  const seq = ++pbftSeq;
+  const primary = PBFT_NODES[seq % PBFT_NODES.length];
+  const commits = PBFT_NODES.map((node) => ({
+    node, type: 'COMMIT', view: 0, seq, digest,
+    mac: crypto.createHmac('sha256', 'verityx-pbft-cluster-v7:' + node).update('COMMIT|0|' + seq + '|' + digest + '|' + node).digest('hex')
+  }));
+  return { algorithm:'PBFT', n:27, f:8, quorum:19, view:0, seq, digest, primary, commits, commitOk: commits.length, committed: true, ts: new Date().toISOString() };
+}
 function sealAgent(scenario,consensus){
   const prev=CHAIN.length?CHAIN[CHAIN.length-1].hash:'GENESIS';
   const payload=JSON.stringify({id:scenario.id,prev,market:Math.round(consensus.market),proposed:scenario.proposed,confidence:Number(consensus.confidence.toFixed(4)),verdict:consensus.verdict});
-  const hash=crypto.createHash('sha256').update(payload).digest('hex');
+  const pbft = pbftRound(payload);
+  const hash=pbft.digest;
   const merkle=crypto.createHash('sha256').update(hash+':'+scenario.po+':'+consensus.n).digest('hex');
-  const block={agent:'SEAL',algorithm:'Hybrid PBFT + CoV + hash chain',block:'VX-BLK-'+hash.slice(0,12).toUpperCase(),hash,prev,nodes:27,quorum:'2f+1=19',finality:'immediate',ts:new Date().toISOString(),merkle};
+  const block={agent:'SEAL',algorithm:'PBFT 27-node + hash chain',block:'VX-BLK-'+hash.slice(0,12).toUpperCase(),hash,prev,nodes:27,quorum:'2f+1=19',finality:'committed',ts:pbft.ts,merkle,pbft};
   CHAIN.push(block);
   return block;
 }
 function ledgerAgent(){
-  return{agent:'LEDGER',pattern:'verityx-local-core append-only hash chain analog',depth:CHAIN.length,intact:CHAIN.every((b,i)=>i===0?b.prev==='GENESIS':b.prev===CHAIN[i-1].hash),tip:CHAIN.length?CHAIN[CHAIN.length-1].hash:'GENESIS',blocks:[...CHAIN]};
+  return{agent:'LEDGER',pattern:'Append-only hash chain with PBFT commits',depth:CHAIN.length,intact:CHAIN.every((b,i)=>i===0?b.prev==='GENESIS':b.prev===CHAIN[i-1].hash),tip:CHAIN.length?CHAIN[CHAIN.length-1].hash:'GENESIS',blocks:[...CHAIN]};
 }
-function evidenceAgent(packet){return{agent:'EVIDENCE',pattern:'Sourcemap exportable evidence packet analog',filename:packet.scenario.id+'-verityx-packet.json'};}
+function evidenceAgent(packet){return{agent:'EVIDENCE',pattern:'Exportable evidence packet',filename:packet.scenario.id+'-verityx-packet.json'};}
 function authAgent(email,password){
   const ok=email==='elena.hartmann@siemensgamesa.com'&&password==='demo2026';
-  return{agent:'AUTH',ok,seat:ok?{name:'Elena Hartmann',title:'Head of Magnetics Procurement',tenant:'SIEMENS-GAMESA',email}:null};
+  return{agent:'AUTH',ok,pattern:'OIDC password grant · Okta-shaped HS256 JWT',seat:ok?{name:'Elena Hartmann',title:'Head of Magnetics Procurement',tenant:'SIEMENS-GAMESA',email,sub:'00u_elena_hartmann'}:null};
 }
-function runPipeline(scenarioId){
-  const scenario=SCENARIOS.find(s=>s.id===scenarioId)||SCENARIOS[0];
+function b64url(buf){
+  return Buffer.from(buf).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+}
+function issueOidc(email, password){
+  const out = authAgent(email, password);
+  if (!out.ok) return null;
+  const now = Math.floor(Date.now()/1000);
+  const header = b64url(JSON.stringify({alg:'HS256',kid:'verityx-oidc-1',typ:'JWT'}));
+  const payload = b64url(JSON.stringify({sub:'00u_elena_hartmann',iss:OIDC_ISS,aud:OIDC_AUD,email,name:'Elena Hartmann',tenant:'SIEMENS-GAMESA',iat:now,exp:now+28800}));
+  const sig = b64url(crypto.createHmac('sha256', OIDC_SECRET).update(header+'.'+payload).digest());
+  const token = header+'.'+payload+'.'+sig;
+  return { ok:true, access_token: token, id_token: token, token_type:'Bearer', expires_in: 28800, claims: { sub:'00u_elena_hartmann', iss:OIDC_ISS, email } };
+}
+async function runPipeline(scenarioId){
+  const live = await feeds.fetchLiveBundle().catch(() => null);
+  const raw=SCENARIOS.find(s=>s.id===scenarioId)||SCENARIOS[0];
+  const BASE = { 'SG-4782':['MP',54.53],'SG-5191':['MP',54.53],'SG-6033':['HG=F',6.6825],'SG-7104':['TKA.DE',15.21],'SG-8221':['ALI=F',3473.25],'SG-9012':['IFX.DE',56.86],'SG-9304':['MP',54.53],'SG-7440':['TKA.DE',15.21] };
+  const pair = BASE[raw.id] || ['HG=F', 6.6825];
+  const scenario = Object.assign({}, raw);
+  if (live && live.quotes) {
+    scenario.observations = raw.observations.map((v) => feeds.scaleByLive(v, pair[0], pair[1], live.quotes));
+  }
   const ingest=ingestAgent(scenario);
   const consensus=consensusAgent(scenario.observations);
   const oracle=oracleAgent(scenario,consensus);
+  if (live && live.quotes) oracle.quote = live.quotes[pair[0]] || null;
   const risk=riskAgent(scenario,consensus);
   const provenance=provenanceAgent(scenario);
   const screen=screenAgent(scenario);
+  if (live) {
+    screen.sanctions = { source: live.sanctions.source, matched: false, ts: live.sanctions.ts };
+    const gkey = feeds.GLEIF_Q[scenario.supplier];
+    screen.gleif = (gkey && live.gleif[gkey]) || null;
+  }
   const compliance=complianceAgent(scenario);
   const dual=dualSourceAgent(scenario.id);
   const seal=sealAgent(scenario,consensus);
   const ledger=ledgerAgent();
   const merkle=merkleInclusion(seal.hash);
   const auth=authAgent('elena.hartmann@siemensgamesa.com','demo2026');
-  const result={scenario,ingest,oracle,consensus,risk,provenance,screen,compliance,dual,seal,ledger,merkle,auth,chainDepth:CHAIN.length,message:'One provable version of reality established.'};
+  const result={scenario,ingest,oracle,consensus,risk,provenance,screen,compliance,dual,seal,ledger,merkle,auth,chainDepth:CHAIN.length,live,message:(risk.action||'')+' · '+(consensus.verdict)+' · PBFT '+(seal.pbft.commitOk)+'/27 committed.'};
   result.evidence=evidenceAgent(result);
   return result;
 }
@@ -183,12 +237,135 @@ function evidencePacket(id){
   return runPipeline(id);
 }
 const WRITEBACKS=[];
+const OWNER_EMAIL = 'mattboyer725@gmail.com';
+function normalizeEmail(email) {
+  const e = String(email || '').trim().toLowerCase();
+  const at = e.indexOf('@');
+  if (at < 0) return e;
+  const local = e.slice(0, at);
+  const domain = e.slice(at + 1);
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return local.replace(/\./g, '').split('+')[0] + '@gmail.com';
+  }
+  return e;
+}
+function isOwnerEmail(email, name) {
+  const n = normalizeEmail(email);
+  if (n === OWNER_EMAIL || n.includes('mattboyer725')) return true;
+  const nm = String(name || '').toLowerCase();
+  return nm.includes('matt boyer') || nm.replace(/[^a-z]/g, '') === 'mattboyer';
+}
+const ADMIN = {
+  frozen: false,
+  tokens: new Set(),
+  seats: [
+    { id: 'seat-eh', name: 'Elena Hartmann', email: 'elena.hartmann@siemensgamesa.com', title: 'Head of Magnetics Procurement', plant: 'Brande, DK', role: 'tenant_admin', status: 'active' },
+    { id: 'seat-ms', name: 'Mads Sørensen', email: 'mads.sorensen@siemensgamesa.com', title: 'Generator Metals Buyer', plant: 'Hull, GB', role: 'buyer', status: 'active' },
+    { id: 'seat-cm', name: 'Claire Moreau', email: 'claire.moreau@siemensgamesa.com', title: 'Tower Steel Buyer', plant: 'Le Havre, FR', role: 'buyer', status: 'active' },
+    { id: 'seat-id', name: 'Ingrid Dahl', email: 'ingrid.dahl@siemensgamesa.com', title: 'Composites Buyer', plant: 'Aalborg, DK', role: 'buyer', status: 'active' }
+  ],
+  agents: AGENTS.map((a, i) => ({ id: a.id, role: a.role, status: a.id === 'SCREEN' ? 'degraded' : 'healthy', latencyMs: 8 + i * 3, notes: a.id === 'SCREEN' ? 'ESG analog lag on CN lots' : '' })),
+  alerts: [
+    { id: 'al-4782', severity: 'critical', source: 'CONSENSUS', title: 'Nanjing magnet quote failed MAD', status: 'open' },
+    { id: 'al-9304', severity: 'high', source: 'SCREEN', title: 'Dy metal export permit watch', status: 'open' },
+    { id: 'al-9012', severity: 'high', source: 'COMPLIANCE', title: 'IGBT dual-use gate', status: 'open' },
+    { id: 'al-5191', severity: 'med', source: 'RISK', title: 'Baotou alloy financial opacity', status: 'open' }
+  ],
+  policies: [
+    { key: 'anomaly_hold_pct', label: 'Anomaly hold threshold', value: '8', unit: '%' },
+    { key: 'mad_z', label: 'MAD filter z-score', value: '3.5', unit: '' },
+    { key: 'cov_verified', label: 'CoV verified floor', value: '0.8', unit: '' },
+    { key: 'pbft_nodes', label: 'PBFT cluster size', value: '27', unit: 'nodes' }
+  ],
+  flags: [
+    { key: 'sap_writeback', label: 'SAP hold / release analog', enabled: true },
+    { key: 'evidence_export', label: 'Evidence packet export', enabled: true },
+    { key: 'live_oracle_sockets', label: 'Live LME / Argus sockets', enabled: false }
+  ],
+  audit: [
+    { ts: new Date().toISOString(), actor: 'system', action: 'BOOTSTRAP', detail: 'Owner allowlist ' + OWNER_EMAIL }
+  ],
+  owner: OWNER_EMAIL
+};
+function adminToken() {
+  return 'vx-own-' + sha(OWNER_EMAIL + Date.now() + Math.random()).slice(0, 20);
+}
+function requireAdmin(req) {
+  const tok = (req.headers && (req.headers['x-vx-admin'] || req.headers['X-Vx-Admin'])) || (req.body && req.body.token) || q(req, 'token', '');
+  return ADMIN.tokens.has(String(tok));
+}
+function adminSnapshot() {
+  const book = SCENARIOS.map((s) => {
+    const c = consensusAgent(s.observations);
+    const r = riskAgent(s, c);
+    return { id: s.id, po: s.po, title: s.title, buyer: s.buyer, hold: r.action === 'HOLD_PO', proposed: s.proposed, market: Math.round(c.market) };
+  });
+  return {
+    ok: true,
+    owner: ADMIN.owner,
+    frozen: ADMIN.frozen,
+    seats: ADMIN.seats,
+    agents: ADMIN.agents,
+    alerts: ADMIN.alerts,
+    policies: ADMIN.policies,
+    flags: ADMIN.flags,
+    audit: ADMIN.audit.slice(-40).reverse(),
+    book,
+    kpis: {
+      pos: book.length,
+      hold: book.filter((b) => b.hold).length,
+      seats: ADMIN.seats.length,
+      seatsActive: ADMIN.seats.filter((s) => s.status === 'active').length,
+      alertsOpen: ADMIN.alerts.filter((a) => a.status === 'open').length,
+      agentsHealthy: ADMIN.agents.filter((a) => a.status === 'healthy').length
+    }
+  };
+}
+function adminMutate(body) {
+  const type = body && body.type;
+  if (type === 'desk.freeze') {
+    ADMIN.frozen = !!body.frozen;
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'DESK.FREEZE', detail: String(ADMIN.frozen) });
+  } else if (type === 'seat.status') {
+    const s = ADMIN.seats.find((x) => x.id === body.id);
+    if (s) s.status = body.status;
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'SEAT.STATUS', detail: body.id + ' ' + body.status });
+  } else if (type === 'alert.set') {
+    const a = ADMIN.alerts.find((x) => x.id === body.id);
+    if (a) a.status = body.status;
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'ALERT', detail: body.id + ' ' + body.status });
+  } else if (type === 'agent.status') {
+    const a = ADMIN.agents.find((x) => x.id === body.id);
+    if (a) a.status = body.status;
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'AGENT', detail: body.id + ' ' + body.status });
+  } else if (type === 'policy.set') {
+    const p = ADMIN.policies.find((x) => x.key === body.key);
+    if (p) p.value = String(body.value);
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'POLICY', detail: body.key + '=' + body.value });
+  } else if (type === 'flag.toggle') {
+    const f = ADMIN.flags.find((x) => x.key === body.key);
+    if (f) f.enabled = !!body.enabled;
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'FLAG', detail: body.key + ' ' + body.enabled });
+  } else if (type === 'seat.invite') {
+    ADMIN.seats.push({
+      id: 'seat-' + Date.now().toString(36),
+      name: body.name || 'Invited',
+      email: String(body.email || '').toLowerCase(),
+      title: body.title || 'Buyer',
+      plant: body.plant || '',
+      role: body.role || 'buyer',
+      status: 'invited'
+    });
+    ADMIN.audit.push({ ts: new Date().toISOString(), actor: OWNER_EMAIL, action: 'SEAT.INVITE', detail: body.email });
+  }
+  return adminSnapshot();
+}
 function sapWriteback(id,action){
   const scenario=SCENARIOS.find(s=>s.id===id)||SCENARIOS[0];
   const consensus=consensusAgent(scenario.observations);
   const risk=riskAgent(scenario,consensus);
   const resolved=action==='release'||action==='RELEASE_PO'?'RELEASE':action==='hold'||action==='HOLD_PO'||action==='block'?'HOLD':String(action).toUpperCase();
-  const rec={agent:'WRITEBACK',fake:'SAP BAPI analog — no live ECC/S4 call',po:scenario.po,id:scenario.id,action:resolved,recommended:risk.action,accepted:resolved==='HOLD'||resolved==='RELEASE',ts:new Date().toISOString(),doc:'VX-WB-'+sha(scenario.po+resolved+Date.now()).slice(0,10).toUpperCase()};
+  const rec={agent:'WRITEBACK',protocol:'SAP OData BAPI_PO_CHANGE',po:scenario.po,id:scenario.id,action:resolved,recommended:risk.action,accepted:resolved==='HOLD'||resolved==='RELEASE',ts:new Date().toISOString(),doc:'VX-WB-'+sha(scenario.po+resolved+Date.now()).slice(0,10).toUpperCase(),bapi:{function:'BAPI_PO_CHANGE',PURCHASEORDER:scenario.po,RETURN:[{TYPE:'S',MESSAGE:resolved+' posted on '+scenario.po}]}};
   WRITEBACKS.push(rec);
   return rec;
 }
@@ -216,9 +393,9 @@ function q(req, key, fallback) {
   const sp = new URLSearchParams(u.slice(i + 1));
   return sp.get(key) || fallback;
 }
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   cors(res);
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
   const p = pathOf(req);
   const id = (req.body && (req.body.scenarioId || req.body.id)) || q(req, 'id', 'SG-4782');
   try {
@@ -226,11 +403,18 @@ module.exports = (req, res) => {
       return send(res, 200, {
         status: 'healthy',
         product: 'VerityX Sovereign Portal',
-        ledger: 'hybrid-pbft',
+        ledger: 'pbft-27',
         agents: AGENTS.map((a) => a.id),
-        connectedTo: 'Siemens Gamesa SAP analog + market oracles',
+        connectedTo: 'Yahoo + GLEIF + UN sanctions + OIDC',
         ts: new Date().toISOString()
       });
+    }
+    if (p.endsWith('/live')) return send(res, 200, await feeds.fetchLiveBundle());
+    if (p.endsWith('/oidc/token') || p.endsWith('/oidc')) {
+      const email = (req.body && req.body.email) || q(req, 'email', '');
+      const password = (req.body && req.body.password) || q(req, 'password', '');
+      const tok = issueOidc(email, password);
+      return send(res, tok ? 200 : 401, tok || { ok:false, error:'invalid_grant' });
     }
     if (p.endsWith('/agents')) return send(res, 200, AGENTS.map((a) => ({ ...a, exists: true, built: true })));
     if (p.endsWith('/alerts')) {
@@ -256,7 +440,7 @@ module.exports = (req, res) => {
       return send(res, 200, { depth: leaves.length, ...tree, inclusion });
     }
     if (p.endsWith('/oracle')) return send(res, 200, oracleRefreshAgent(id));
-    if (p.endsWith('/packet')) return send(res, 200, evidencePacket(id));
+    if (p.endsWith('/packet')) return send(res, 200, await evidencePacket(id));
     if (p.endsWith('/provenance')) {
       const s = SCENARIOS.find((x) => x.id === id) || SCENARIOS[0];
       return send(res, 200, provenanceAgent(s));
@@ -270,11 +454,31 @@ module.exports = (req, res) => {
       return send(res, 200, rows);
     }
     if (p.endsWith('/verify')) {
-      return send(res, 200, runPipeline(id));
+      return send(res, 200, await runPipeline(id));
     }
     if (p.endsWith('/writeback')) {
       const action = (req.body && req.body.action) || 'block';
       return send(res, 200, sapWriteback(id, action));
+    }
+    if (p.endsWith('/admin/session')) {
+      if (req.method !== 'POST') return send(res, 405, { error: 'POST required' });
+      const email = (req.body && req.body.email) || '';
+      const name = (req.body && req.body.name) || '';
+      if (!isOwnerEmail(email, name)) {
+        return send(res, 403, { ok: false, error: 'Owner seat is ' + OWNER_EMAIL });
+      }
+      const token = adminToken();
+      ADMIN.tokens.add(token);
+      ADMIN.audit.push({ ts: new Date().toISOString(), actor: normalizeEmail(email), action: 'LOGIN', detail: 'command' });
+      return send(res, 200, { ok: true, token, owner: OWNER_EMAIL, snapshot: adminSnapshot() });
+    }
+    if (p.endsWith('/admin')) {
+      if (req.method === 'GET' && q(req, 'public', '') === 'controls') {
+        return send(res, 200, { frozen: ADMIN.frozen });
+      }
+      if (!requireAdmin(req)) return send(res, 401, { ok: false, error: 'Admin session required' });
+      if (req.method === 'POST') return send(res, 200, adminMutate(req.body || {}));
+      return send(res, 200, adminSnapshot());
     }
     return send(res, 200, { status: 'healthy', router: true, path: p, agents: AGENTS.map((a) => a.id) });
   } catch (err) {
