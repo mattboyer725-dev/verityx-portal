@@ -46,6 +46,7 @@ This static `/admin.html` remains an analog of the older command surface. Prefer
 | `/api/oracle` | GET/POST | ORACLE |
 | `/api/packet` | GET | EVIDENCE |
 | `/api/merkle` | GET | inclusion proof |
+| `/api/core` | GET | Local Core doctor (HMAC + Merkle) |
 | `/api/writeback` | POST | SAP analog |
 | `/api/competition` | GET | takeaways |
 
@@ -55,9 +56,9 @@ INGEST · ORACLE · CONSENSUS · RISK · PROVENANCE · SCREEN · COMPLIANCE · S
 
 ## Remaining fakes (honest)
 
-- SAP S/4HANA and Ariba are analog feeds, not a live tenant connection
-- Market oracles are scenario prints, not live LME/Argus sockets
-- EcoVadis / Prewave / RapidRatings / Circulor / Minespider are analog screens and passports
-- 27-node PBFT is in-process (quorum `2f+1=19`), not a real cluster
-- Demo buyer login is a hardcoded seat, not Okta
-- Portal `/admin` is an owner-email analog; the React app uses real Google sign-in
+- Siemens Gamesa SAP S/4HANA / Ariba **tenant** is not connected — the desk runs a live OData-shaped store with mutating HOLD/RELEASE, ETag, CSRF and IDoc, plus TED overlay
+- Argus Metals **paid socket** is not subscribed — NdPr is derived from live MP Materials + Westmetall LME cash
+- EcoVadis / Prewave / RapidRatings / Circulor / Minespider **vendor APIs** are paid — scores and DPP are computed from GLEIF, UN sanctions, news RSS and USGS coordinates
+- 27-node PBFT is an in-process HMAC cluster (quorum `2f+1=19`, 2 Byzantine), not 27 networked hosts
+- Okta Workforce **tenant** is not provisioned — the desk issues Okta-shaped OIDC RS256 JWTs with JWKS
+- Local Core v1.6.0 HMAC + Merkle **is real and bit-identical** to [mattboyer725-dev/verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) (`319af22`) — in-memory on Vercel (no durable FS)

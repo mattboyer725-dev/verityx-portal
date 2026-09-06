@@ -44,6 +44,9 @@
     { "id": "T11", "status": "DONE", "title": "Platform command admin front + back (owner Gmail)" },
     { "id": "T12", "status": "DONE", "title": "Command v6: monitor, security, keys, backup restore, desk telemetry" },
     { "id": "T13", "status": "DONE", "title": "Live Yahoo / GLEIF / UN / FX / 27-node PBFT / OIDC" },
-    { "id": "T14", "status": "DONE", "title": "Editorial visual redesign" }
+    { "id": "T14", "status": "DONE", "title": "Editorial visual redesign" },
+    { "id": "T15", "status": "DONE", "title": "Port verityx-local-core HMAC+Merkle into LEDGER" },
+    { "id": "T16", "status": "DONE", "title": "One-click Elena seat (no password form)" },
+    { "id": "T17", "status": "DONE", "title": "Verify local-core v1.6.0 SHA 319af22 on GitHub; bit-identical JS merkle.py port" }
   ]
 }

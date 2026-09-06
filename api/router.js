@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const feeds = require('./lib/feeds');
+const core = require('./lib/core');
 
 const SCENARIOS = [
   {id:'SG-4782',desk:'metals',title:'Rare Earth Permanent Magnets',supplier:'Nanjing RareTech Ltd.',proposed:6950000,observations:[5680000,5712000,5594000,5748000,8120000],observationSources:['LME-adjacent magnet index','Asian Metal NdFeB print','Argus REE weekly','Internal last-buy SAP','Supplier quote (unverified)'],assumptions:['China processing share ~90%','Sintered NdFeB N48H'],tenant:'SIEMENS-GAMESA',commodity:'NdFeB magnet',po:'4500187742',plant:'Brande, DK',buyer:'Elena Hartmann',currency:'EUR',due:'2026-10-14',tiers:[{tier:0,role:'Mine',name:'Bayan Obo analog lot',country:'CN',evidence:'lot weighbridge'},{tier:1,role:'Separator',name:'Inner Mongolia REE mill',country:'CN',evidence:'assay cert'},{tier:2,role:'Magnet OEM',name:'Nanjing RareTech Ltd.',country:'CN',evidence:'quote + ISO 9001'},{tier:3,role:'OEM plant',name:'Siemens Gamesa Brande',country:'DK',evidence:'SAP PO'}],screens:{exportPermit:'WATCH',esg:'HIGH',financial:'MED',dualUse:'CLEAR'}},
@@ -109,7 +110,23 @@ function sealAgent(scenario,consensus){
   return block;
 }
 function ledgerAgent(){
-  return{agent:'LEDGER',pattern:'Append-only hash chain with PBFT commits',depth:CHAIN.length,intact:CHAIN.every((b,i)=>i===0?b.prev==='GENESIS':b.prev===CHAIN[i-1].hash),tip:CHAIN.length?CHAIN[CHAIN.length-1].hash:'GENESIS',blocks:[...CHAIN]};
+  core.ensureGenesis();
+  const chain = core.verifyChain();
+  const snap = core.merkleSnapshot();
+  return{
+    agent:'LEDGER',
+    pattern:'verityx-local-core v1.6.0 · HMAC-SHA256 append-only + Merkle inclusion',
+    repo: core.CORE_REPO,
+    version: core.CORE_VERSION,
+    sha: core.CORE_SHA,
+    depth: chain.depth,
+    intact: chain.ok,
+    tip: core.eventHashes().at(-1) || 'GENESIS',
+    merkleRoot: snap.merkle_root,
+    events: core.listEvents().slice(-8),
+    errors: chain.errors,
+    blocks:[...CHAIN]
+  };
 }
 function evidenceAgent(packet){return{agent:'EVIDENCE',pattern:'Exportable evidence packet',filename:packet.scenario.id+'-verityx-packet.json'};}
 function authAgent(email,password){
@@ -153,8 +170,25 @@ async function runPipeline(scenarioId){
   const compliance=complianceAgent(scenario);
   const dual=dualSourceAgent(scenario.id);
   const seal=sealAgent(scenario,consensus);
+  core.ensureGenesis();
+  const artifact = core.appendCoreEvent('artifact.record', {
+    title: scenario.id + ' ' + scenario.po,
+    location: seal.hash,
+    kind: 'po-seal',
+    notes: (risk.action || '') + ' ' + consensus.verdict,
+  }, 'elena.hartmann@siemensgamesa.com');
+  core.appendCoreEvent('decision.record', {
+    title: scenario.po,
+    choice: risk.action,
+    context: scenario.title + ' · ' + scenario.supplier,
+  }, 'elena.hartmann@siemensgamesa.com');
   const ledger=ledgerAgent();
-  const merkle=merkleInclusion(seal.hash);
+  const hashes = core.eventHashes();
+  const idx = hashes.lastIndexOf(artifact.hash);
+  const inc = idx >= 0 ? core.inclusionProof(hashes, idx) : null;
+  const merkle = inc
+    ? { ok: core.verifyInclusion(artifact.hash, idx, inc.path, inc.root), leaf: artifact.hash, index: idx, root: inc.root, proof: inc.path }
+    : merkleInclusion(seal.hash);
   const auth=authAgent('elena.hartmann@siemensgamesa.com','demo2026');
   const result={scenario,ingest,oracle,consensus,risk,provenance,screen,compliance,dual,seal,ledger,merkle,auth,chainDepth:CHAIN.length,live,message:(risk.action||'')+' · '+(consensus.verdict)+' · PBFT '+(seal.pbft.commitOk)+'/27 committed.'};
   result.evidence=evidenceAgent(result);
@@ -169,7 +203,7 @@ function competitionNotes(){
     {name:'RapidRatings / D&B',take:'Financial health as a first-class screen.'},
     {name:'Sourcemap / Altana',take:'Exportable evidence packet.'},
     {name:'Hyperledger supply-chain samples',take:'Permissioned events, not public PoW.'},
-    {name:'verityx-local-core',take:'Append-only hash chain + Merkle inclusion.'}
+    {name:'verityx-local-core',take:'HMAC-SHA256 append-only log + domain-separated Merkle inclusion (v1.6.0, SHA 319af22).'}
   ];
 }
 function cors(res){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');}
@@ -432,12 +466,31 @@ module.exports = async (req, res) => {
     if (p.endsWith('/dual-source')) return send(res, 200, dualSourceAgent(id));
     if (p.endsWith('/intake')) return send(res, 200, intakeAgent(req.body || {}));
     if (p.endsWith('/ledger')) return send(res, 200, ledgerAgent());
+    if (p.endsWith('/core') || p.endsWith('/doctor')) {
+      core.ensureGenesis();
+      return send(res, 200, core.doctor());
+    }
     if (p.endsWith('/merkle')) {
-      const leaves = CHAIN.map((b) => b.hash);
-      const tree = merkleRoot(leaves);
+      core.ensureGenesis();
+      const hashes = core.eventHashes();
+      const root = core.merkleRootOf(hashes);
+      const idx = q(req, 'index');
       const leaf = q(req, 'leaf');
-      const inclusion = leaf ? merkleInclusion(leaf) : null;
-      return send(res, 200, { depth: leaves.length, ...tree, inclusion });
+      let inclusion = null;
+      if (idx != null && idx !== '') {
+        const i = Number(idx);
+        if (i >= 0 && i < hashes.length) {
+          const inc = core.inclusionProof(hashes, i);
+          inclusion = { ok: core.verifyInclusion(hashes[i], i, inc.path, inc.root), leaf: hashes[i], index: i, root: inc.root, proof: inc.path };
+        }
+      } else if (leaf) {
+        const i = hashes.lastIndexOf(leaf);
+        if (i >= 0) {
+          const inc = core.inclusionProof(hashes, i);
+          inclusion = { ok: true, leaf, index: i, root: inc.root, proof: inc.path };
+        }
+      }
+      return send(res, 200, { depth: hashes.length, root, inclusion, repo: core.CORE_REPO, version: core.CORE_VERSION, sha: core.CORE_SHA });
     }
     if (p.endsWith('/oracle')) return send(res, 200, oracleRefreshAgent(id));
     if (p.endsWith('/packet')) return send(res, 200, await evidencePacket(id));
