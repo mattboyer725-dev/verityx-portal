@@ -34,6 +34,6 @@
     { "id": "T7", "status": "DONE", "title": "Screens + alerts" },
     { "id": "T8", "status": "DONE", "title": "Hash chain + evidence export" },
     { "id": "T9", "status": "DONE", "title": "Push full tree to GitHub" },
-    { "id": "T10", "status": "OPEN", "title": "Deploy full tree to Vercel verityx-live-desk" }
+    { "id": "T10", "status": "DONE", "title": "Deploy full tree to Vercel verityx-live-desk" }
   ]
 }
