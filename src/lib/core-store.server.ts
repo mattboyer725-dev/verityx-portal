@@ -30,18 +30,23 @@ function rowToEvent(r: Record<string, unknown>): CoreEvent {
 export async function hydrateCoreLedger() {
   if (ready && dumpLog().length) return;
   try {
-    const sql = await getSql();
-    const rows = await sql<Record<string, unknown>>`select * from core_events order by timestamp asc`;
-    if (rows.length) {
-      loadLog(rows.map(rowToEvent));
-      ready = true;
-      return;
+    const sql = await Promise.race([
+      getSql(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+    ]);
+    if (sql) {
+      const rows = await sql<Record<string, unknown>>`select * from core_events order by timestamp asc`;
+      if (rows.length) {
+        loadLog(rows.map(rowToEvent));
+        ready = true;
+        return;
+      }
     }
   } catch {
     /* table may not exist yet in a fresh preview */
   }
   await ensureGenesis();
-  await persistCoreLedger();
+  void persistCoreLedger();
   ready = true;
 }
 

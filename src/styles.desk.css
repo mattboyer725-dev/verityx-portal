@@ -479,6 +479,8 @@
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   background: var(--color-bg);
+  overflow-x: hidden;
+  max-width: 100%;
 }
 .gate-left {
   padding: clamp(1.5rem, 5vw, 4.5rem);
@@ -510,6 +512,7 @@
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-top: 2rem;
+  max-width: 100%;
 }
 .tape-chip {
   font-family: var(--font-mono);

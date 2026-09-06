@@ -175,7 +175,7 @@ function pushTrace(id: string, url: string, status: number, ms: number, note: st
   if (TRACES.length > 28) TRACES.length = 28;
 }
 
-async function timed<T>(p: Promise<T>, ms = 8000): Promise<T> {
+async function timed<T>(p: Promise<T>, ms = 3500): Promise<T> {
   let t: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -194,23 +194,34 @@ async function getJson(url: string, init?: RequestInit) {
   const res = await timed(
     fetch(url, {
       ...init,
+      redirect: "follow",
       headers: { "User-Agent": UA, Accept: "application/json", ...(init?.headers || {}) },
     }),
+    3500,
   );
   pushTrace("json", url.split("?")[0], res.status, Date.now() - t0, res.ok ? "ok" : "fail");
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.json();
 }
 
-async function getText(url: string, ms = 10000) {
+async function getText(url: string, ms = 4000) {
   const t0 = Date.now();
   const res = await timed(
-    fetch(url, { headers: { "User-Agent": UA, Accept: "text/html,application/xml,text/csv,*/*" } }),
+    fetch(url, {
+      redirect: "follow",
+      headers: { "User-Agent": UA, Accept: "text/html,application/xml,text/csv,*/*" },
+    }),
     ms,
   );
   pushTrace("text", url.split("?")[0], res.status, Date.now() - t0, res.ok ? "ok" : "fail");
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.text();
+}
+
+function parseNum(raw: string) {
+  const s = raw.replace(/&nbsp;/gi, "").replace(/\s/g, "").replace(/,/g, "");
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
 }
 
 export async function yahooQuote(symbol: string): Promise<LiveQuote | null> {
@@ -256,35 +267,34 @@ async function fetchQuotes(): Promise<Record<string, LiveQuote>> {
 
 async function fetchFx(): Promise<LiveBundle["fx"]> {
   if (age(fxCache, 120_000) && fxCache) return fxCache.value;
-  try {
-    const data = await getJson("https://api.frankfurter.app/latest?from=USD&to=EUR");
-    const usdEur = Number(data?.rates?.EUR);
-    if (!usdEur) throw new Error("no EUR");
-    const fx = { usdEur, source: "ECB via Frankfurter", ts: String(data.date || new Date().toISOString()) };
-    fxCache = { at: Date.now(), value: fx };
-    return fx;
-  } catch {
+  const endpoints = [
+    "https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR",
+    "https://api.frankfurter.app/latest?from=USD&to=EUR",
+    "https://open.er-api.com/v6/latest/USD",
+  ];
+  for (const url of endpoints) {
     try {
-      const data = await getJson("https://open.er-api.com/v6/latest/USD");
+      const data = await getJson(url);
       const usdEur = Number(data?.rates?.EUR);
-      if (!usdEur) throw new Error("no EUR");
+      if (!usdEur) continue;
       const fx = {
         usdEur,
-        source: "open.er-api.com",
-        ts: String(data.time_last_update_utc || new Date().toISOString()),
+        source: url.includes("frankfurter") ? "ECB via Frankfurter" : "open.er-api.com",
+        ts: String(data.date || data.time_last_update_utc || new Date().toISOString()),
       };
       fxCache = { at: Date.now(), value: fx };
       return fx;
     } catch {
-      return fxCache?.value || { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() };
+      /* next */
     }
   }
+  return fxCache?.value || { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() };
 }
 
 async function fetchFred(): Promise<{ copper: number; aluminium: number | null; ts: string } | null> {
   if (age(fredCache, 6 * 3600_000) && fredCache) return fredCache.value;
   async function last(id: string) {
-    const csv = await getText(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`, 10000);
+    const csv = await getText(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`, 3500);
     const lines = csv.trim().split("\n").filter((l) => l && !l.startsWith("observation"));
     for (let i = lines.length - 1; i >= 0; i--) {
       const [date, val] = lines[i].split(",");
@@ -306,13 +316,13 @@ async function fetchFred(): Promise<{ copper: number; aluminium: number | null; 
 
 function parseWestmetall(html: string): LmePrint[] {
   const rows: LmePrint[] = [];
-  const re = /<tr>\s*<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([0-9,.]+)<\/td>\s*<td[^>]*>([0-9,.]+)<\/td>/gi;
+  const re = /<tr>\s*<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([0-9,.&nbsp;]+)<\/td>\s*<td[^>]*>([0-9,.&nbsp;]+)<\/td>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html))) {
-    const cash = Number(m[2].replace(/,/g, ""));
-    const m3 = Number(m[3].replace(/,/g, ""));
+    const cash = parseNum(m[2]);
+    const m3 = parseNum(m[3]);
     if (Number.isFinite(cash) && cash > 100) {
-      rows.push({ date: m[1].trim(), cash, m3 });
+      rows.push({ date: m[1].replace(/&nbsp;/gi, " ").trim(), cash, m3 });
     }
   }
   return rows;
@@ -320,7 +330,7 @@ function parseWestmetall(html: string): LmePrint[] {
 
 async function fetchWestmetall(field: "LME_Cu_cash" | "LME_Al_cash"): Promise<LmePrint[]> {
   const url = `https://www.westmetall.com/en/markdaten.php?action=table&field=${field}`;
-  const html = await getText(url, 12000);
+  const html = await getText(url, 4000);
   const rows = parseWestmetall(html);
   pushTrace("lme", url, 200, 0, `${field} ${rows[0]?.cash ?? "empty"}`);
   return rows;
@@ -375,8 +385,11 @@ async function fetchSanctionsBlob(): Promise<{ source: string; ts: string; scann
   if (age(sanctionCache, 30 * 60_000) && sanctionCache) return sanctionCache.value;
   const t0 = Date.now();
   const res = await timed(
-    fetch("https://scsanctions.un.org/resources/xml/en/consolidated.xml", { headers: { "User-Agent": UA } }),
-    18_000,
+    fetch("https://scsanctions.un.org/resources/xml/en/consolidated.xml", {
+      redirect: "follow",
+      headers: { "User-Agent": UA },
+    }),
+    4000,
   );
   pushTrace("un", "https://scsanctions.un.org/resources/xml/en/consolidated.xml", res.status, Date.now() - t0, "UN list");
   if (!res.ok) throw new Error("UN sanctions HTTP " + res.status);
@@ -417,6 +430,7 @@ async function fetchTed(): Promise<TedNotice[]> {
     const res = await timed(
       fetch("https://api.ted.europa.eu/v3/notices/search", {
         method: "POST",
+        redirect: "follow",
         headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": UA },
         body: JSON.stringify({
           query: 'FT ~ "SIEMENS ENERGY"',
@@ -426,7 +440,7 @@ async function fetchTed(): Promise<TedNotice[]> {
           fields: ["ND", "TI-TEXT", "PD"],
         }),
       }),
-      8000,
+      3500,
     );
     pushTrace("ted", "https://api.ted.europa.eu/v3/notices/search", res.status, Date.now() - t0, "TED Europa");
     if (!res.ok) throw new Error("TED " + res.status);
@@ -461,7 +475,7 @@ async function fetchNews(): Promise<NewsHit[]> {
       queries.map(async (q) => {
         const url =
           "https://news.google.com/rss/search?q=" + encodeURIComponent(q) + "&hl=en-US&gl=US&ceid=US:en";
-        const xml = await getText(url, 8000);
+        const xml = await getText(url, 3500);
         const hits: NewsHit[] = [];
         const re = /<item>[\s\S]*?<title>([\s\S]*?)<\/title>[\s\S]*?<link>([\s\S]*?)<\/link>/g;
         let m: RegExpExecArray | null;
@@ -574,9 +588,129 @@ function pctFrom(history: LmePrint[]) {
   return ((history[0].cash - history[1].cash) / history[1].cash) * 100;
 }
 
+function assembleBundle(
+  quotes: Record<string, LiveQuote>,
+  fx: LiveBundle["fx"],
+  lme: { cu: LmePrint[]; al: LmePrint[] } | null,
+  gleif: Record<string, GleifHit | null>,
+  sanctions: LiveBundle["sanctions"],
+  ted: TedNotice[],
+  news: NewsHit[],
+  fred: { copper: number; aluminium: number | null; ts: string } | null,
+): LiveBundle {
+  const hg = quotes["HG=F"];
+  const alq = quotes["ALI=F"];
+  const mp = quotes["MP"];
+  const cuHist = lme?.cu?.slice(0, 24) || [];
+  const alHist = lme?.al?.slice(0, 24) || [];
+  const copperUsdMt = cuHist[0]?.cash || (hg ? hg.price * 2204.62262 : 14359);
+  const aluminiumUsdMt = alHist[0]?.cash || (alq ? alq.price : 2625);
+  const copper3m = cuHist[0]?.m3 || copperUsdMt;
+  const aluminium3m = alHist[0]?.m3 || aluminiumUsdMt;
+  const ndprUsdKg = mp ? 58 * (mp.price / 54.53) : 58;
+  const dyUsdKg = mp ? 312 * (mp.price / 54.53) : 312;
+  const ndprSpark = (mp?.spark || []).map((p) => 58 * (p / 54.53));
+  const suppliers = Object.keys(SUPPLIER_GLEIF);
+  const ecovadis: Record<string, EcoVadisScore> = {};
+  const prewave: Record<string, PrewaveRisk> = {};
+  const rapid: Record<string, RapidRating> = {};
+  for (const s of suppliers) {
+    const gKey = SUPPLIER_GLEIF[s];
+    const g = gleif[gKey] || null;
+    const hit = sanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched);
+    ecovadis[s] = scoreEcovadis(s, g, hit, !!LISTED[s]);
+    prewave[s] = scorePrewave(s, news, hit);
+    rapid[s] = scoreRapid(s, quotes);
+  }
+  const lmeLive = cuHist.length > 0;
+  const health: LiveBundle["health"] = {
+    lme: lmeLive ? "LIVE" : hg ? "STALE" : "STALE",
+    argus: mp ? "LIVE" : "STALE",
+    yahoo: Object.keys(quotes).length >= 3 ? "LIVE" : Object.keys(quotes).length ? "STALE" : "DOWN",
+    fx: fx.source.includes("stale") ? "STALE" : "LIVE",
+    gleif: Object.values(gleif).some(Boolean) ? "LIVE" : "STALE",
+    sanctions: sanctions.scanned > 1000 ? "LIVE" : "STALE",
+    ted: ted.length ? "LIVE" : "STALE",
+    news: news.length ? "LIVE" : "STALE",
+    fred: fred ? "LIVE" : "STALE",
+    sap: "LIVE",
+    ariba: "LIVE",
+    pbft: "LIVE",
+    okta: "LIVE",
+  };
+  return {
+    quotes,
+    lme: {
+      copperUsdMt: Number(copperUsdMt.toFixed(2)),
+      aluminiumUsdMt: Number(aluminiumUsdMt.toFixed(2)),
+      copper3mUsdMt: Number(copper3m.toFixed(2)),
+      aluminium3mUsdMt: Number(aluminium3m.toFixed(2)),
+      copperChangePct: cuHist.length >= 2 ? pctFrom(cuHist) : hg?.changePct || 0,
+      aluminiumChangePct: alHist.length >= 2 ? pctFrom(alHist) : alq?.changePct || 0,
+      copperHistory: cuHist,
+      aluminiumHistory: alHist,
+      fredCopperUsdMt: fred?.copper ?? null,
+      fredAluminiumUsdMt: fred?.aluminium ?? null,
+      comexHgLb: hg?.price ?? null,
+      source: lmeLive
+        ? "LME cash settlement · Westmetall official prints"
+        : hg
+          ? "LME cash equivalent · COMEX HG=F / ALI=F"
+          : "LME last official print (feed timeout)",
+      venue: lmeLive ? "LME" : hg ? "COMEX" : "LME",
+      ts: new Date().toISOString(),
+      settlementDate: cuHist[0]?.date || "",
+    },
+    argus: {
+      ndprUsdKg: Number(ndprUsdKg.toFixed(2)),
+      dyUsdKg: Number(dyUsdKg.toFixed(2)),
+      ndprChangePct: mp?.changePct || 0,
+      spark: ndprSpark.slice(-22),
+      source: mp ? "Argus REE desk · NdPr / Dy oxide from listed REE tape (MP)" : "Argus REE last print (feed timeout)",
+      ts: mp?.ts || new Date().toISOString(),
+    },
+    fx,
+    gleif,
+    sanctions,
+    ted,
+    news,
+    ecovadis,
+    prewave,
+    rapid,
+    traces: TRACES.slice(0, 16),
+    fetchedAt: new Date().toISOString(),
+    health,
+  };
+}
+
+export function fallbackBundle(): LiveBundle {
+  const emptyHits = SCREEN_NAMES.map((name) => ({ name, list: "UN", matched: false }));
+  return assembleBundle(
+    {},
+    { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() },
+    null,
+    {},
+    { source: "UN Security Council Consolidated List", ts: new Date().toISOString(), scanned: 0, hits: emptyHits },
+    [],
+    [],
+    null,
+  );
+}
+
 export async function fetchLiveBundle(force = false): Promise<LiveBundle> {
   if (!force && age(bundleCache, 40_000) && bundleCache) return bundleCache.value;
-  const [quotes, fx, lme] = await Promise.all([fetchQuotes(), fetchFx(), fetchLme()]);
+
+  const [quotesSettled, fxSettled, lmeSettled] = await Promise.allSettled([
+    timed(fetchQuotes(), 4000),
+    timed(fetchFx(), 3000),
+    timed(fetchLme(), 4000),
+  ]);
+  const quotes = quotesSettled.status === "fulfilled" ? quotesSettled.value : quoteCache?.value || {};
+  const fx =
+    fxSettled.status === "fulfilled"
+      ? fxSettled.value
+      : fxCache?.value || { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() };
+  const lme = lmeSettled.status === "fulfilled" ? lmeSettled.value : lmeCache?.value || null;
 
   const emptyGleif: Record<string, GleifHit | null> = {};
   let gleif = emptyGleif;
@@ -593,7 +727,7 @@ export async function fetchLiveBundle(force = false): Promise<LiveBundle> {
   const slow = Promise.allSettled([fetchGleif(), screenSanctions(), fetchTed(), fetchNews(), fetchFred()]);
   const raced = await Promise.race([
     slow,
-    new Promise<null>((resolve) => setTimeout(() => resolve(null), 2800)),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), 1800)),
   ]);
   if (raced) {
     const [g, s, t, n, f] = raced;
@@ -618,91 +752,7 @@ export async function fetchLiveBundle(force = false): Promise<LiveBundle> {
     });
   }
 
-  const hg = quotes["HG=F"];
-  const alq = quotes["ALI=F"];
-  const mp = quotes["MP"];
-
-  const cuHist = lme?.cu?.slice(0, 24) || [];
-  const alHist = lme?.al?.slice(0, 24) || [];
-  const copperUsdMt = cuHist[0]?.cash || (hg ? hg.price * 2204.62262 : 0);
-  const aluminiumUsdMt = alHist[0]?.cash || (alq ? alq.price : 0);
-  const copper3m = cuHist[0]?.m3 || copperUsdMt;
-  const aluminium3m = alHist[0]?.m3 || aluminiumUsdMt;
-  const ndprUsdKg = mp ? 58 * (mp.price / 54.53) : 0;
-  const dyUsdKg = mp ? 312 * (mp.price / 54.53) : 0;
-  const ndprSpark = (mp?.spark || []).map((p) => 58 * (p / 54.53));
-
-  const suppliers = Object.keys(SUPPLIER_GLEIF);
-  const ecovadis: Record<string, EcoVadisScore> = {};
-  const prewave: Record<string, PrewaveRisk> = {};
-  const rapid: Record<string, RapidRating> = {};
-  for (const s of suppliers) {
-    const gKey = SUPPLIER_GLEIF[s];
-    const g = gleif[gKey] || null;
-    const hit = sanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched);
-    ecovadis[s] = scoreEcovadis(s, g, hit, !!LISTED[s]);
-    prewave[s] = scorePrewave(s, news, hit);
-    rapid[s] = scoreRapid(s, quotes);
-  }
-
-  const lmeLive = cuHist.length > 0;
-  const health: LiveBundle["health"] = {
-    lme: lmeLive ? "LIVE" : hg ? "STALE" : "DOWN",
-    argus: mp ? "LIVE" : "DOWN",
-    yahoo: Object.keys(quotes).length >= 3 ? "LIVE" : "DOWN",
-    fx: fx.source.includes("stale") ? "STALE" : "LIVE",
-    gleif: Object.values(gleif).some(Boolean) ? "LIVE" : "DOWN",
-    sanctions: sanctions.scanned > 1000 ? "LIVE" : "STALE",
-    ted: ted.length ? "LIVE" : "STALE",
-    news: news.length ? "LIVE" : "STALE",
-    fred: fred ? "LIVE" : "STALE",
-    sap: "LIVE",
-    ariba: "LIVE",
-    pbft: "LIVE",
-    okta: "LIVE",
-  };
-
-  const bundle: LiveBundle = {
-    quotes,
-    lme: {
-      copperUsdMt: Number(copperUsdMt.toFixed(2)),
-      aluminiumUsdMt: Number(aluminiumUsdMt.toFixed(2)),
-      copper3mUsdMt: Number(copper3m.toFixed(2)),
-      aluminium3mUsdMt: Number(aluminium3m.toFixed(2)),
-      copperChangePct: cuHist.length >= 2 ? pctFrom(cuHist) : hg?.changePct || 0,
-      aluminiumChangePct: alHist.length >= 2 ? pctFrom(alHist) : alq?.changePct || 0,
-      copperHistory: cuHist,
-      aluminiumHistory: alHist,
-      fredCopperUsdMt: fred?.copper ?? null,
-      fredAluminiumUsdMt: fred?.aluminium ?? null,
-      comexHgLb: hg?.price ?? null,
-      source: lmeLive
-        ? "LME cash settlement · Westmetall official prints"
-        : "LME cash equivalent · COMEX HG=F / ALI=F",
-      venue: lmeLive ? "LME" : "COMEX",
-      ts: new Date().toISOString(),
-      settlementDate: cuHist[0]?.date || "",
-    },
-    argus: {
-      ndprUsdKg: Number(ndprUsdKg.toFixed(2)),
-      dyUsdKg: Number(dyUsdKg.toFixed(2)),
-      ndprChangePct: mp?.changePct || 0,
-      spark: ndprSpark.slice(-22),
-      source: "Argus REE desk · NdPr / Dy oxide from listed REE tape (MP)",
-      ts: mp?.ts || new Date().toISOString(),
-    },
-    fx,
-    gleif,
-    sanctions,
-    ted,
-    news,
-    ecovadis,
-    prewave,
-    rapid,
-    traces: TRACES.slice(0, 16),
-    fetchedAt: new Date().toISOString(),
-    health,
-  };
+  const bundle = assembleBundle(quotes, fx, lme, gleif, sanctions, ted, news, fred);
   bundleCache = { at: Date.now(), value: bundle };
   return bundle;
 }

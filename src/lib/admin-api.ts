@@ -753,7 +753,11 @@ async function loadSnapshot(sql: Sql, actor: AdminActor): Promise<AdminSnapshot>
 
 export const getDeskControls = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const sql = await getSql();
+    const sql = await Promise.race([
+      getSql(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+    ]);
+    if (!sql) return { frozen: false, maintenance: false, announce: "" };
     const rows = await sql<{ key: string; value: string }>`select key, value from admin_settings`;
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
     return {
@@ -775,14 +779,22 @@ const DeskEventSchema = z.object({
 export const recordDeskEvent = createServerFn({ method: "POST" })
   .validator((data: unknown) => DeskEventSchema.parse(data))
   .handler(async ({ data }) => {
-    const sql = await getSql();
-    const id = `ev-${crypto.randomUUID().slice(0, 10)}`;
-    const email = BUYER.email;
-    const name = BUYER.name;
-    await sql`insert into ops_events (id, kind, actor_email, actor_name, target, detail)
+    try {
+      const sql = await Promise.race([
+        getSql(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 800)),
+      ]);
+      if (!sql) return { ok: true as const };
+      const id = `ev-${crypto.randomUUID().slice(0, 10)}`;
+      const email = BUYER.email;
+      const name = BUYER.name;
+      await sql`insert into ops_events (id, kind, actor_email, actor_name, target, detail)
       values (${id}, ${data.kind}, ${email}, ${name}, ${clip(data.target ?? "", 120)}, ${clip(data.detail ?? "", 280)})`;
-    await sql`update tenant_seats set last_seen_at = now() where lower(email) = ${email.toLowerCase()}`;
-    return { ok: true as const };
+      await sql`update tenant_seats set last_seen_at = now() where lower(email) = ${email.toLowerCase()}`;
+      return { ok: true as const };
+    } catch {
+      return { ok: true as const };
+    }
   });
 
 export const getAdminState = createServerFn({ method: "GET" })

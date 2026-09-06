@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { fetchLiveBundle } from "@/lib/feeds";
+import { fallbackBundle, fetchLiveBundle } from "@/lib/feeds";
 import { runPipeline, sapWriteback, SCENARIOS, BUYER } from "@/lib/engine";
 import { issueDeskToken, oidcDiscovery, oidcJwks } from "@/lib/oidc";
 import { clusterSnapshot } from "@/lib/pbft";
@@ -22,36 +22,58 @@ function seedAll() {
   }
 }
 
+function withBudget<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p.catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+async function hydrateCoreSoft(ms = 400) {
+  void withBudget(
+    (async () => {
+      try {
+        const { hydrateCoreLedger } = await import("@/lib/core-store.server");
+        await hydrateCoreLedger();
+      } catch {
+        await ensureGenesis();
+      }
+    })(),
+    ms,
+    undefined,
+  );
+}
+
+async function coreSlice() {
+  try {
+    await ensureGenesis();
+    const core = await merkleSnapshot();
+    const chain = await verifyChain();
+    const coreDoctor = await doctor();
+    return {
+      ...core,
+      ok: chain.ok,
+      repo: LOCAL_CORE.repo,
+      sha: LOCAL_CORE.sha,
+      doctor: coreDoctor || undefined,
+      events: listEvents().slice(-6).map((e) => ({
+        id: e.id,
+        type: e.type,
+        hash: e.hash,
+        mac: e.mac.slice(0, 16),
+        ts: e.ts,
+      })),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async () => {
   seedAll();
-  try {
-    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
-    await hydrateCoreLedger();
-  } catch {
-    try {
-      await ensureGenesis();
-    } catch {
-      /* genesis is best-effort */
-    }
-  }
-  let live: Awaited<ReturnType<typeof fetchLiveBundle>>;
-  try {
-    live = await fetchLiveBundle();
-  } catch {
-    live = await fetchLiveBundle(true).catch(() => {
-      throw new Error("live bundle failed");
-    });
-  }
-  let core: Awaited<ReturnType<typeof merkleSnapshot>> | null = null;
-  let chain = { ok: false, depth: 0 };
-  let coreDoctor: Awaited<ReturnType<typeof doctor>> | null = null;
-  try {
-    core = await merkleSnapshot();
-    chain = await verifyChain();
-    coreDoctor = await doctor();
-  } catch {
-    /* core best-effort */
-  }
+  void hydrateCoreSoft(400);
+  const live = await withBudget(fetchLiveBundle(), 5500, fallbackBundle());
+  const core = await withBudget(coreSlice(), 400, undefined);
   return {
     ...live,
     sapCount: listSapPos().length,
@@ -66,22 +88,7 @@ export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async (
     ariba: SCENARIOS.map((s) => getAriba(s.po)).filter(Boolean),
     writebacks: sapWritebackLog().slice(0, 8),
     cluster: clusterSnapshot(),
-    core: core
-      ? {
-          ...core,
-          ok: chain.ok,
-          repo: LOCAL_CORE.repo,
-          sha: LOCAL_CORE.sha,
-          doctor: coreDoctor || undefined,
-          events: listEvents().slice(-6).map((e) => ({
-            id: e.id,
-            type: e.type,
-            hash: e.hash,
-            mac: e.mac.slice(0, 16),
-            ts: e.ts,
-          })),
-        }
-      : undefined,
+    core,
   };
 });
 
@@ -89,17 +96,12 @@ export const runLiveVerify = createServerFn({ method: "POST" })
   .validator((data: unknown) => z.object({ id: z.string().min(1).max(40) }).parse(data))
   .handler(async ({ data }) => {
     seedAll();
-    try {
-      const { hydrateCoreLedger } = await import("@/lib/core-store.server");
-      await hydrateCoreLedger();
-    } catch {
-      await ensureGenesis();
-    }
-    const live = await fetchLiveBundle();
+    void hydrateCoreSoft(400);
+    const live = await withBudget(fetchLiveBundle(), 5500, fallbackBundle());
     const result = await runPipeline(data.id, live);
     try {
       const { persistCoreLedger } = await import("@/lib/core-store.server");
-      await persistCoreLedger();
+      void persistCoreLedger();
     } catch {
       /* durable write is best-effort */
     }
@@ -158,12 +160,8 @@ export const oidcWellKnown = createServerFn({ method: "GET" }).handler(async () 
 export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oidcJwks());
 
 export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
-    await hydrateCoreLedger();
-  } catch {
-    await ensureGenesis();
-  }
+  void hydrateCoreSoft(600);
+  await ensureGenesis().catch(() => undefined);
   const [chain, snap, doc] = await Promise.all([verifyChain(), merkleSnapshot(), doctor()]);
   let proof: Awaited<ReturnType<typeof merkleProofAt>> | null = null;
   if (snap.leaf_count > 0) {
@@ -182,3 +180,4 @@ export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () 
     core: LOCAL_CORE,
   };
 });
+

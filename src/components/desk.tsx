@@ -21,6 +21,13 @@ import { Spark } from "@/components/spark";
 import { SESSION_KEY, type DeskSession } from "@/lib/session";
 import { OWNER_EMAIL } from "@/lib/admin";
 
+function clientBudget<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) => setTimeout(() => rej(new Error("timeout")), ms)),
+  ]);
+}
+
 function pillClass(v: string) {
   const s = v.toUpperCase();
   if (
@@ -75,6 +82,9 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
         setAnnounce(c.announce);
       })
       .catch(() => setMaintenance(false));
+    clientBudget(getLiveSnapshot(), 7000)
+      .then(setTape)
+      .catch(() => setTape(null));
   }, []);
 
   async function enterSeat() {
@@ -88,7 +98,10 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
     let iss = "";
     let sub = "";
     try {
-      const tok = await oidcToken({ data: { seat: true } });
+      const tok = await Promise.race([
+        oidcToken({ data: { seat: true } }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500)),
+      ]);
       if (tok && tok.ok && "access_token" in tok) {
         access = tok.access_token;
         iss = tok.claims.iss;
@@ -188,7 +201,7 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
             {" · "}
             <Link to="/work">Customer Zero OS</Link>
             {" · "}
-            <Link to="/">Hub</Link>
+            <Link to="/core">Local Core</Link>
           </p>
         </div>
       </section>
@@ -219,6 +232,15 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
         setAnnounce(c.announce);
       })
       .catch(() => setFrozen(false));
+    clientBudget(getLiveSnapshot(), 7000)
+      .then(setLive)
+      .catch(() => setLive(null));
+    const t = setInterval(() => {
+      clientBudget(getLiveSnapshot(), 7000)
+        .then(setLive)
+        .catch(() => undefined);
+    }, 60_000);
+    return () => clearInterval(t);
   }, []);
 
   const sapMap = useMemo(() => {
@@ -301,7 +323,7 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
     setRunning(true);
     setNote("INGEST · SAP OData + Ariba + LME cash…");
     try {
-      const result = await runLiveVerify({ data: { id } });
+      const result = await clientBudget(runLiveVerify({ data: { id } }), 12000);
       setPacket(result);
       setNote(result.message);
       void qc.invalidateQueries({ queryKey: deskKeys.tape });
