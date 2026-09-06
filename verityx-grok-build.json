@@ -1,14 +1,16 @@
 {
   "product": "VerityX Sovereign",
+  "version": "v1.0-soft-prod",
+  "status": "live",
   "planes": [
     { "id": "desk", "path": "/desk", "persona": "Elena Hartmann", "tenant": "SIEMENS-GAMESA" },
     { "id": "os", "path": "/work", "persona": "founder", "product": "Customer Zero OS" },
-    { "id": "core", "path": "/core", "repo": "mattboyer725-dev/verityx-local-core", "sha": "319af22fc87271665ec0e453a73b9946a4473104", "version": "1.6.0" },
+    { "id": "core", "path": "/core", "product": "Local Core HMAC + Merkle" },
     { "id": "command", "path": "/admin", "owner": "mattboyer725@gmail.com" }
   ],
   "targets": {
     "github": "mattboyer725-dev/verityx-portal",
-    "vercelProject": "verityx-live-desk"
+    "vercelProject": "verityx-portal"
   },
   "agents": [
     { "id": "INGEST", "exists": true, "role": "SAP OData + TED", "built": true },
@@ -23,14 +25,5 @@
     { "id": "EVIDENCE", "exists": true, "role": "Exportable packet", "built": true },
     { "id": "AUTH", "exists": true, "role": "OIDC JWT seat", "built": true },
     { "id": "OS", "exists": true, "role": "Customer Zero advisory rules", "built": true }
-  ],
-  "localCore": {
-    "verified": true,
-    "repo": "mattboyer725-dev/verityx-local-core",
-    "tag": "v1.6.0",
-    "sha": "319af22fc87271665ec0e453a73b9946a4473104",
-    "pythonTests": 112,
-    "jsPortBitIdentical": true,
-    "notes": "HMAC-SHA256 + domain-separated Merkle (0x00 leaf / 0x01 pair). In-process on Vercel with Postgres persistence. Not a 27-host mesh."
-  }
+  ]
 }

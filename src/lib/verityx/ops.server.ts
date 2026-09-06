@@ -24,7 +24,7 @@ import {
   mapReport,
 } from "./mappers";
 import { assertCan } from "./rbac";
-import { ensureActor, mutateGuard, toWorkspace, writeAudit } from "./actor";
+import { ensureActor, mutateGuard, toWorkspace, writeAudit, listMembersForOrg } from "./actor";
 import type {
   Dashboard,
   Decision,
@@ -54,20 +54,30 @@ async function scopedProspect(orgId: string, id: string): Promise<Prospect> {
 
 export async function getWorkspace(userId: string): Promise<Workspace> {
     const actor = await ensureActor(userId);
-    return toWorkspace(actor);
+    const members = await listMembersForOrg(actor.organizationId);
+    return toWorkspace(actor, members);
+}
+
+export async function listMembers(userId: string) {
+    const actor = await ensureActor(userId);
+    return listMembersForOrg(actor.organizationId);
 }
 
 export async function updateOrg(userId: string, data: { name?: string }) {
     const actor = await ensureActor(userId);
     assertCan(actor.role, "org.write");
     await mutateGuard(actor, "org.write");
-    if (data.name == null || !data.name.trim()) return toWorkspace(actor);
+    const members = await listMembersForOrg(actor.organizationId);
+    if (data.name == null || !data.name.trim()) return toWorkspace(actor, members);
     const sql = await getSql();
     await sql`update organizations set name = ${data.name.trim()} where id = ${actor.organizationId}`;
     await writeAudit(actor, "org.update", "organization", actor.organizationId, {
       name: data.name.trim(),
     });
-    return { ...toWorkspace(actor), organization: { ...toWorkspace(actor).organization, name: data.name.trim() } };
+    return {
+      ...toWorkspace(actor, members),
+      organization: { ...toWorkspace(actor, members).organization, name: data.name.trim() },
+    };
 }
 
 export async function getDashboard(userId: string): Promise<Dashboard> {
@@ -128,16 +138,20 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
         case "report":
           return { stage, complete: reportN > 0, detail: `${reportN} issued` };
         case "follow_up":
-          return { stage, complete: outcomeN > 0, detail: "Capture what happened" };
+          return { stage, complete: outcomeN > 0, detail: outcomeN ? `${outcomeN} follow-ups captured` : "Schedule follow-up after the report" };
         case "outcome":
           return { stage, complete: outcomeN > 0, detail: `${outcomeN} recorded` };
+        case "learning":
+          return { stage, complete: outcomeN > 0 || feedbackCount > 0, detail: `${feedbackCount} notes · ${outcomeN} outcomes` };
         default:
-          return { stage, complete: outcomeN > 0, detail: `${feedbackCount} notes · case-study fields` };
+          return { stage, complete: false, detail: "" };
       }
     });
 
+    const members = await listMembersForOrg(actor.organizationId);
+
     return {
-      workspace: toWorkspace(actor),
+      workspace: toWorkspace(actor, members),
       counts: {
         prospects: prospectN,
         pilots: pilotN,
@@ -161,6 +175,7 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
         pilotTitle: String((r as { pilot_title?: string }).pilot_title ?? ""),
       })),
       recentAudit: recentAudit.map(mapAudit),
+      fetchedAt: new Date().toISOString(),
     };
 }
 
@@ -815,6 +830,7 @@ export async function upsertOutcome(userId: string, data: {
     outcomeValue?: string;
     timeToResolutionDays?: number | null;
     caseStudyPermission?: Outcome["caseStudyPermission"];
+    followUpAt?: string | null;
     notes?: string;
   }): Promise<Outcome> {
     const actor = await ensureActor(userId);
@@ -823,6 +839,12 @@ export async function upsertOutcome(userId: string, data: {
     const pilot = await scopedPilot(actor.organizationId, data.pilotId);
     const sql = await getSql();
     const existing = await sql`select * from outcomes where organization_id = ${actor.organizationId} and pilot_id = ${pilot.id} limit 1`;
+    const followUp =
+      data.followUpAt === undefined
+        ? undefined
+        : data.followUpAt
+          ? new Date(data.followUpAt).toISOString()
+          : null;
     if (existing[0]) {
       const cur = mapOutcome(existing[0]);
       const accuracy = data.outcomeAccuracy ?? cur.outcomeAccuracy;
@@ -830,14 +852,15 @@ export async function upsertOutcome(userId: string, data: {
       const days = data.timeToResolutionDays === undefined ? cur.timeToResolutionDays : data.timeToResolutionDays;
       const perm = data.caseStudyPermission ?? cur.caseStudyPermission;
       const notes = data.notes ?? cur.notes;
+      const nextFollow = followUp === undefined ? cur.followUpAt : followUp;
       await sql`
         update outcomes set
           outcome_accuracy = ${accuracy},
           outcome_value = ${value},
           time_to_resolution_days = ${days},
           case_study_permission = ${perm},
+          follow_up_at = ${nextFollow},
           notes = ${notes},
-          follow_up_at = now(),
           updated_at = now()
         where id = ${cur.id} and organization_id = ${actor.organizationId}
       `;
@@ -854,7 +877,7 @@ export async function upsertOutcome(userId: string, data: {
         ${id}, ${actor.organizationId}, ${actor.userId}, ${pilot.id},
         ${data.outcomeAccuracy ?? "unknown"}, ${data.outcomeValue ?? ""},
         ${data.timeToResolutionDays ?? null}, ${data.caseStudyPermission ?? "undecided"},
-        now(), ${data.notes ?? ""}
+        ${followUp ?? new Date().toISOString()}, ${data.notes ?? ""}
       )
     `;
     await sql`

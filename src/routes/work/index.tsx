@@ -66,11 +66,13 @@ function Command() {
         }
       />
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {[
           ["Prospects", String(data.counts.prospects)],
           ["Paid pilots", String(data.counts.paidPilots)],
+          ["Unpaid", String(data.counts.unpaidPilots)],
           ["Pilot revenue", money(data.revenueUsd)],
+          ["Reports", String(data.counts.reports)],
           ["Pending BLOCK", String(data.counts.pendingApprovals)],
         ].map(([k, v]) => (
           <div key={k} className="panel p-5">

@@ -4,6 +4,7 @@ import {
   FileText,
   Fingerprint,
   Gavel,
+  Home,
   LayoutDashboard,
   Menu,
   Scale,
@@ -18,11 +19,12 @@ import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useWorkspaceLive } from "@/lib/verityx/live";
 import { cn } from "@/lib/cn";
-import { Pill } from "./status";
+import { LivePulse, Pill } from "./status";
 
 const NAV = [
+  { to: "/", label: "Platform", icon: Home, exact: true },
   { to: "/desk", label: "Live desk", icon: Shield },
-  { to: "/core", label: "Local Core", icon: Fingerprint },
+  { to: "/core", label: "Local core", icon: Fingerprint },
   { to: "/work", label: "Command", icon: LayoutDashboard, exact: true },
   { to: "/work/prospects", label: "Prospects", icon: Users },
   { to: "/work/pilots", label: "Pilots", icon: ClipboardList },
@@ -66,7 +68,7 @@ function Brand() {
         V
       </span>
       <span>
-        <span className="block font-display text-lg leading-none tracking-tight">Verityx</span>
+        <span className="block font-display text-lg leading-none tracking-tight">VerityX</span>
         <span className="mt-1 block text-[10px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</span>
       </span>
     </Link>
@@ -75,7 +77,7 @@ function Brand() {
 
 export function AppShell() {
   const user = useCurrentUser();
-  const { data: workspace } = useWorkspaceLive();
+  const { data: workspace, refreshing, updatedAt } = useWorkspaceLive();
   const [open, setOpen] = useState(false);
 
   return (
@@ -91,16 +93,16 @@ export function AppShell() {
               <p className="truncate text-xs text-mute">{workspace.organization.name}</p>
               <div className="mt-2 flex items-center gap-2">
                 <Pill tone={workspace.role}>{workspace.role}</Pill>
-                <span className="text-[10px] uppercase tracking-[0.14em] text-mute">Live</span>
+                <span className="text-[10px] uppercase tracking-[0.14em] text-mute">
+                  {(workspace.members?.length ?? 0)} seat
+                  {(workspace.members?.length ?? 0) === 1 ? "" : "s"}
+                </span>
               </div>
             </div>
           ) : (
             <div className="h-10 animate-pulse rounded-[8px] bg-raised" />
           )}
-          <div className="flex items-center justify-between gap-2 text-xs">
-            <span className="truncate text-mute">{user?.displayName ?? user?.primaryEmail}</span>
-            <UserButton />
-          </div>
+          <UserButton />
         </div>
       </aside>
 
@@ -138,9 +140,12 @@ export function AppShell() {
 
       <main className="lg:pl-60">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
-          <div className="mb-6 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-mute">
-            <Shield className="size-3.5" strokeWidth={1.6} />
-            Advisory system · live tenant file · no automatic accusations
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-2 text-[11px] uppercase tracking-[0.16em] text-mute">
+            <span className="inline-flex items-center gap-2">
+              <Shield className="size-3.5" strokeWidth={1.6} />
+              Advisory system · tenant file · no automatic accusations
+            </span>
+            <LivePulse refreshing={refreshing} updatedAt={updatedAt} />
           </div>
           <Outlet />
         </div>

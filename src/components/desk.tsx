@@ -11,7 +11,9 @@ import {
   type Scenario,
 } from "@/lib/engine";
 import { getDeskControls, recordDeskEvent } from "@/lib/admin-api";
-import { getLiveSnapshot, oidcToken, postSapWriteback, runLiveVerify } from "@/lib/live-api";
+import { oidcToken, postSapWriteback, runLiveVerify } from "@/lib/live-api";
+import { deskKeys, useDeskTape } from "@/lib/desk-live";
+import { useQueryClient } from "@tanstack/react-query";
 import { issueDeskToken } from "@/lib/oidc";
 import type { LiveBundle } from "@/lib/feeds";
 import { VxMark } from "@/components/vx-mark";
@@ -63,7 +65,8 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
   const [busy, setBusy] = useState(false);
   const [maintenance, setMaintenance] = useState(false);
   const [announce, setAnnounce] = useState("");
-  const [tape, setTape] = useState<LiveSnap | null>(null);
+  const tapeQ = useDeskTape();
+  const tape = tapeQ.data ?? null;
 
   useEffect(() => {
     getDeskControls()
@@ -72,9 +75,6 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
         setAnnounce(c.announce);
       })
       .catch(() => setMaintenance(false));
-    getLiveSnapshot()
-      .then(setTape)
-      .catch(() => setTape(null));
   }, []);
 
   async function enterSeat() {
@@ -206,7 +206,9 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
   const [wb, setWb] = useState("");
   const [frozen, setFrozen] = useState(false);
   const [announce, setAnnounce] = useState("");
-  const [live, setLive] = useState<LiveSnap | null>(null);
+  const tapeQ = useDeskTape();
+  const live = (tapeQ.data as LiveSnap | undefined) ?? null;
+  const qc = useQueryClient();
   const [tab, setTab] = useState<"pipe" | "sap" | "mkt" | "screen" | "prov" | "seal" | "core">("pipe");
   const [drawer, setDrawer] = useState(false);
 
@@ -217,15 +219,6 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
         setAnnounce(c.announce);
       })
       .catch(() => setFrozen(false));
-    getLiveSnapshot()
-      .then(setLive)
-      .catch(() => setLive(null));
-    const t = setInterval(() => {
-      getLiveSnapshot()
-        .then(setLive)
-        .catch(() => undefined);
-    }, 60_000);
-    return () => clearInterval(t);
   }, []);
 
   const sapMap = useMemo(() => {
@@ -285,7 +278,7 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
       const res = await postSapWriteback({ data: { id: current.s.id, action } });
       setWb(`${res.rec.action} · ${res.rec.doc}`);
       setNote(`SAP OData PATCH ${res.rec.action} on ${res.rec.po}`);
-      setLive((prev) => {
+      qc.setQueryData(deskKeys.tape, (prev: LiveSnap | undefined) => {
         if (!prev) return prev;
         const sap = (prev.sap || []).map((p) =>
           p.PurchaseOrder === current.s.po ? { ...p, ReleaseStatus: action } : p,
@@ -311,9 +304,7 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
       const result = await runLiveVerify({ data: { id } });
       setPacket(result);
       setNote(result.message);
-      getLiveSnapshot()
-        .then(setLive)
-        .catch(() => undefined);
+      void qc.invalidateQueries({ queryKey: deskKeys.tape });
       void recordDeskEvent({
         data: { kind: "desk.verify", target: id, detail: result.message.slice(0, 280) },
       }).catch(() => undefined);

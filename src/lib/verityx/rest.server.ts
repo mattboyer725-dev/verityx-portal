@@ -1,25 +1,8 @@
 import { UnauthorizedError } from "@/lib/auth/verify.server";
 import { CrossSiteRequestError } from "@/lib/auth/isolation.server";
 import * as ops from "./ops.server";
+import { corsHeaders, matchPath } from "./http";
 import type { EvidenceItem, Outcome, Pilot, ProspectStage } from "./types";
-
-function corsHeaders(request: Request): Record<string, string> {
-  const origin = request.headers.get("origin") ?? "";
-  const allow = (process.env.FRONTEND_ORIGINS ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const headers: Record<string, string> = {
-    Vary: "Origin",
-    "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    "Access-Control-Allow-Credentials": "true",
-  };
-  if (origin && allow.includes(origin)) {
-    headers["Access-Control-Allow-Origin"] = origin;
-  }
-  return headers;
-}
 
 function jsonError(request: Request, err: unknown): Response {
   let status = 400;
@@ -55,18 +38,6 @@ async function readJson<T>(request: Request): Promise<T> {
   return JSON.parse(text) as T;
 }
 
-function match(path: string, pattern: string): Record<string, string> | null {
-  const a = path.split("/").filter(Boolean);
-  const b = pattern.split("/").filter(Boolean);
-  if (a.length !== b.length) return null;
-  const params: Record<string, string> = {};
-  for (let i = 0; i < a.length; i += 1) {
-    if (b[i].startsWith(":")) params[b[i].slice(1)] = decodeURIComponent(a[i]);
-    else if (a[i] !== b[i]) return null;
-  }
-  return params;
-}
-
 function json(request: Request, data: unknown, status = 200): Response {
   return Response.json(data, { status, headers: corsHeaders(request) });
 }
@@ -85,7 +56,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
   }
 
   try {
-    if (path === "/api/me" && method === "GET") {
+    if ((path === "/api/me" || path === "/api/workspace") && method === "GET") {
       const userId = await requireApiUser(request);
       const workspace = await ops.getWorkspace(userId);
       return json(request, workspace);
@@ -95,6 +66,10 @@ export async function dispatchRest(request: Request): Promise<Response> {
 
     if (path === "/api/dashboard" && method === "GET") {
       return json(request, await ops.getDashboard(userId));
+    }
+
+    if (path === "/api/members" && method === "GET") {
+      return json(request, await ops.listMembers(userId));
     }
 
     if (path === "/api/prospects" && method === "GET") {
@@ -113,7 +88,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
       return json(request, await ops.createProspect(userId, body), 201);
     }
 
-    const prospectId = match(path, "/api/prospects/:id");
+    const prospectId = matchPath(path, "/api/prospects/:id");
     if (prospectId && method === "GET") {
       return json(request, await ops.getProspect(userId, { id: prospectId.id }));
     }
@@ -141,7 +116,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
       return json(request, await ops.createPilot(userId, body), 201);
     }
 
-    const pilotId = match(path, "/api/pilots/:id");
+    const pilotId = matchPath(path, "/api/pilots/:id");
     if (pilotId && method === "GET") {
       return json(request, await ops.getPilot(userId, { id: pilotId.id }));
     }
@@ -154,8 +129,29 @@ export async function dispatchRest(request: Request): Promise<Response> {
       }>(request);
       return json(request, await ops.patchPilot(userId, { id: pilotId.id, ...body }));
     }
+    const pay = matchPath(path, "/api/pilots/:id/payment");
+    if (pay && method === "POST") {
+      const body = await readJson<{ note?: string; confirm?: string }>(request);
+      return json(
+        request,
+        await ops.recordManualPayment(userId, {
+          pilotId: pay.id,
+          note: body.note ?? "",
+          confirm: body.confirm ?? "",
+        }),
+      );
+    }
 
-    const checkout = match(path, "/api/billing/pilot-checkout/:pilotId");
+    if ((path === "/api/workspace" || path === "/api/org") && (method === "PATCH" || method === "PUT" || method === "POST")) {
+      const body = await readJson<{ name?: string }>(request);
+      return json(request, await ops.updateOrg(userId, body));
+    }
+
+    if (path === "/api/sample" && method === "POST") {
+      return json(request, await ops.loadSampleWalkthrough(userId), 201);
+    }
+
+    const checkout = matchPath(path, "/api/billing/pilot-checkout/:pilotId");
     if (checkout && method === "POST") {
       const body = await readJson<{ origin?: string }>(request);
       const origin = body.origin || request.headers.get("origin") || url.origin;
@@ -175,13 +171,13 @@ export async function dispatchRest(request: Request): Promise<Response> {
       return json(request, await ops.createDecision(userId, body), 201);
     }
 
-    const approve = match(path, "/api/decisions/:id/approve");
+    const approve = matchPath(path, "/api/decisions/:id/approve");
     if (approve && method === "POST") {
       const body = await readJson<{ note?: string }>(request);
       return json(request, await ops.approveDecision(userId, { id: approve.id, note: body.note }));
     }
 
-    const decisionId = match(path, "/api/decisions/:id");
+    const decisionId = matchPath(path, "/api/decisions/:id");
     if (decisionId && method === "GET") {
       return json(request, await ops.getDecision(userId, { id: decisionId.id }));
     }
@@ -208,6 +204,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
         outcomeValue?: string;
         timeToResolutionDays?: number | null;
         caseStudyPermission?: Outcome["caseStudyPermission"];
+        followUpAt?: string | null;
         notes?: string;
       }>(request);
       return json(request, await ops.upsertOutcome(userId, body));
@@ -221,12 +218,12 @@ export async function dispatchRest(request: Request): Promise<Response> {
       return json(request, await ops.generateReport(userId, body), 201);
     }
 
-    const generate = match(path, "/api/reports/generate/:pilotId");
+    const generate = matchPath(path, "/api/reports/generate/:pilotId");
     if (generate && method === "POST") {
       return json(request, await ops.generateReport(userId, { pilotId: generate.pilotId }), 201);
     }
 
-    const pdf = match(path, "/api/reports/:id/pdf");
+    const pdf = matchPath(path, "/api/reports/:id/pdf");
     if (pdf && (method === "GET" || method === "POST")) {
       const file = await ops.getReportPdf(userId, { id: pdf.id });
       const bytes = Uint8Array.from(atob(file.base64), (c) => c.charCodeAt(0));
@@ -240,7 +237,7 @@ export async function dispatchRest(request: Request): Promise<Response> {
       });
     }
 
-    const reportId = match(path, "/api/reports/:id");
+    const reportId = matchPath(path, "/api/reports/:id");
     if (reportId && method === "GET") {
       return json(request, await ops.getReport(userId, { id: reportId.id }));
     }

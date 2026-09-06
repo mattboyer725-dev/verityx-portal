@@ -19,10 +19,14 @@ function LearningPage() {
       />
       {dash.loading && !dash.data ? <Skeleton /> : null}
       <ErrorNote message={dash.error ?? fb.error ?? outcomes.error} />
-      <section className="grid gap-3 sm:grid-cols-3">
+      <section className="grid gap-3 sm:grid-cols-4">
         <div className="panel p-5">
           <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Outcomes</p>
           <p className="mt-2 font-display text-3xl tabular-nums">{dash.data?.counts.outcomes ?? "—"}</p>
+        </div>
+        <div className="panel p-5">
+          <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Feedback notes</p>
+          <p className="mt-2 font-display text-3xl tabular-nums">{dash.data?.counts.feedback ?? "—"}</p>
         </div>
         <div className="panel p-5">
           <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Reports</p>
@@ -56,6 +60,7 @@ function LearningPage() {
                 <p className="mt-1 text-mute">
                   {item.pilotTitle} · permission {item.caseStudyPermission}
                   {item.outcomeValue ? ` · ${item.outcomeValue}` : ""}
+                  {item.followUpAt ? ` · follow-up ${formatWhen(item.followUpAt)}` : ""}
                 </p>
                 {item.notes ? <p className="mt-1 text-mist">{item.notes}</p> : null}
               </li>
@@ -64,21 +69,26 @@ function LearningPage() {
         </section>
       ) : null}
       {fb.data && fb.data.length > 0 ? (
-        <ul className="panel divide-y divide-line">
-          {fb.data.map((item) => (
-            <li key={item.id} className="px-5 py-4 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <Link to="/work/pilots/$id" params={{ id: item.pilotId }} className="hover:underline">
-                  {item.companyName}
-                </Link>
-                <span className="tabular-nums text-mute">{formatWhen(item.createdAt)}</span>
-              </div>
-              <p className="mt-1 text-mute">
-                {item.kind} · {item.rating ?? "—"}/5 — {item.comment || "No comment"}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <section className="panel">
+          <div className="border-b border-line px-5 py-4">
+            <h2 className="font-display text-xl">Feedback</h2>
+          </div>
+          <ul className="divide-y divide-line">
+            {fb.data.map((item) => (
+              <li key={item.id} className="px-5 py-4 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <Link to="/work/pilots/$id" params={{ id: item.pilotId }} className="hover:underline">
+                    {item.companyName}
+                  </Link>
+                  <span className="tabular-nums text-mute">{formatWhen(item.createdAt)}</span>
+                </div>
+                <p className="mt-1 text-mute">
+                  {item.kind} · {item.rating ?? "—"}/5 — {item.comment || "No comment"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
     </div>
   );

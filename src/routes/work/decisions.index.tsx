@@ -42,6 +42,7 @@ function DecisionsPage() {
                     <Link to="/work/decisions/$id" params={{ id: d.id }} className="hover:underline">
                       {d.pilotTitle}
                     </Link>
+                    <p className="mt-1 max-w-sm truncate text-xs text-mute">{d.confidenceRationale}</p>
                   </td>
                   <td className="px-5 py-4">
                     <Pill tone={d.proposedAction}>{d.proposedAction}</Pill>

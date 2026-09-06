@@ -2,7 +2,7 @@ import { getSql } from "@/lib/db";
 import { PILOT_PRICE_USD, PILOT_SLA_HOURS, RULE_VERSION } from "./constants";
 import { iso, newId, slugify } from "./format";
 import { rateLimit } from "./rate-limit";
-import type { Role, Workspace } from "./types";
+import type { Member, Role, Workspace } from "./types";
 
 export type Actor = {
   userId: string;
@@ -41,6 +41,30 @@ export function logEvent(
       ...redact(extra ?? {}),
     }),
   );
+}
+
+export async function listMembersForOrg(organizationId: string): Promise<Member[]> {
+  const sql = await getSql();
+  const rows = await sql<{
+    user_id: string;
+    role: Role;
+    created_at: unknown;
+    name: string | null;
+    email: string | null;
+  }>`
+    select m.user_id, m.role, m.created_at, u.name, u.email
+    from memberships m
+    left join "user" u on u.id = m.user_id
+    where m.organization_id = ${organizationId}
+    order by m.created_at asc
+  `;
+  return rows.map((r) => ({
+    userId: r.user_id,
+    role: r.role,
+    name: (r.name ?? "").trim() || (r.email ?? "").split("@")[0] || "Member",
+    email: r.email ?? "",
+    createdAt: iso(r.created_at),
+  }));
 }
 
 export async function ensureActor(userId: string): Promise<Actor> {
@@ -141,12 +165,13 @@ export async function mutateGuard(actor: Actor, action: string) {
   rateLimit(actor.userId, action);
 }
 
-export function toWorkspace(actor: Actor): Workspace {
+export function toWorkspace(actor: Actor, members: Member[] = []): Workspace {
   return {
     userId: actor.userId,
     role: actor.role,
     stripeConfigured: Boolean(process.env.STRIPE_SECRET_KEY),
     ruleVersion: RULE_VERSION,
+    members,
     organization: {
       id: actor.organizationId,
       name: actor.orgName,

@@ -85,6 +85,18 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+/** In-app paths the sign-in return is allowed to land on. Default is the hub. */
+export type AppReturnPath = "/" | "/work" | "/admin" | "/desk" | "/core";
+
+export function safeAppPath(raw: string | null | undefined): AppReturnPath {
+  const v = (raw ?? "").trim();
+  if (v === "/work" || v.startsWith("/work/")) return "/work";
+  if (v === "/admin" || v.startsWith("/admin/")) return "/admin";
+  if (v === "/desk" || v.startsWith("/desk/")) return "/desk";
+  if (v === "/core" || v.startsWith("/core/")) return "/core";
+  return "/";
+}
+
 export function slugify(name: string): string {
   const base =
     name

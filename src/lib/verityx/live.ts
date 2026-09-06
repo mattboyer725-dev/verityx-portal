@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useCallback } from "react";
 import {
   approveDecision,
@@ -63,18 +63,31 @@ function asLive<T>(q: UseQueryResult<T, Error>) {
     error: q.error ? errorMessage(q.error) : null,
     loading: q.isPending,
     refreshing: q.isFetching && !q.isPending,
+    updatedAt: q.dataUpdatedAt,
     reload: () => {
       void q.refetch();
     },
   };
 }
 
+const liveList = {
+  staleTime: 4_000,
+  refetchOnWindowFocus: true,
+  placeholderData: keepPreviousData,
+} as const;
+
+const liveRecord = {
+  staleTime: 4_000,
+  refetchOnWindowFocus: true,
+} as const;
+
 export function useWorkspaceLive() {
   return asLive(
     useQuery({
       queryKey: vxKeys.workspace,
       queryFn: () => getWorkspace(),
-      staleTime: 8_000,
+      refetchInterval: 12_000,
+      ...liveList,
     }),
   );
 }
@@ -84,8 +97,8 @@ export function useDashboardLive() {
     useQuery({
       queryKey: vxKeys.dashboard,
       queryFn: () => getDashboard(),
-      refetchInterval: 12_000,
-      refetchOnWindowFocus: true,
+      refetchInterval: 8_000,
+      ...liveList,
     }),
   );
 }
@@ -95,7 +108,8 @@ export function useProspectsLive() {
     useQuery({
       queryKey: vxKeys.prospects,
       queryFn: () => listProspects(),
-      refetchInterval: 15_000,
+      refetchInterval: 10_000,
+      ...liveList,
     }),
   );
 }
@@ -106,7 +120,8 @@ export function useProspectLive(id: string) {
       queryKey: vxKeys.prospect(id),
       queryFn: () => getProspect({ data: { id } }),
       enabled: Boolean(id),
-      refetchInterval: 12_000,
+      refetchInterval: 8_000,
+      ...liveRecord,
     }),
   );
 }
@@ -116,7 +131,8 @@ export function usePilotsLive() {
     useQuery({
       queryKey: vxKeys.pilots,
       queryFn: () => listPilots(),
-      refetchInterval: 12_000,
+      refetchInterval: 8_000,
+      ...liveList,
     }),
   );
 }
@@ -129,9 +145,10 @@ export function usePilotLive(id: string, opts?: { pollPayment?: boolean }) {
       enabled: Boolean(id),
       refetchInterval: (q) => {
         const status = q.state.data?.pilot.paymentStatus;
-        if (opts?.pollPayment || status === "checkout_open") return 3_000;
-        return 10_000;
+        if (opts?.pollPayment || status === "checkout_open") return 2_500;
+        return 6_000;
       },
+      ...liveRecord,
     }),
   );
 }
@@ -141,7 +158,8 @@ export function useDecisionsLive() {
     useQuery({
       queryKey: vxKeys.decisions,
       queryFn: () => listDecisions(),
-      refetchInterval: 12_000,
+      refetchInterval: 10_000,
+      ...liveList,
     }),
   );
 }
@@ -152,7 +170,8 @@ export function useDecisionLive(id: string) {
       queryKey: vxKeys.decision(id),
       queryFn: () => getDecision({ data: { id } }),
       enabled: Boolean(id),
-      refetchInterval: 8_000,
+      refetchInterval: 6_000,
+      ...liveRecord,
     }),
   );
 }
@@ -162,7 +181,8 @@ export function useReportsLive() {
     useQuery({
       queryKey: vxKeys.reports,
       queryFn: () => listReports(),
-      refetchInterval: 15_000,
+      refetchInterval: 10_000,
+      ...liveList,
     }),
   );
 }
@@ -173,6 +193,8 @@ export function useReportLive(id: string) {
       queryKey: vxKeys.report(id),
       queryFn: () => getReport({ data: { id } }),
       enabled: Boolean(id),
+      refetchInterval: 12_000,
+      ...liveRecord,
     }),
   );
 }
@@ -182,7 +204,8 @@ export function useFeedbackLive() {
     useQuery({
       queryKey: vxKeys.feedback,
       queryFn: () => listFeedback(),
-      refetchInterval: 15_000,
+      refetchInterval: 10_000,
+      ...liveList,
     }),
   );
 }
@@ -192,7 +215,8 @@ export function useOutcomesLive() {
     useQuery({
       queryKey: vxKeys.outcomes,
       queryFn: () => listOutcomes(),
-      refetchInterval: 15_000,
+      refetchInterval: 10_000,
+      ...liveList,
     }),
   );
 }
@@ -202,7 +226,8 @@ export function useAuditLive() {
     useQuery({
       queryKey: vxKeys.audit,
       queryFn: () => listAuditLogs(),
-      refetchInterval: 8_000,
+      refetchInterval: 6_000,
+      ...liveList,
     }),
   );
 }
@@ -266,6 +291,7 @@ export function useLiveMutations() {
       outcomeValue?: string;
       timeToResolutionDays?: number | null;
       caseStudyPermission?: Outcome["caseStudyPermission"];
+      followUpAt?: string | null;
       notes?: string;
     }) => upsertOutcome({ data }).then(after),
     updateOrg: (data: { name?: string }) => updateOrg({ data }).then(after),

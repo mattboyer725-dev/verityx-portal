@@ -122,8 +122,9 @@ function ProspectsPage() {
             <thead className="text-[11px] uppercase tracking-[0.14em] text-mute">
               <tr className="border-b border-line">
                 <th className="px-5 py-3 font-medium">Company</th>
+                <th className="px-5 py-3 font-medium">Contact</th>
                 <th className="px-5 py-3 font-medium">Stage</th>
-                <th className="px-5 py-3 font-medium">Sector</th>
+                <th className="px-5 py-3 font-medium">Region</th>
                 <th className="px-5 py-3 font-medium">Updated</th>
               </tr>
             </thead>
@@ -134,14 +135,18 @@ function ProspectsPage() {
                     <Link to="/work/prospects/$id" params={{ id: p.id }} className="hover:underline">
                       {p.companyName}
                     </Link>
-                    <div className="mt-1">
-                      <SampleTag on={p.isSample} />
-                    </div>
+                    <p className="mt-1 flex items-center gap-2 text-xs text-mute">
+                      {p.sector || "No sector"} <SampleTag on={p.isSample} />
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 text-sm">
+                    <p>{p.contactName || "—"}</p>
+                    <p className="text-xs text-mute">{p.contactEmail || "No email"}</p>
                   </td>
                   <td className="px-5 py-4">
                     <Pill tone={p.stage}>{p.stage}</Pill>
                   </td>
-                  <td className="px-5 py-4 text-mute">{p.sector || "—"}</td>
+                  <td className="px-5 py-4 text-mute">{p.region || "—"}</td>
                   <td className="px-5 py-4 tabular-nums text-mute">{formatWhen(p.updatedAt)}</td>
                 </tr>
               ))}

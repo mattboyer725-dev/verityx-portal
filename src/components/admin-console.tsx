@@ -163,6 +163,8 @@ function AdminSignIn() {
           ))}
         </div>
         <p className="hint">
+          <Link to="/">Platform hub</Link>
+          {" · "}
           <Link to="/desk">Siemens Gamesa live desk</Link>
         </p>
       </div>
@@ -229,9 +231,14 @@ function AdminConsole() {
         <div className="login-card">
           <h1>Command unavailable</h1>
           <p>{loadErr}</p>
-          <Link className="vx-btn vx-btn-ghost" to="/login">
-            Sign in
-          </Link>
+          <div className="vx-actions">
+            <Link className="vx-btn vx-btn-ghost" to="/login">
+              Sign in
+            </Link>
+            <Link className="vx-btn vx-btn-ghost" to="/">
+              Platform hub
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -255,6 +262,9 @@ function AdminConsole() {
           <div className="vx-actions">
             <Link className="vx-btn vx-btn-primary" to="/desk">
               Open desk
+            </Link>
+            <Link className="vx-btn vx-btn-ghost" to="/">
+              Platform hub
             </Link>
           </div>
         </div>

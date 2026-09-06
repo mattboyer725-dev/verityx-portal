@@ -71,6 +71,25 @@ function SettingsPage() {
           read. Payment never flips to paid from the client — only a verified Stripe event or this authorized path.
         </p>
       </section>
+      <section className="panel max-w-xl p-5 sm:p-6">
+        <h2 className="font-display text-2xl">Seats</h2>
+        <p className="mt-1 text-sm text-mute">Live membership for this tenant. Isolation is per organization_id.</p>
+        <ul className="mt-4 divide-y divide-line">
+          {(data.members ?? []).length === 0 ? (
+            <li className="py-3 text-sm text-mute">No seats on this tenant yet.</li>
+          ) : (
+            (data.members ?? []).map((m) => (
+              <li key={m.userId} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="truncate">{m.name}</p>
+                  <p className="truncate text-xs text-mute">{m.email || m.userId.slice(0, 8)}</p>
+                </div>
+                <Pill tone={m.role}>{m.role}</Pill>
+              </li>
+            ))
+          )}
+        </ul>
+      </section>
     </div>
   );
 }

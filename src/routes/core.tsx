@@ -72,7 +72,10 @@ function CoreStatus() {
           </div>
           <div className="grid gap-3">
             {(data?.events.slice(-4) ?? []).map((e, i) => (
-              <div key={e.id} className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-ink/50 px-3 py-3">
+              <div
+                key={e.id}
+                className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-ink/50 px-3 py-3"
+              >
                 <span className="font-mono text-xs text-ok">{String(i + 1).padStart(2, "0")}</span>
                 <span>
                   <span className="block text-sm">{e.type}</span>
@@ -114,9 +117,25 @@ function CoreStatus() {
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {[
-            { n: "01 / AUTHENTICATE", t: "Content-derived hashes", d: "HMAC-SHA256 over canonical JSON, then SHA-256(canonical || signature)." },
-            { n: "02 / INCLUDE", t: "Merkle proofs", d: data?.proof ? `Last leaf ${shortHash(data.proof.leaf)} · valid ${String(data.proof.valid)}` : "Inclusion path for the tip leaf, domain-separated." },
-            { n: "03 / DOCTOR", t: "Self-check", d: data?.doctor ? `overall ${data.doctor.overall} · secret ${data.doctor.checks.secret.status} · chain ${data.doctor.checks.chain.status}` : "Secret hygiene, chain, Merkle, mesh=false." },
+            {
+              n: "01 / AUTHENTICATE",
+              t: "Content-derived hashes",
+              d: "HMAC-SHA256 over canonical JSON, then SHA-256(canonical || signature).",
+            },
+            {
+              n: "02 / INCLUDE",
+              t: "Merkle proofs",
+              d: data?.proof
+                ? `Last leaf ${shortHash(data.proof.leaf)} · valid ${String(data.proof.valid)}`
+                : "Inclusion path for the tip leaf, domain-separated.",
+            },
+            {
+              n: "03 / DOCTOR",
+              t: "Self-check",
+              d: data?.doctor
+                ? `overall ${data.doctor.overall} · secret ${data.doctor.checks.secret.status} · chain ${data.doctor.checks.chain.status}`
+                : "Secret hygiene, chain, Merkle, mesh=false.",
+            },
           ].map((c) => (
             <article key={c.n} className="panel min-h-52 p-6">
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ok">{c.n}</p>
@@ -142,7 +161,7 @@ function CoreStatus() {
               <li className="border-t border-line pt-3">Signed append-only event log</li>
               <li className="border-t border-line pt-3">HMAC secret (32+ bytes)</li>
               <li className="border-t border-line pt-3">Backup, restore, ritual CLI</li>
-              <li className="border-t border-line pt-3">Loopback-only read API :8420</li>
+              <li className="border-t border-line pt-3">Loopback-only read API</li>
             </ul>
           </div>
           <div className="bg-raised/40 p-8">

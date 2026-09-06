@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { formatDuration, slaState } from "./format.ts";
+import { formatDuration, safeAppPath, slaState } from "./format.ts";
 
 describe("slaState", () => {
   it("waits until inputs land", () => {
@@ -26,5 +26,23 @@ describe("slaState", () => {
 describe("formatDuration", () => {
   it("formats hours and minutes", () => {
     assert.equal(formatDuration(3_600_000 + 120_000), "1h 2m");
+  });
+});
+
+describe("safeAppPath", () => {
+  it("returns to the platform hub by default", () => {
+    assert.equal(safeAppPath(undefined), "/");
+    assert.equal(safeAppPath(""), "/");
+    assert.equal(safeAppPath("https://evil.example"), "/");
+    assert.equal(safeAppPath("//evil.example"), "/");
+    assert.equal(safeAppPath("/api/auth/callback"), "/");
+  });
+
+  it("allows in-app planes", () => {
+    assert.equal(safeAppPath("/work"), "/work");
+    assert.equal(safeAppPath("/work/pilots/abc"), "/work");
+    assert.equal(safeAppPath("/admin"), "/admin");
+    assert.equal(safeAppPath("/desk"), "/desk");
+    assert.equal(safeAppPath("/core"), "/core");
   });
 });

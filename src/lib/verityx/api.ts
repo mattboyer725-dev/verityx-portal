@@ -228,6 +228,7 @@ export const upsertOutcome = createServerFn({ method: "POST" })
     outcomeValue?: string;
     timeToResolutionDays?: number | null;
     caseStudyPermission?: Outcome["caseStudyPermission"];
+    followUpAt?: string | null;
     notes?: string;
   }) => data)
   .handler(async ({ context, data }) => {
@@ -247,6 +248,13 @@ export const listAuditLogs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const ops = await import("./ops.server");
     return ops.listAuditLogs(context.userId);
+  });
+
+export const listMembers = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ops = await import("./ops.server");
+    return ops.listMembers(context.userId);
   });
 
 export const loadSampleWalkthrough = createServerFn({ method: "POST" })

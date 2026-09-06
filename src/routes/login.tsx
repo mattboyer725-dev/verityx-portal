@@ -1,4 +1,5 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -6,12 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { ErrorNote } from "@/components/page-header";
 import { MIN_PASSWORD_LENGTH } from "@/lib/verityx/constants";
-import { normalizeEmail } from "@/lib/verityx/format";
+import { normalizeEmail, safeAppPath } from "@/lib/verityx/format";
 
-export const Route = createFileRoute("/login")({ component: Login });
+export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
+  component: Login,
+});
 
 function Login() {
   const { user, isPending } = useCurrentUserState();
+  const { redirect } = Route.useSearch();
+  const dest = safeAppPath(redirect);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -22,7 +32,13 @@ function Login() {
   if (isPending) {
     return <div className="min-h-dvh bg-ink" />;
   }
-  if (user) return <Navigate to="/work" />;
+  if (user) return <Navigate to={dest} replace />;
+
+  async function returnToPlatform() {
+    queryClient.clear();
+    await authClient.getSession().catch(() => undefined);
+    await navigate({ to: dest, replace: true });
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,18 +63,16 @@ function Login() {
           email: normalized,
           password,
           name: name.trim() || normalized.split("@")[0],
-          callbackURL: "/work",
         });
         if (err) throw new Error(err.message ?? "Could not create the workspace");
       } else {
         const { error: err } = await authClient.signIn.email({
           email: normalized,
           password,
-          callbackURL: "/work",
         });
         if (err) throw new Error(err.message ?? "Could not sign in");
       }
-      window.location.assign("/work");
+      await returnToPlatform();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
       setBusy(false);
@@ -91,7 +105,9 @@ function Login() {
             {mode === "in" ? "Sign in" : "Create a workspace"}
           </h2>
           <p className="mt-2 text-sm text-mute">
-            {mode === "in" ? "Continue a pilot already in motion." : "Register the organization that will own the first customer."}
+            {mode === "in"
+              ? "Continue, then return to the platform hub."
+              : "Register the organization that will own the first customer."}
           </p>
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
@@ -121,7 +137,7 @@ function Login() {
             </Field>
             <ErrorNote message={error} />
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Working…" : mode === "in" ? "Enter workspace" : "Create workspace"}
+              {busy ? "Working…" : mode === "in" ? "Enter platform" : "Create workspace"}
             </Button>
           </form>
 
@@ -146,7 +162,9 @@ function Login() {
                     type="button"
                     variant="ghost"
                     className="w-full"
-                    onClick={() => signIn(p.providerId, { callbackURL: "/work" })}
+                    onClick={() =>
+                      signIn(p.providerId, { callbackURL: dest, errorCallbackURL: "/login" })
+                    }
                   >
                     Continue with {p.label}
                   </Button>
@@ -158,15 +176,21 @@ function Login() {
           )}
 
           <div className="mt-8 space-y-2 border-t border-line pt-6 text-sm">
+            <Link to="/" className="block text-mute hover:text-paper">
+              Back to the platform hub →
+            </Link>
             <Link to="/desk" className="block text-mute hover:text-paper">
               Open the Siemens Gamesa magnetics desk →
+            </Link>
+            <Link to="/core" className="block text-mute hover:text-paper">
+              Verify the signed core →
             </Link>
             <button
               type="button"
               className="block text-mute hover:text-paper"
               onClick={() => {
                 const google = GROK_PROVIDERS.find((p) => p.idp === "google");
-                if (google) signIn(google.providerId, { callbackURL: "/admin" });
+                if (google) signIn(google.providerId, { callbackURL: "/admin", errorCallbackURL: "/login" });
               }}
             >
               Owner command (Google) →

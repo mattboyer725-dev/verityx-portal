@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const tones: Record<string, string> = {
@@ -31,6 +31,13 @@ const tones: Record<string, string> = {
   admin: "text-paper border-line",
   analyst: "text-mist border-line",
   viewer: "text-mute border-line",
+  correct: "text-ok border-ok/30",
+  partial: "text-warn border-warn/30",
+  incorrect: "text-bad border-bad/30",
+  unknown: "text-mute border-line",
+  yes: "text-ok border-ok/30",
+  no: "text-mute border-line",
+  undecided: "text-mist border-line",
 };
 
 export function Pill({ children, tone }: { children: ReactNode; tone?: string }) {
@@ -49,4 +56,40 @@ export function Pill({ children, tone }: { children: ReactNode; tone?: string })
 export function SampleTag({ on }: { on?: boolean }) {
   if (!on) return null;
   return <Pill>Sample</Pill>;
+}
+
+export function LivePulse({
+  refreshing,
+  updatedAt,
+}: {
+  refreshing?: boolean;
+  updatedAt?: number;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const ago = updatedAt ? Math.max(0, Math.round((now - updatedAt) / 1000)) : null;
+  const label = refreshing
+    ? "Syncing ledger"
+    : ago == null
+      ? "Live"
+      : ago < 4
+        ? "Live now"
+        : ago < 60
+          ? `Live · ${ago}s ago`
+          : `Live · ${Math.floor(ago / 60)}m ago`;
+  return (
+    <span className="inline-flex items-center gap-2 tabular-nums">
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          refreshing ? "bg-warn vx-pulse" : "bg-ok",
+        )}
+        aria-hidden
+      />
+      {label}
+    </span>
+  );
 }

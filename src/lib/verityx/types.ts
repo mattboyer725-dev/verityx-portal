@@ -47,12 +47,21 @@ export type Organization = {
   createdAt: string;
 };
 
+export type Member = {
+  userId: string;
+  role: Role;
+  name: string;
+  email: string;
+  createdAt: string;
+};
+
 export type Workspace = {
   userId: string;
   organization: Organization;
   role: Role;
   stripeConfigured: boolean;
   ruleVersion: string;
+  members: Member[];
 };
 
 export type Prospect = {
@@ -182,4 +191,5 @@ export type Dashboard = {
   recentPilots: (Pilot & { companyName: string })[];
   recentOutcomes: (Outcome & { companyName: string; pilotTitle: string })[];
   recentAudit: AuditLog[];
+  fetchedAt: string;
 };

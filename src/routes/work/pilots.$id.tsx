@@ -43,6 +43,7 @@ function PilotDetail() {
     outcomeValue: "",
     timeToResolutionDays: "",
     caseStudyPermission: "undecided" as Outcome["caseStudyPermission"],
+    followUpAt: "",
     notes: "",
   });
 
@@ -57,6 +58,7 @@ function PilotDetail() {
         timeToResolutionDays:
           data.outcome.timeToResolutionDays == null ? "" : String(data.outcome.timeToResolutionDays),
         caseStudyPermission: data.outcome.caseStudyPermission,
+        followUpAt: data.outcome.followUpAt ? data.outcome.followUpAt.slice(0, 10) : "",
         notes: data.outcome.notes,
       });
     }
@@ -347,6 +349,7 @@ function PilotDetail() {
           ? Number(outcome.timeToResolutionDays)
           : null,
         caseStudyPermission: outcome.caseStudyPermission,
+        followUpAt: outcome.followUpAt || null,
         notes: outcome.notes,
       });
       toast.success("Outcome recorded");
@@ -360,7 +363,10 @@ function PilotDetail() {
   if (loading && !data) return <Skeleton className="h-64" />;
   if (error) return <ErrorNote message={error} />;
   if (!data) return null;
-  const { pilot, prospect, decisions, reports, feedback, stripeConfigured } = data;
+  const { pilot, prospect, stripeConfigured } = data;
+  const decisions = data.decisions ?? [];
+  const reports = data.reports ?? [];
+  const feedback = data.feedback ?? [];
 
   return (
     <div className="space-y-8 vx-enter">
@@ -633,6 +639,13 @@ function PilotDetail() {
                 <option value="yes">yes</option>
                 <option value="no">no</option>
               </Select>
+            </Field>
+            <Field label="Follow-up date" hint="When you will check later reality against this file.">
+              <Input
+                type="date"
+                value={outcome.followUpAt}
+                onChange={(e) => setOutcome({ ...outcome, followUpAt: e.target.value })}
+              />
             </Field>
             <Field label="Notes">
               <Textarea value={outcome.notes} onChange={(e) => setOutcome({ ...outcome, notes: e.target.value })} />

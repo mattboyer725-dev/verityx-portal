@@ -5,7 +5,7 @@ import { runPipeline, sapWriteback, SCENARIOS, BUYER } from "@/lib/engine";
 import { issueDeskToken, oidcDiscovery, oidcJwks } from "@/lib/oidc";
 import { clusterSnapshot } from "@/lib/pbft";
 import { getAriba, getSapPo, listSapPos, sapGetEntity, sapWritebackLog, seedSapPo } from "@/lib/sap";
-import { ensureGenesis, merkleSnapshot, verifyChain, listEvents, LOCAL_CORE, doctor, merkleProofAt } from "@/lib/core-ledger";
+import { ensureGenesis, merkleSnapshot, merkleProofAt, verifyChain, listEvents, LOCAL_CORE, doctor } from "@/lib/core-ledger";
 
 function seedAll() {
   for (const s of SCENARIOS) {
@@ -164,44 +164,21 @@ export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () 
   } catch {
     await ensureGenesis();
   }
-  const snap = await merkleSnapshot();
-  const chain = await verifyChain();
-  const coreDoctor = await doctor();
-  const events = listEvents();
-  let proof: {
-    index: number;
-    root: string;
-    valid: boolean;
-    leaf: string;
-    path: { sibling: string; side: string }[];
-  } | null = null;
-  if (events.length) {
-    const p = await merkleProofAt(events.length - 1);
-    proof = {
-      index: p.index,
-      root: p.root,
-      valid: p.valid,
-      leaf: p.leaf,
-      path: p.path.map((s) => ({ sibling: s.sibling, side: s.side })),
-    };
+  const [chain, snap, doc] = await Promise.all([verifyChain(), merkleSnapshot(), doctor()]);
+  let proof: Awaited<ReturnType<typeof merkleProofAt>> | null = null;
+  if (snap.leaf_count > 0) {
+    try {
+      proof = await merkleProofAt(snap.leaf_count - 1);
+    } catch {
+      proof = null;
+    }
   }
   return {
-    version: LOCAL_CORE.version,
-    sha: LOCAL_CORE.sha,
-    repo: LOCAL_CORE.repo,
-    verifiedOnGithub: true,
-    tests: 112,
+    chain,
     snap,
-    chain: { ok: chain.ok, depth: chain.depth, bad: chain.bad, errors: chain.errors },
-    doctor: coreDoctor,
-    events: events.map((e) => ({
-      id: e.id,
-      type: e.type,
-      hash: e.hash,
-      mac: e.mac,
-      ts: e.ts,
-      actor: e.actor,
-    })),
+    doctor: doc,
+    events: listEvents(),
     proof,
+    core: LOCAL_CORE,
   };
 });

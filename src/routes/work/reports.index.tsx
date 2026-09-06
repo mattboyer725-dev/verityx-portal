@@ -1,12 +1,37 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { toast } from "sonner";
 import { EmptyState, ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { formatWhen } from "@/lib/verityx/format";
-import { useReportsLive } from "@/lib/verityx/live";
+import { errorMessage, useLiveMutations, useReportsLive } from "@/lib/verityx/live";
 
 export const Route = createFileRoute("/work/reports/")({ component: ReportsPage });
 
 function ReportsPage() {
   const { data, error, loading } = useReportsLive();
+  const mutate = useLiveMutations();
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function download(id: string, title: string) {
+    setBusy(id);
+    try {
+      const file = await mutate.getReportPdf({ id });
+      const binary = Uint8Array.from(atob(file.base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([binary], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = file.filename || `${title}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="space-y-8 vx-enter">
       <PageHeader
@@ -31,6 +56,14 @@ function ReportsPage() {
                   {r.companyName} · {formatWhen(r.createdAt)}
                 </p>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy === r.id}
+                onClick={() => download(r.id, r.title)}
+              >
+                {busy === r.id ? "Preparing…" : "PDF"}
+              </Button>
             </li>
           ))}
         </ul>

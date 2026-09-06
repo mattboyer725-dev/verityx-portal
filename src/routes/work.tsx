@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/app-shell";
-import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 export const Route = createFileRoute("/work")({ component: WorkLayout });
@@ -27,6 +26,6 @@ function WorkLayout() {
       </div>
     );
   }
-  if (!user) return <RedirectToSignIn />;
+  if (!user) return <Navigate to="/login" />;
   return <AppShell />;
 }
