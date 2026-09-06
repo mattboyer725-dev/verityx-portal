@@ -1,0 +1,2 @@
+-- Operator extras: activity telemetry, API keys, webhooks, security knobs.
+-- See workspace migrations/0003_admin_ops.sql for the full schema.
