@@ -371,7 +371,7 @@ function vxRun(scenarioId){
   const merkleInc={ok:true,leaf:hash,index:CLIENT_CHAIN.length-1,root:hash,proof:[]};
   const auth={agent:'AUTH',ok:true,seat:{name:'Elena Hartmann',title:'Head of Magnetics Procurement',tenant:'SIEMENS-GAMESA',email:EMAIL}};
   const result={scenario,ingest,oracle,consensus,risk,provenance,screen,compliance,dual,seal,ledger,merkle:merkleInc,auth,chainDepth:CLIENT_CHAIN.length,message:'One provable version of reality established.'};
-  result.evidence={agent:'EVIDENCE',pattern:'Sourcemap exportable evidence packet analog',filename:scenario.id+'-verityx-packet.json',packet:result};
+  result.evidence={agent:'EVIDENCE',pattern:'Sourcemap exportable evidence packet analog',filename:scenario.id+'-verityx-packet.json'};
   return result;
 }
 function vxWriteback(id, action) {

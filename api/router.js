@@ -83,7 +83,7 @@ function sealAgent(scenario,consensus){
 function ledgerAgent(){
   return{agent:'LEDGER',pattern:'verityx-local-core append-only hash chain analog',depth:CHAIN.length,intact:CHAIN.every((b,i)=>i===0?b.prev==='GENESIS':b.prev===CHAIN[i-1].hash),tip:CHAIN.length?CHAIN[CHAIN.length-1].hash:'GENESIS',blocks:[...CHAIN]};
 }
-function evidenceAgent(packet){return{agent:'EVIDENCE',pattern:'Sourcemap exportable evidence packet analog',filename:packet.scenario.id+'-verityx-packet.json',packet};}
+function evidenceAgent(packet){return{agent:'EVIDENCE',pattern:'Sourcemap exportable evidence packet analog',filename:packet.scenario.id+'-verityx-packet.json'};}
 function authAgent(email,password){
   const ok=email==='elena.hartmann@siemensgamesa.com'&&password==='demo2026';
   return{agent:'AUTH',ok,seat:ok?{name:'Elena Hartmann',title:'Head of Magnetics Procurement',tenant:'SIEMENS-GAMESA',email}:null};
@@ -180,8 +180,7 @@ function intakeAgent(body){
   return{agent:'INTAKE',accepted:true,scenario:row};
 }
 function evidencePacket(id){
-  const packet=runPipeline(id);
-  return evidenceAgent(packet);
+  return runPipeline(id);
 }
 const WRITEBACKS=[];
 function sapWriteback(id,action){
@@ -196,7 +195,15 @@ function sapWriteback(id,action){
 
 function send(res, code, body) {
   cors(res);
-  res.status(code).json(body);
+  let payload;
+  try { payload = JSON.stringify(body); }
+  catch (err) {
+    code = 500;
+    payload = JSON.stringify({ error: 'serialize', message: String(err && err.message || err) });
+  }
+  res.statusCode = code;
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.end(payload);
 }
 function pathOf(req) {
   const raw = (req.url || '/').split('?')[0];
@@ -263,7 +270,6 @@ module.exports = (req, res) => {
       return send(res, 200, rows);
     }
     if (p.endsWith('/verify')) {
-      if (req.method !== 'POST') return send(res, 405, { error: 'POST required' });
       return send(res, 200, runPipeline(id));
     }
     if (p.endsWith('/writeback')) {
