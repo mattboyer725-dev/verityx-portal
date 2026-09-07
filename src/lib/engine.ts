@@ -15,6 +15,7 @@ import {
 } from "@/lib/core-ledger";
 import { runPbft, PBFT_N, PBFT_QUORUM, clusterSnapshot, type PbftRound } from "@/lib/pbft";
 import { getAriba, getSapPo, seedSapPo, sapWriteback as postSap, sapWritebackLog as sapLog, type SapPO, type AribaRfq } from "@/lib/sap";
+import { recordCirculorLot } from "@/lib/circulor";
 import { evaluateDecision, type Evaluation } from "@/lib/verityx/decision-engine";
 import type { EvidenceItem } from "@/lib/verityx/types";
 
@@ -427,29 +428,35 @@ export function riskAgent(scenario: Scenario, consensus: Consensus) {
   };
 }
 
-export function provenanceAgent(scenario: Scenario) {
-  const lot = scenario.po.slice(-8);
-  const now = Date.now();
-  const custody = scenario.tiers.map((t, i) => ({
-    step: i + 1,
-    from: t.name,
-    event: `${t.role} handoff`,
-    evidence: t.evidence,
-    country: t.country,
-    lat: t.lat,
-    lng: t.lng,
-    at: new Date(now - (scenario.tiers.length - i) * 86400000 * 11).toISOString(),
-  }));
+export async function provenanceAgent(scenario: Scenario) {
+  const lot = await recordCirculorLot({
+    id: scenario.id,
+    po: scenario.po,
+    commodity: scenario.commodity,
+    plant: scenario.plant,
+    tiers: scenario.tiers,
+  });
   return {
     agent: "PROVENANCE" as const,
     pattern: "Circulor mass-balance + Minespider batch hash + EU DPP",
     commodity: scenario.commodity,
-    dppId: `dpp:eu:sgre:${scenario.id.toLowerCase()}:${lot}`,
-    gs1: `https://id.gs1.org/01/04012345678901/21/${lot}`,
-    circulorLot: `CIR-SGRE-${lot}`,
-    minespiderBatch: `MS-${scenario.id}-${lot}`,
+    dppId: lot.dppId,
+    gs1: lot.gs1,
+    circulorLot: lot.lot,
+    minespiderBatch: lot.minespiderBatch,
+    circulor: lot,
     tiers: scenario.tiers,
-    custody,
+    custody: lot.events.map((e) => ({
+      step: e.seq,
+      from: e.from,
+      event: `${e.event} · ${e.evidence}`,
+      evidence: e.evidence,
+      country: e.country,
+      lat: e.lat,
+      lng: e.lng,
+      at: e.at,
+      hash: e.hash,
+    })),
   };
 }
 
@@ -471,7 +478,7 @@ export function screenAgent(scenario: Scenario, live?: LiveBundle) {
   ].filter(Boolean) as { type: string; text: string }[];
   return {
     agent: "SCREEN" as const,
-    pattern: "EcoVadis + Prewave + RapidRatings + GLEIF + UN",
+    pattern: "EcoVadis + Prewave + RapidRatings + GLEIF + OpenSanctions + UN",
     screens: scenario.screens,
     alerts,
     gleif,
@@ -730,7 +737,7 @@ export type PipelineResult = {
   oracle: ReturnType<typeof oracleAgent>;
   consensus: Consensus;
   risk: ReturnType<typeof riskAgent>;
-  provenance: ReturnType<typeof provenanceAgent>;
+  provenance: Awaited<ReturnType<typeof provenanceAgent>>;
   screen: ReturnType<typeof screenAgent>;
   compliance: ReturnType<typeof complianceAgent>;
   dual: ReturnType<typeof dualSourceAgent>;
@@ -758,7 +765,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
     outlier: !consensus.kept.includes(p.value) && !p.live,
   }));
   const risk = riskAgent(scenario, consensus);
-  const provenance = provenanceAgent(scenario);
+  const provenance = await provenanceAgent(scenario);
   const screen = screenAgent(scenario, live);
   const compliance = complianceAgent(scenario);
   const dual = dualSourceAgent(scenario, consensus);
@@ -814,18 +821,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   };
 }
 
-export function competitionNotes() {
-  return [
-    { name: "SAP Ariba / Coupa / GEP", take: "Verify sits on the PO path with an OData writeback, not a side dashboard." },
-    { name: "EcoVadis / Prewave", take: "Live EcoVadis scorecard + Prewave media risk on every supplier." },
-    { name: "Resilinc / Everstream / Sayari", take: "N-tier map with lat/lng custody events." },
-    { name: "Circulor / Minespider / Everledger", take: "EU DPP + GS1 Digital Link + mass-balance lot." },
-    { name: "RapidRatings / D&B", take: "Live FHR from listed tape; opacity flag if unlisted." },
-    { name: "Sourcemap / Altana", take: "Exportable evidence packet." },
-    { name: "Hyperledger samples", take: "Permissioned 27-node PBFT, not public PoW." },
-    { name: "verityx-local-core", take: "HMAC-SHA256 append-only log + domain-separated Merkle inclusion (v1.6.0, SHA 319af22)." },
-  ];
-}
+export { competitionNotes } from "./competition";
 
 export const AGENTS = [
   { id: "INGEST", exists: true, role: "SAP S/4 + Ariba" },

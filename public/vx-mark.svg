@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="VerityX">
+  <circle cx="32" cy="32" r="31.2" fill="#120C1A"/>
+  <circle cx="32" cy="32" r="28.6" stroke="#6E5A8A" stroke-width="0.9" opacity="0.9"/>
+  <polygon points="32.00,6.00 54.52,19.00 54.52,45.00 32.00,58.00 9.48,45.00 9.48,19.00" stroke="#C9B07A" stroke-width="0.7" opacity="0.55"/>
+  <polygon points="32.00,12.00 49.32,42.00 14.68,42.00" stroke="#6E5A8A" stroke-width="0.7" opacity="0.7"/>
+  <circle cx="32" cy="32" r="9.2" stroke="#C9B07A" stroke-width="0.6" opacity="0.4"/>
+  <path d="M49.32 22 L32 52 L14.68 22" stroke="#C9B07A" stroke-width="2.35" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="6" r="1.05" fill="#C9B07A" opacity="0.8"/>
+  <circle cx="54.52" cy="19" r="1.05" fill="#C9B07A" opacity="0.55"/>
+  <circle cx="54.52" cy="45" r="1.05" fill="#C9B07A" opacity="0.55"/>
+  <circle cx="32" cy="58" r="1.05" fill="#C9B07A" opacity="0.8"/>
+  <circle cx="9.48" cy="45" r="1.05" fill="#C9B07A" opacity="0.55"/>
+  <circle cx="9.48" cy="19" r="1.05" fill="#C9B07A" opacity="0.55"/>
+</svg>

@@ -25,6 +25,7 @@ import {
 import { VxMark } from "@/components/vx-mark";
 import { SiteNav } from "@/components/site-nav";
 import { enterOwnerSeat } from "@/lib/owner-enter";
+import { openCommandPalette } from "@/lib/nav";
 
 type Panel =
   | "command"
@@ -379,15 +380,12 @@ function AdminConsole() {
           <Link className="vx-btn vx-btn-ghost" to="/">
             Hub
           </Link>
-          <Link className="vx-btn vx-btn-ghost" to="/desk">
-            Desk
+          <Link className="vx-btn vx-btn-ghost" to="/field">
+            Field
           </Link>
-          <Link className="vx-btn vx-btn-ghost" to="/core">
-            Core
-          </Link>
-          <Link className="vx-btn vx-btn-ghost" to="/work">
-            OS
-          </Link>
+          <button className="vx-btn vx-btn-ghost" type="button" onClick={() => openCommandPalette()}>
+            Menu
+          </button>
         </div>
       </header>
 

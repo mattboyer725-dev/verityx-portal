@@ -4,6 +4,10 @@ import { ArrowRight, Check, Shield } from "lucide-react";
 import { getCoreStatus } from "@/lib/live-api";
 import { CORE_SHA, CORE_VERSION, LOCAL_CORE } from "@/lib/core-ledger";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
+import { useLiveAdapters } from "@/lib/desk-live";
+import { SurfaceLoop } from "@/components/surface-loop";
+import { AdapterStrip } from "@/components/adapter-strip";
 
 export const Route = createFileRoute("/core")({
   loader: async () => {
@@ -39,6 +43,8 @@ function CoreStatus() {
     enabled: typeof window !== "undefined",
   });
   const data = q.data;
+  const { adapters } = useLiveAdapters();
+
   const ok = Boolean(data?.chain.ok && data?.doctor.overall === "ok");
   const statusLabel = ok
     ? "Chain verified"
@@ -49,7 +55,7 @@ function CoreStatus() {
         : "Checking…";
 
   return (
-    <main className="min-h-dvh bg-ink text-paper">
+    <main className="min-h-dvh overflow-x-hidden bg-ink text-paper">
       <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
         <SiteNav tone="ink" />
       </div>
@@ -66,6 +72,7 @@ function CoreStatus() {
             <span className="font-mono text-paper">{CORE_SHA.slice(0, 7)}</span>. Not a mesh peer. No public write
             route.
           </p>
+          <SurfaceLoop className="mt-8" />
           <div className="mt-8 flex flex-wrap gap-3">
             <span className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-ok/40 bg-ok/10 px-4 text-sm text-ok">
               <span className="size-1.5 rounded-full bg-ok" />
@@ -117,6 +124,13 @@ function CoreStatus() {
             <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-mute">{m.l}</p>
           </div>
         ))}
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Live adapters on this host</p>
+        <div className="mt-4">
+          <AdapterStrip adapters={adapters} compact />
+        </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-16">
@@ -212,7 +226,7 @@ function CoreStatus() {
           ) : null}
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/desk" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-paper px-4 text-sm text-ink">
+          <Link to="/desk" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-4 text-sm text-plum">
             Open magnetics desk
             <ArrowRight className="size-4" />
           </Link>
@@ -224,6 +238,10 @@ function CoreStatus() {
           </Link>
         </div>
       </section>
+
+      <div className="mx-auto max-w-6xl px-6 pb-10">
+        <SiteFooter />
+      </div>
     </main>
   );
 }

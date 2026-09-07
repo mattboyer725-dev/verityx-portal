@@ -1,0 +1,16 @@
+.git
+.vercel
+.output
+.nitro
+.tanstack
+.grok
+node_modules
+screenshots
+attachments
+artifacts
+*.log
+.env
+.env.*
+.project_id
+dist
+portal

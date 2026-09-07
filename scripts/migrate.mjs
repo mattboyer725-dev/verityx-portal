@@ -44,7 +44,9 @@ async function main() {
 
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
   const client = await pool.connect();
+  const lockKey = 74188201;
   try {
+    await client.query("SELECT pg_advisory_lock($1)", [lockKey]);
     await client.query(
       "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
     );
@@ -75,6 +77,11 @@ async function main() {
     }
     console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
   } finally {
+    try {
+      await client.query("SELECT pg_advisory_unlock($1)", [lockKey]);
+    } catch {
+      /* session end releases the lock */
+    }
     client.release();
     await pool.end();
   }

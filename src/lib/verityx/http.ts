@@ -9,9 +9,23 @@ export function originHost(origin: string): string | null {
   }
 }
 
+function authUrlHost(): string | null {
+  const raw = process.env.BETTER_AUTH_URL?.trim();
+  if (!raw) return null;
+  try {
+    return new URL(raw).hostname;
+  } catch {
+    return null;
+  }
+}
+
 function isTrustedHost(host: string): boolean {
   if (LOCAL_HOSTS.has(host)) return true;
   if (host.endsWith(".grok-sandbox.com") || host.endsWith(".grok.me")) return true;
+  const configuredHost = authUrlHost();
+  if (configuredHost && host === configuredHost) return true;
+  // Cloud Run default URLs: verityx-HASH-uc.a.run.app (and the legacy *.run.app).
+  if (host.endsWith(".run.app") && host.startsWith("verityx-")) return true;
   if (!host.endsWith(".vercel.app")) return false;
   return (
     host === "verityx.vercel.app" ||

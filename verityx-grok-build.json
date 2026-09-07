@@ -12,6 +12,16 @@
     "github": "mattboyer725-dev/verityx-portal",
     "githubRelease": "v1.0-soft-prod",
     "vercelProject": "verityx-portal",
+    "gcp": {
+      "runtime": "Cloud Run",
+      "database": "Cloud SQL Postgres 16",
+      "region": "us-central1",
+      "service": "verityx",
+      "build": "gcp/cloudbuild.yaml",
+      "bootstrap": "gcp/bootstrap.sh",
+      "deploy": "gcp/deploy.sh",
+      "health": ["/health/live", "/health/ready"]
+    },
     "live": [
       "https://verityx-portal.vercel.app",
       "https://verityx-sovereign-desk.vercel.app",
@@ -21,17 +31,17 @@
     ]
   },
   "agents": [
-    { "id": "INGEST", "exists": true, "role": "SAP OData + TED", "built": true },
-    { "id": "ORACLE", "exists": true, "role": "Yahoo + FX tape", "built": true },
+    { "id": "INGEST", "exists": true, "role": "SAP OData tenant + TED", "built": true },
+    { "id": "ORACLE", "exists": true, "role": "LME + REE SSE socket + ECB FX", "built": true },
     { "id": "CONSENSUS", "exists": true, "role": "CoV + MAD filter", "built": true },
     { "id": "RISK", "exists": true, "role": "Anomaly vs proposed", "built": true },
-    { "id": "PROVENANCE", "exists": true, "role": "EU DPP + geo custody", "built": true },
-    { "id": "SCREEN", "exists": true, "role": "GLEIF + UN sanctions", "built": true },
+    { "id": "PROVENANCE", "exists": true, "role": "Circulor lot ledger + EU DPP", "built": true },
+    { "id": "SCREEN", "exists": true, "role": "GLEIF + OpenSanctions + UN", "built": true },
     { "id": "COMPLIANCE", "exists": true, "role": "CBAM / dual-use gate", "built": true },
-    { "id": "SEAL", "exists": true, "role": "27-node PBFT", "built": true },
+    { "id": "SEAL", "exists": true, "role": "27-host PBFT network", "built": true },
     { "id": "LEDGER", "exists": true, "role": "HMAC + Merkle persisted", "built": true },
     { "id": "EVIDENCE", "exists": true, "role": "Exportable packet", "built": true },
-    { "id": "AUTH", "exists": true, "role": "OIDC JWT seat", "built": true },
+    { "id": "AUTH", "exists": true, "role": "Okta-shaped OIDC RS256 IdP", "built": true },
     { "id": "OS", "exists": true, "role": "Customer Zero advisory rules", "built": true }
   ]
 }

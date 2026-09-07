@@ -15,12 +15,16 @@ import { postSapWriteback, runLiveVerify } from "@/lib/live-api";
 import { deskKeys, useDeskTape } from "@/lib/desk-live";
 import { useQueryClient } from "@tanstack/react-query";
 import { issueDeskToken } from "@/lib/oidc";
+import { sapPatchPo, seatFromOidc } from "@/lib/desk-adapters";
 import type { LiveBundle } from "@/lib/feeds";
 import { VxMark } from "@/components/vx-mark";
 import { Spark } from "@/components/spark";
 import { SiteNav } from "@/components/site-nav";
+import { SurfaceLoop } from "@/components/surface-loop";
 import { SESSION_KEY, type DeskSession } from "@/lib/session";
 import { OWNER_EMAIL } from "@/lib/admin";
+import { openCommandPalette } from "@/lib/nav";
+import { deskTabForProve, proveLabel, type DeskTab } from "@/lib/competition";
 
 function clientBudget<T>(p: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -68,7 +72,7 @@ function chg(n: number) {
   );
 }
 
-export function LoginGate({ onEnter }: { onEnter: () => void }) {
+export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: string }) {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [maintenance, setMaintenance] = useState(false);
@@ -92,7 +96,8 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
     }
     setBusy(true);
     setErr("");
-    const local = await issueDeskToken(BUYER.email, BUYER.password);
+    const remote = await seatFromOidc(BUYER.email, BUYER.password).catch(() => null);
+    const local = remote || (await issueDeskToken(BUYER.email, BUYER.password));
     if (!local) {
       setBusy(false);
       setErr("Seat could not be signed. Try again.");
@@ -116,6 +121,7 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
     <div className="gate">
       <div className="gate-nav">
         <SiteNav tone="linen" />
+        <SurfaceLoop className="mt-3" />
       </div>
       <section className="gate-left">
         <div>
@@ -128,8 +134,8 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
           </div>
           <h1>One provable version of the purchase order.</h1>
           <p className="lede">
-            Siemens Gamesa magnetics. Live LME cash, SAP writeback, EcoVadis screens, Circulor custody, sealed by a
-            27-node PBFT cluster and an HMAC local-core ledger.
+            Siemens Gamesa magnetics. Live LME cash, SAP OData tenant, OpenSanctions screens, Circulor lot ledger, sealed by a
+            27-host PBFT network and an HMAC local-core ledger.
           </p>
           <div className="gate-tape">
             {tape?.lme ? <span className="tape-chip">LME Cu {tape.lme.copperUsdMt.toFixed(0)} USD/mt</span> : null}
@@ -144,7 +150,7 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
             {!tape?.lme && !tape?.fx ? <span className="tape-chip">LME · Argus · ECB standby</span> : null}
           </div>
         </div>
-        <p className="hint">SAP · Ariba · LME · Argus · EcoVadis · Circulor · PBFT 27 · Local Core HMAC · Okta</p>
+        <p className="hint">SAP OData · Ariba · LME · REE socket · OpenSanctions · Circulor lots · PBFT 27 · Local Core HMAC · OIDC</p>
       </section>
       <section className="gate-right">
         <div className="login-card">
@@ -155,8 +161,12 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
               <span>Siemens Gamesa · magnetics</span>
             </div>
           </div>
-          <h2>Continue as Elena</h2>
-          <p>Head of Magnetics Procurement. One click issues an RS256 seat token and opens the live PO tape.</p>
+          <h2>{prove ? "Prove it on the tape" : "Continue as Elena"}</h2>
+          <p>
+            {prove
+              ? `${proveLabel(prove) || "The analog"} is live on this host. One click as Elena opens that tab on the magnetics PO.`
+              : "Head of Magnetics Procurement. One click issues an RS256 seat token and opens the live PO tape."}
+          </p>
           <div className="seat-card">
             <div className="vx-avatar">EH</div>
             <div className="who">
@@ -179,6 +189,8 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
           <p className="hint">
             <Link to="/">Hub</Link>
             {" · "}
+            <Link to="/field">Field</Link>
+            {" · "}
             <Link to="/work">Customer Zero OS</Link>
             {" · "}
             <Link to="/core">Local Core</Link>
@@ -191,21 +203,27 @@ export function LoginGate({ onEnter }: { onEnter: () => void }) {
   );
 }
 
-export function Desk({ onLeave }: { onLeave: () => void }) {
+export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }) {
   const [desk, setDesk] = useState<"all" | Scenario["desk"]>("all");
   const [flag, setFlag] = useState<"all" | "hold" | "clear">("all");
   const [selected, setSelected] = useState(SCENARIOS[0].id);
   const [running, setRunning] = useState(false);
   const [packet, setPacket] = useState<PipelineResult | null>(null);
-  const [note, setNote] = useState("Select a PO and verify");
+  const [note, setNote] = useState(prove ? `Field · ${proveLabel(prove) || prove}` : "Select a PO and verify");
   const [wb, setWb] = useState("");
   const [frozen, setFrozen] = useState(false);
   const [announce, setAnnounce] = useState("");
   const tapeQ = useDeskTape();
   const live = (tapeQ.data as LiveSnap | undefined) ?? null;
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"pipe" | "sap" | "mkt" | "screen" | "prov" | "seal" | "core">("pipe");
+  const [tab, setTab] = useState<DeskTab>(() => deskTabForProve(prove));
   const [drawer, setDrawer] = useState(false);
+
+  useEffect(() => {
+    if (!prove) return;
+    setTab(deskTabForProve(prove));
+    setNote(`Field · ${proveLabel(prove) || prove}`);
+  }, [prove]);
 
   useEffect(() => {
     getDeskControls()
@@ -270,9 +288,12 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
 
   async function writeback(action: "HOLD" | "RELEASE") {
     try {
-      const res = await postSapWriteback({ data: { id: current.s.id, action } });
-      setWb(`${res.rec.action} · ${res.rec.doc}`);
-      setNote(`SAP OData PATCH ${res.rec.action} on ${res.rec.po}`);
+      const http = await sapPatchPo(current.s.po, action).catch(() => null);
+      const rec = http
+        ? http.writeback
+        : (await postSapWriteback({ data: { id: current.s.id, action } })).rec;
+      setWb(`${rec.action} · ${rec.doc}`);
+      setNote(`SAP OData PATCH ${rec.action} on ${rec.po}`);
       qc.setQueryData(deskKeys.tape, (prev: LiveSnap | undefined) => {
         if (!prev) return prev;
         const sap = (prev.sap || []).map((p) =>
@@ -367,9 +388,9 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
   const screens = view?.screen.screens ?? current.s.screens;
   const alerts = view?.screen.alerts ?? [];
   const tiers = view?.provenance.tiers ?? current.s.tiers;
-  const eco = view?.screen.ecovadis;
-  const pre = view?.screen.prewave;
-  const rapid = view?.screen.rapid;
+  const eco = view?.screen.ecovadis || live?.ecovadis?.[current.s.supplier];
+  const pre = view?.screen.prewave || live?.prewave?.[current.s.supplier];
+  const rapid = view?.screen.rapid || live?.rapid?.[current.s.supplier];
   const sap = view?.sap;
   const ariba = view?.ariba;
   const cluster = view?.seal.cluster;
@@ -398,15 +419,15 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
           <Link className="vx-btn vx-btn-ghost" to="/">
             Hub
           </Link>
+          <Link className="vx-btn vx-btn-ghost" to="/field">
+            Field
+          </Link>
           <Link className="vx-btn vx-btn-ghost" to="/core">
             Core
           </Link>
-          <Link className="vx-btn vx-btn-ghost" to="/admin">
-            Command
-          </Link>
-          <Link className="vx-btn vx-btn-ghost" to="/work">
-            OS
-          </Link>
+          <button className="vx-btn vx-btn-ghost" type="button" onClick={() => openCommandPalette()}>
+            Menu
+          </button>
           <button className="vx-btn vx-btn-ghost" type="button" onClick={signOut}>
             Sign out
           </button>
@@ -712,11 +733,15 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
             <div>
               <div className="screen-row">
                 <span>OData</span>
-                <span className="mono">API_PURCHASEORDER_PROCESS_SRV</span>
+                <span className="mono">/sap/opu/odata/sap/API_PURCHASEORDER_PROCESS_SRV</span>
               </div>
               <div className="screen-row">
                 <span>GET</span>
                 <span className="mono">A_PurchaseOrder('{sap?.PurchaseOrder || current.s.po}')</span>
+              </div>
+              <div className="screen-row">
+                <span>CSRF / ETag</span>
+                <span className="mono">X-CSRF-Token · If-Match</span>
               </div>
               <div className="screen-row">
                 <span>Company / org</span>
@@ -819,16 +844,24 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
 
           {tab === "screen" ? (
             <div>
+              <div className="screen-row">
+                <span>EcoVadis analog</span>
+                <span className="mono">/ecovadis/api/v2/scorecards</span>
+              </div>
+              <div className="screen-row">
+                <span>Prewave analog</span>
+                <span className="mono">/prewave/api/v1/risks</span>
+              </div>
               <div className="score-grid">
                 <div className="score-card">
                   <div className="k">EcoVadis</div>
                   <div className="v">{eco ? `${eco.score}` : "—"}</div>
-                  <div className="s">{eco ? `${eco.medal} medal` : "Verify to score"}</div>
+                  <div className="s">{eco ? `${eco.medal} medal · NACE 27` : "Verify to score"}</div>
                 </div>
                 <div className="score-card">
                   <div className="k">Prewave</div>
-                  <div className="v">{pre ? pre.risk : "—"}</div>
-                  <div className="s">{pre ? `${pre.level} media risk` : "live news RSS"}</div>
+                  <div className="v">{pre ? pre.heat ?? pre.risk : "—"}</div>
+                  <div className="s">{pre ? `${pre.level} heat on the PO` : "live news RSS"}</div>
                 </div>
                 <div className="score-card">
                   <div className="k">RapidRatings</div>
@@ -852,6 +885,15 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
                     </div>
                   ))
                 : null}
+              {pre ? (
+                <div className="theme-bar">
+                  <span>heat</span>
+                  <div className="track">
+                    <div className="fill" style={{ width: `${pre.heat ?? pre.risk}%` }} />
+                  </div>
+                  <span className="mono">{pre.level}</span>
+                </div>
+              ) : null}
               {(["exportPermit", "esg", "financial", "dualUse"] as const).map((k) => (
                 <div className="screen-row" key={k}>
                   <span>{k}</span>
@@ -866,10 +908,13 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
                   </span>
                 </div>
               ) : null}
-              {pre?.headlines?.map((h) => (
-                <div className="alert" key={h}>
-                  <span className="pill pill-mid">NEWS</span>
-                  <span>{h}</span>
+              {(pre?.incidents?.length
+                ? pre.incidents.map((i) => ({ key: i.url || i.title, cat: i.category, text: i.title }))
+                : (pre?.headlines || []).map((h) => ({ key: h, cat: "NEWS" as const, text: h }))
+              ).map((row) => (
+                <div className="alert" key={row.key}>
+                  <span className="pill pill-mid">{row.cat}</span>
+                  <span>{row.text}</span>
                 </div>
               ))}
               {alerts.map((a) => (
@@ -1050,13 +1095,16 @@ export function Desk({ onLeave }: { onLeave: () => void }) {
           FX <strong>{live?.health.fx || "…"}</strong>
         </span>
         <span>
+          OpenSanctions <strong>{live?.health.opensanctions || "…"}</strong>
+        </span>
+        <span>
           PBFT <strong>27 / quorum 19</strong>
         </span>
         <span>
           Core <strong>{live?.core?.ok ? "HMAC 1.6.0" : "…"}</strong>
         </span>
         <span>
-          Okta <strong>RS256</strong>
+          OIDC <strong>RS256</strong>
         </span>
       </footer>
 

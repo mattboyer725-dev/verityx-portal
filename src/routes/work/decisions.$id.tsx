@@ -20,8 +20,12 @@ function DecisionDetail() {
   async function approve() {
     setBusy(true);
     try {
-      await mutate.approveDecision({ id, note });
-      toast.success("Approved");
+      const d = await mutate.approveDecision({ id, note });
+      toast.success(
+        d.writeback
+          ? `Approved · analog SAP ${d.writeback.action} ${d.writeback.doc}`
+          : "Approved",
+      );
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -117,6 +121,30 @@ function DecisionDetail() {
           ))}
         </ol>
       </section>
+
+      {decision.writeback ? (
+        <section className="panel p-5 sm:p-6">
+          <h2 className="font-display text-2xl">Analog SAP writeback</h2>
+          <p className="mt-1 text-sm text-mute">
+            Posted after human approval. Live analog tenant, not Siemens S/4HANA.
+          </p>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+            {[
+              ["PO", decision.writeback.po],
+              ["Action", decision.writeback.action],
+              ["Document", decision.writeback.doc],
+              ["BAPI", decision.writeback.bapi],
+              ["IDoc", decision.writeback.idoc],
+              ["ETag", decision.writeback.etag],
+            ].map(([k, v]) => (
+              <div key={k} className="min-w-0">
+                <dt className="text-[11px] uppercase tracking-[0.14em] text-mute">{k}</dt>
+                <dd className="mt-1 break-all font-mono text-sm">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
 
       {decision.status === "pending_approval" ? (
         <section className="panel p-5 sm:p-6">

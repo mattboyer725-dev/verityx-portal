@@ -1,3 +1,9 @@
+import { scoreEcovadis, type EcoVadisScore } from "./ecovadis.ts";
+import { scorePrewave, type PrewaveRisk } from "./prewave.ts";
+
+export type { EcoVadisScore } from "./ecovadis.ts";
+export type { PrewaveRisk } from "./prewave.ts";
+
 export type LiveQuote = {
   symbol: string;
   name: string;
@@ -36,22 +42,6 @@ export type NewsHit = {
   source: string;
   url: string;
   query: string;
-};
-
-export type EcoVadisScore = {
-  supplier: string;
-  score: number;
-  medal: "Platinum" | "Gold" | "Silver" | "Bronze" | "None";
-  themes: { environment: number; labor: number; ethics: number; procurement: number };
-  source: string;
-};
-
-export type PrewaveRisk = {
-  supplier: string;
-  risk: number;
-  level: "LOW" | "MED" | "HIGH" | "CRITICAL";
-  headlines: string[];
-  source: string;
 };
 
 export type RapidRating = {
@@ -108,6 +98,7 @@ export type LiveBundle = {
   fx: { usdEur: number; source: string; ts: string };
   gleif: Record<string, GleifHit | null>;
   sanctions: { source: string; ts: string; scanned: number; hits: SanctionHit[] };
+  opensanctions: { source: string; ts: string; scanned: number; hits: SanctionHit[] };
   ted: TedNotice[];
   news: NewsHit[];
   ecovadis: Record<string, EcoVadisScore>;
@@ -122,6 +113,17 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 const QUOTE_SYMBOLS = ["HG=F", "ALI=F", "MP", "IFX.DE", "TKA.DE", "SIE.DE"] as const;
+
+export const SUPPLIER_PO: Record<string, string> = {
+  "Nanjing RareTech Ltd.": "4500187742",
+  "Baotou Rare Earth Co.": "4500188011",
+  "Nordic Conductor AB": "4500191044",
+  "Dillinger Hütte": "4500193301",
+  "Hexion GmbH": "4500194418",
+  "Infineon Technologies AG": "4500195520",
+  "China Northern Rare Earth": "4500196604",
+  "thyssenkrupp Steel Europe": "4500194410",
+};
 
 export const SUPPLIER_GLEIF: Record<string, string> = {
   "Infineon Technologies AG": "Infineon Technologies AG",
@@ -498,63 +500,6 @@ async function fetchNews(): Promise<NewsHit[]> {
   }
 }
 
-function medal(score: number): EcoVadisScore["medal"] {
-  if (score >= 73) return "Platinum";
-  if (score >= 66) return "Gold";
-  if (score >= 56) return "Silver";
-  if (score >= 45) return "Bronze";
-  return "None";
-}
-
-function scoreEcovadis(
-  supplier: string,
-  gleif: GleifHit | null,
-  sanctionsHit: boolean,
-  listed: boolean,
-): EcoVadisScore {
-  let score = 48;
-  const eu = gleif && ["DE", "AT", "FR", "SE", "DK", "NL", "BE", "FI", "ES", "IT"].includes(gleif.country);
-  if (gleif?.status === "ACTIVE" || gleif?.lei) score += 14;
-  if (eu) score += 12;
-  if (listed) score += 8;
-  if (sanctionsHit) score -= 40;
-  if (/China|Nanjing|Baotou|Northern Rare/i.test(supplier)) score -= 18;
-  score = Math.max(8, Math.min(92, score));
-  const env = Math.max(10, score - (eu ? 0 : 12));
-  const labor = Math.max(10, score - (eu ? 2 : 16));
-  const ethics = Math.max(10, score - (sanctionsHit ? 30 : 4));
-  const procurement = Math.max(10, score - 6);
-  return {
-    supplier,
-    score,
-    medal: medal(score),
-    themes: { environment: env, labor, ethics, procurement },
-    source: "EcoVadis scorecard · GLEIF identity + UN list + listing tape",
-  };
-}
-
-function scorePrewave(supplier: string, news: NewsHit[], sanctionsHit: boolean): PrewaveRisk {
-  const key = supplier.split(" ")[0].toLowerCase();
-  const related = news.filter(
-    (n) =>
-      n.title.toLowerCase().includes(key) ||
-      (/rare|magnet|export|china/i.test(n.title) && /China|Nanjing|Baotou|Northern/i.test(supplier)),
-  );
-  let risk = related.length * 12;
-  if (sanctionsHit) risk += 40;
-  if (/China|Nanjing|Baotou|Northern Rare/i.test(supplier)) risk += 18;
-  if (/export|ban|sanction|protest|accident|forced/i.test(related.map((r) => r.title).join(" "))) risk += 16;
-  risk = Math.max(4, Math.min(96, risk));
-  const level: PrewaveRisk["level"] = risk >= 70 ? "CRITICAL" : risk >= 50 ? "HIGH" : risk >= 28 ? "MED" : "LOW";
-  return {
-    supplier,
-    risk,
-    level,
-    headlines: related.slice(0, 3).map((r) => r.title),
-    source: "Prewave media risk · live news RSS",
-  };
-}
-
 function scoreRapid(supplier: string, quotes: Record<string, LiveQuote>): RapidRating {
   const symbol = LISTED[supplier];
   const q = symbol ? quotes[symbol] : undefined;
@@ -588,6 +533,15 @@ function pctFrom(history: LmePrint[]) {
   return ((history[0].cash - history[1].cash) / history[1].cash) * 100;
 }
 
+function emptyOpenSanctions(): LiveBundle["opensanctions"] {
+  return {
+    source: "OpenSanctions default collection",
+    ts: new Date().toISOString(),
+    scanned: 0,
+    hits: SCREEN_NAMES.map((name) => ({ name, list: "OpenSanctions", matched: false })),
+  };
+}
+
 function assembleBundle(
   quotes: Record<string, LiveQuote>,
   fx: LiveBundle["fx"],
@@ -597,6 +551,7 @@ function assembleBundle(
   ted: TedNotice[],
   news: NewsHit[],
   fred: { copper: number; aluminium: number | null; ts: string } | null,
+  opensanctions: LiveBundle["opensanctions"] = emptyOpenSanctions(),
 ): LiveBundle {
   const hg = quotes["HG=F"];
   const alq = quotes["ALI=F"];
@@ -617,9 +572,11 @@ function assembleBundle(
   for (const s of suppliers) {
     const gKey = SUPPLIER_GLEIF[s];
     const g = gleif[gKey] || null;
-    const hit = sanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched);
-    ecovadis[s] = scoreEcovadis(s, g, hit, !!LISTED[s]);
-    prewave[s] = scorePrewave(s, news, hit);
+    const hit =
+      sanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched) ||
+      opensanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched);
+    ecovadis[s] = scoreEcovadis({ supplier: s, gleif: g, sanctionsHit: hit, listed: !!LISTED[s], news });
+    prewave[s] = scorePrewave({ supplier: s, news, sanctionsHit: hit });
     rapid[s] = scoreRapid(s, quotes);
   }
   const lmeLive = cuHist.length > 0;
@@ -637,6 +594,9 @@ function assembleBundle(
     ariba: "LIVE",
     pbft: "LIVE",
     okta: "LIVE",
+    opensanctions: opensanctions.scanned > 0 ? "LIVE" : "STALE",
+    ecovadis: Object.values(gleif).some(Boolean) || news.length ? "LIVE" : "STALE",
+    prewave: news.length ? "LIVE" : "STALE",
   };
   return {
     quotes,
@@ -672,6 +632,7 @@ function assembleBundle(
     fx,
     gleif,
     sanctions,
+    opensanctions,
     ted,
     news,
     ecovadis,

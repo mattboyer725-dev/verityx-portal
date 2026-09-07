@@ -131,6 +131,12 @@ export async function dispatchRest(request: Request): Promise<Response> {
       }>(request);
       return json(request, await ops.patchPilot(userId, { id: pilotId.id, ...body }));
     }
+    const deskPacket = matchPath(path, "/api/pilots/:id/desk-packet");
+    if (deskPacket && method === "POST") {
+      const body = await readJson<{ scenarioId?: string }>(request);
+      return json(request, await ops.pullDeskPacket(userId, { pilotId: deskPacket.id, scenarioId: body.scenarioId }), 201);
+    }
+
     const pay = matchPath(path, "/api/pilots/:id/payment");
     if (pay && method === "POST") {
       const body = await readJson<{ note?: string; confirm?: string }>(request);

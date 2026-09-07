@@ -13,17 +13,32 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CoreRouteImport } from './routes/core'
 import { Route as DeskRouteImport } from './routes/desk'
+import { Route as FieldRouteImport } from './routes/field'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as WorkRouteImport } from './routes/work'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
+import { Route as ApiAdaptersRouteImport } from './routes/api.adapters'
+import { Route as ApiCompetitionRouteImport } from './routes/api.competition'
+import { Route as ApiOracleRouteImport } from './routes/api.oracle'
+import { Route as ApiPbftRouteImport } from './routes/api.pbft'
+import { Route as AribaSplatRouteImport } from './routes/ariba.$'
+import { Route as EcovadisSplatRouteImport } from './routes/ecovadis.$'
 import { Route as HealthLiveRouteImport } from './routes/health.live'
 import { Route as HealthReadyRouteImport } from './routes/health.ready'
+import { Route as MinespiderSplatRouteImport } from './routes/minespider.$'
+import { Route as Oauth2SplatRouteImport } from './routes/oauth2.$'
+import { Route as PrewaveSplatRouteImport } from './routes/prewave.$'
+import { Route as SapSplatRouteImport } from './routes/sap.$'
 import { Route as WorkIndexRouteImport } from './routes/work/index'
 import { Route as WorkAuditRouteImport } from './routes/work/audit'
 import { Route as WorkLearningRouteImport } from './routes/work/learning'
 import { Route as WorkSettingsRouteImport } from './routes/work/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
+import { Route as ApiCirculorSplatRouteImport } from './routes/api.circulor.$'
+import { Route as ApiOktaSplatRouteImport } from './routes/api.okta.$'
+import { Route as ApiOracleStreamRouteImport } from './routes/api.oracle.stream'
+import { Route as ApiPbftRoundRouteImport } from './routes/api.pbft.round'
 import { Route as WorkDecisionsIndexRouteImport } from './routes/work/decisions.index'
 import { Route as WorkDecisionsIdRouteImport } from './routes/work/decisions.$id'
 import { Route as WorkPilotsIndexRouteImport } from './routes/work/pilots.index'
@@ -54,6 +69,11 @@ const DeskRoute = DeskRouteImport.update({
   path: '/desk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FieldRoute = FieldRouteImport.update({
+  id: '/field',
+  path: '/field',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -69,6 +89,36 @@ const ApiSplatRoute = ApiSplatRouteImport.update({
   path: '/api/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdaptersRoute = ApiAdaptersRouteImport.update({
+  id: '/api/adapters',
+  path: '/api/adapters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCompetitionRoute = ApiCompetitionRouteImport.update({
+  id: '/api/competition',
+  path: '/api/competition',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOracleRoute = ApiOracleRouteImport.update({
+  id: '/api/oracle',
+  path: '/api/oracle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPbftRoute = ApiPbftRouteImport.update({
+  id: '/api/pbft',
+  path: '/api/pbft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AribaSplatRoute = AribaSplatRouteImport.update({
+  id: '/ariba/$',
+  path: '/ariba/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EcovadisSplatRoute = EcovadisSplatRouteImport.update({
+  id: '/ecovadis/$',
+  path: '/ecovadis/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HealthLiveRoute = HealthLiveRouteImport.update({
   id: '/health/live',
   path: '/health/live',
@@ -77,6 +127,26 @@ const HealthLiveRoute = HealthLiveRouteImport.update({
 const HealthReadyRoute = HealthReadyRouteImport.update({
   id: '/health/ready',
   path: '/health/ready',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MinespiderSplatRoute = MinespiderSplatRouteImport.update({
+  id: '/minespider/$',
+  path: '/minespider/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Oauth2SplatRoute = Oauth2SplatRouteImport.update({
+  id: '/oauth2/$',
+  path: '/oauth2/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrewaveSplatRoute = PrewaveSplatRouteImport.update({
+  id: '/prewave/$',
+  path: '/prewave/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SapSplatRoute = SapSplatRouteImport.update({
+  id: '/sap/$',
+  path: '/sap/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkIndexRoute = WorkIndexRouteImport.update({
@@ -108,6 +178,26 @@ const ApiAuthMeRoute = ApiAuthMeRouteImport.update({
   id: '/api/auth/me',
   path: '/api/auth/me',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCirculorSplatRoute = ApiCirculorSplatRouteImport.update({
+  id: '/api/circulor/$',
+  path: '/api/circulor/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOktaSplatRoute = ApiOktaSplatRouteImport.update({
+  id: '/api/okta/$',
+  path: '/api/okta/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOracleStreamRoute = ApiOracleStreamRouteImport.update({
+  id: '/stream',
+  path: '/stream',
+  getParentRoute: () => ApiOracleRoute,
+} as any)
+const ApiPbftRoundRoute = ApiPbftRoundRouteImport.update({
+  id: '/round',
+  path: '/round',
+  getParentRoute: () => ApiPbftRoute,
 } as any)
 const WorkDecisionsIndexRoute = WorkDecisionsIndexRouteImport.update({
   id: '/decisions/',
@@ -160,17 +250,32 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/core': typeof CoreRoute
   '/desk': typeof DeskRoute
+  '/field': typeof FieldRoute
   '/login': typeof LoginRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
+  '/api/adapters': typeof ApiAdaptersRoute
+  '/api/competition': typeof ApiCompetitionRoute
+  '/api/oracle': typeof ApiOracleRouteWithChildren
+  '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/ariba/$': typeof AribaSplatRoute
+  '/ecovadis/$': typeof EcovadisSplatRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/minespider/$': typeof MinespiderSplatRoute
+  '/oauth2/$': typeof Oauth2SplatRoute
+  '/prewave/$': typeof PrewaveSplatRoute
+  '/sap/$': typeof SapSplatRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/circulor/$': typeof ApiCirculorSplatRoute
+  '/api/okta/$': typeof ApiOktaSplatRoute
+  '/api/oracle/stream': typeof ApiOracleStreamRoute
+  '/api/pbft/round': typeof ApiPbftRoundRoute
   '/work/decisions/$id': typeof WorkDecisionsIdRoute
   '/work/pilots/$id': typeof WorkPilotsIdRoute
   '/work/prospects/$id': typeof WorkProspectsIdRoute
@@ -186,16 +291,31 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/core': typeof CoreRoute
   '/desk': typeof DeskRoute
+  '/field': typeof FieldRoute
   '/login': typeof LoginRoute
   '/api/$': typeof ApiSplatRoute
+  '/api/adapters': typeof ApiAdaptersRoute
+  '/api/competition': typeof ApiCompetitionRoute
+  '/api/oracle': typeof ApiOracleRouteWithChildren
+  '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/ariba/$': typeof AribaSplatRoute
+  '/ecovadis/$': typeof EcovadisSplatRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/minespider/$': typeof MinespiderSplatRoute
+  '/oauth2/$': typeof Oauth2SplatRoute
+  '/prewave/$': typeof PrewaveSplatRoute
+  '/sap/$': typeof SapSplatRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/circulor/$': typeof ApiCirculorSplatRoute
+  '/api/okta/$': typeof ApiOktaSplatRoute
+  '/api/oracle/stream': typeof ApiOracleStreamRoute
+  '/api/pbft/round': typeof ApiPbftRoundRoute
   '/work/decisions/$id': typeof WorkDecisionsIdRoute
   '/work/pilots/$id': typeof WorkPilotsIdRoute
   '/work/prospects/$id': typeof WorkProspectsIdRoute
@@ -212,17 +332,32 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/core': typeof CoreRoute
   '/desk': typeof DeskRoute
+  '/field': typeof FieldRoute
   '/login': typeof LoginRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
+  '/api/adapters': typeof ApiAdaptersRoute
+  '/api/competition': typeof ApiCompetitionRoute
+  '/api/oracle': typeof ApiOracleRouteWithChildren
+  '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/ariba/$': typeof AribaSplatRoute
+  '/ecovadis/$': typeof EcovadisSplatRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/minespider/$': typeof MinespiderSplatRoute
+  '/oauth2/$': typeof Oauth2SplatRoute
+  '/prewave/$': typeof PrewaveSplatRoute
+  '/sap/$': typeof SapSplatRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/me': typeof ApiAuthMeRoute
+  '/api/circulor/$': typeof ApiCirculorSplatRoute
+  '/api/okta/$': typeof ApiOktaSplatRoute
+  '/api/oracle/stream': typeof ApiOracleStreamRoute
+  '/api/pbft/round': typeof ApiPbftRoundRoute
   '/work/decisions/$id': typeof WorkDecisionsIdRoute
   '/work/pilots/$id': typeof WorkPilotsIdRoute
   '/work/prospects/$id': typeof WorkProspectsIdRoute
@@ -240,17 +375,32 @@ export interface FileRouteTypes {
     | '/admin'
     | '/core'
     | '/desk'
+    | '/field'
     | '/login'
     | '/work'
     | '/api/$'
+    | '/api/adapters'
+    | '/api/competition'
+    | '/api/oracle'
+    | '/api/pbft'
+    | '/ariba/$'
+    | '/ecovadis/$'
     | '/health/live'
     | '/health/ready'
+    | '/minespider/$'
+    | '/oauth2/$'
+    | '/prewave/$'
+    | '/sap/$'
     | '/work/audit'
     | '/work/learning'
     | '/work/settings'
     | '/work/'
     | '/api/auth/$'
     | '/api/auth/me'
+    | '/api/circulor/$'
+    | '/api/okta/$'
+    | '/api/oracle/stream'
+    | '/api/pbft/round'
     | '/work/decisions/$id'
     | '/work/pilots/$id'
     | '/work/prospects/$id'
@@ -266,16 +416,31 @@ export interface FileRouteTypes {
     | '/admin'
     | '/core'
     | '/desk'
+    | '/field'
     | '/login'
     | '/api/$'
+    | '/api/adapters'
+    | '/api/competition'
+    | '/api/oracle'
+    | '/api/pbft'
+    | '/ariba/$'
+    | '/ecovadis/$'
     | '/health/live'
     | '/health/ready'
+    | '/minespider/$'
+    | '/oauth2/$'
+    | '/prewave/$'
+    | '/sap/$'
     | '/work/audit'
     | '/work/learning'
     | '/work/settings'
     | '/work'
     | '/api/auth/$'
     | '/api/auth/me'
+    | '/api/circulor/$'
+    | '/api/okta/$'
+    | '/api/oracle/stream'
+    | '/api/pbft/round'
     | '/work/decisions/$id'
     | '/work/pilots/$id'
     | '/work/prospects/$id'
@@ -291,17 +456,32 @@ export interface FileRouteTypes {
     | '/admin'
     | '/core'
     | '/desk'
+    | '/field'
     | '/login'
     | '/work'
     | '/api/$'
+    | '/api/adapters'
+    | '/api/competition'
+    | '/api/oracle'
+    | '/api/pbft'
+    | '/ariba/$'
+    | '/ecovadis/$'
     | '/health/live'
     | '/health/ready'
+    | '/minespider/$'
+    | '/oauth2/$'
+    | '/prewave/$'
+    | '/sap/$'
     | '/work/audit'
     | '/work/learning'
     | '/work/settings'
     | '/work/'
     | '/api/auth/$'
     | '/api/auth/me'
+    | '/api/circulor/$'
+    | '/api/okta/$'
+    | '/api/oracle/stream'
+    | '/api/pbft/round'
     | '/work/decisions/$id'
     | '/work/pilots/$id'
     | '/work/prospects/$id'
@@ -318,13 +498,26 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   CoreRoute: typeof CoreRoute
   DeskRoute: typeof DeskRoute
+  FieldRoute: typeof FieldRoute
   LoginRoute: typeof LoginRoute
   WorkRoute: typeof WorkRouteWithChildren
   ApiSplatRoute: typeof ApiSplatRoute
+  ApiAdaptersRoute: typeof ApiAdaptersRoute
+  ApiCompetitionRoute: typeof ApiCompetitionRoute
+  ApiOracleRoute: typeof ApiOracleRouteWithChildren
+  ApiPbftRoute: typeof ApiPbftRouteWithChildren
+  AribaSplatRoute: typeof AribaSplatRoute
+  EcovadisSplatRoute: typeof EcovadisSplatRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
+  MinespiderSplatRoute: typeof MinespiderSplatRoute
+  Oauth2SplatRoute: typeof Oauth2SplatRoute
+  PrewaveSplatRoute: typeof PrewaveSplatRoute
+  SapSplatRoute: typeof SapSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
+  ApiCirculorSplatRoute: typeof ApiCirculorSplatRoute
+  ApiOktaSplatRoute: typeof ApiOktaSplatRoute
   ApiBillingStripeWebhookRoute: typeof ApiBillingStripeWebhookRoute
 }
 
@@ -358,6 +551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DeskRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/field': {
+      id: '/field'
+      path: '/field'
+      fullPath: '/field'
+      preLoaderRoute: typeof FieldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -379,6 +579,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/adapters': {
+      id: '/api/adapters'
+      path: '/api/adapters'
+      fullPath: '/api/adapters'
+      preLoaderRoute: typeof ApiAdaptersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/competition': {
+      id: '/api/competition'
+      path: '/api/competition'
+      fullPath: '/api/competition'
+      preLoaderRoute: typeof ApiCompetitionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oracle': {
+      id: '/api/oracle'
+      path: '/api/oracle'
+      fullPath: '/api/oracle'
+      preLoaderRoute: typeof ApiOracleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pbft': {
+      id: '/api/pbft'
+      path: '/api/pbft'
+      fullPath: '/api/pbft'
+      preLoaderRoute: typeof ApiPbftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ariba/$': {
+      id: '/ariba/$'
+      path: '/ariba/$'
+      fullPath: '/ariba/$'
+      preLoaderRoute: typeof AribaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ecovadis/$': {
+      id: '/ecovadis/$'
+      path: '/ecovadis/$'
+      fullPath: '/ecovadis/$'
+      preLoaderRoute: typeof EcovadisSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/health/live': {
       id: '/health/live'
       path: '/health/live'
@@ -391,6 +633,34 @@ declare module '@tanstack/react-router' {
       path: '/health/ready'
       fullPath: '/health/ready'
       preLoaderRoute: typeof HealthReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/minespider/$': {
+      id: '/minespider/$'
+      path: '/minespider/$'
+      fullPath: '/minespider/$'
+      preLoaderRoute: typeof MinespiderSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oauth2/$': {
+      id: '/oauth2/$'
+      path: '/oauth2/$'
+      fullPath: '/oauth2/$'
+      preLoaderRoute: typeof Oauth2SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prewave/$': {
+      id: '/prewave/$'
+      path: '/prewave/$'
+      fullPath: '/prewave/$'
+      preLoaderRoute: typeof PrewaveSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sap/$': {
+      id: '/sap/$'
+      path: '/sap/$'
+      fullPath: '/sap/$'
+      preLoaderRoute: typeof SapSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/work/': {
@@ -434,6 +704,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/auth/me'
       preLoaderRoute: typeof ApiAuthMeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/circulor/$': {
+      id: '/api/circulor/$'
+      path: '/api/circulor/$'
+      fullPath: '/api/circulor/$'
+      preLoaderRoute: typeof ApiCirculorSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/okta/$': {
+      id: '/api/okta/$'
+      path: '/api/okta/$'
+      fullPath: '/api/okta/$'
+      preLoaderRoute: typeof ApiOktaSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/oracle/stream': {
+      id: '/api/oracle/stream'
+      path: '/stream'
+      fullPath: '/api/oracle/stream'
+      preLoaderRoute: typeof ApiOracleStreamRouteImport
+      parentRoute: typeof ApiOracleRoute
+    }
+    '/api/pbft/round': {
+      id: '/api/pbft/round'
+      path: '/round'
+      fullPath: '/api/pbft/round'
+      preLoaderRoute: typeof ApiPbftRoundRouteImport
+      parentRoute: typeof ApiPbftRoute
     }
     '/work/decisions/': {
       id: '/work/decisions/'
@@ -533,18 +831,54 @@ const WorkRouteChildren: WorkRouteChildren = {
 
 const WorkRouteWithChildren = WorkRoute._addFileChildren(WorkRouteChildren)
 
+interface ApiOracleRouteChildren {
+  ApiOracleStreamRoute: typeof ApiOracleStreamRoute
+}
+
+const ApiOracleRouteChildren: ApiOracleRouteChildren = {
+  ApiOracleStreamRoute: ApiOracleStreamRoute,
+}
+
+const ApiOracleRouteWithChildren = ApiOracleRoute._addFileChildren(
+  ApiOracleRouteChildren,
+)
+
+interface ApiPbftRouteChildren {
+  ApiPbftRoundRoute: typeof ApiPbftRoundRoute
+}
+
+const ApiPbftRouteChildren: ApiPbftRouteChildren = {
+  ApiPbftRoundRoute: ApiPbftRoundRoute,
+}
+
+const ApiPbftRouteWithChildren =
+  ApiPbftRoute._addFileChildren(ApiPbftRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   CoreRoute: CoreRoute,
   DeskRoute: DeskRoute,
+  FieldRoute: FieldRoute,
   LoginRoute: LoginRoute,
   WorkRoute: WorkRouteWithChildren,
   ApiSplatRoute: ApiSplatRoute,
+  ApiAdaptersRoute: ApiAdaptersRoute,
+  ApiCompetitionRoute: ApiCompetitionRoute,
+  ApiOracleRoute: ApiOracleRouteWithChildren,
+  ApiPbftRoute: ApiPbftRouteWithChildren,
+  AribaSplatRoute: AribaSplatRoute,
+  EcovadisSplatRoute: EcovadisSplatRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
+  MinespiderSplatRoute: MinespiderSplatRoute,
+  Oauth2SplatRoute: Oauth2SplatRoute,
+  PrewaveSplatRoute: PrewaveSplatRoute,
+  SapSplatRoute: SapSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,
+  ApiCirculorSplatRoute: ApiCirculorSplatRoute,
+  ApiOktaSplatRoute: ApiOktaSplatRoute,
   ApiBillingStripeWebhookRoute: ApiBillingStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport
