@@ -1,2 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /work
+Disallow: /admin
+Disallow: /login
+Disallow: /oauth2
+Disallow: /sap/
+Disallow: /ariba/
+Disallow: /minespider/
+Disallow: /health/
+
+Sitemap: https://verityx-portal.vercel.app/sitemap.xml

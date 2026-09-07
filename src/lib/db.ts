@@ -1,20 +1,23 @@
 import { pendingMigrations } from "../../scripts/migration-plan.mjs";
+import { applyCloudSqlUrlToEnv, durableDatabaseRequired, resolvePostgresUrl } from "./postgres-url.ts";
 
-/** Which database backend is active. */
+/** Which database backend is active. `"neon"` means any remote Postgres (Neon or Cloud SQL). */
 export type DbSource = "neon" | "pglite";
 
 // An empty/whitespace DATABASE_URL (an easy misconfig in deploy UIs) must mean
 // "unset" — otherwise production would silently run on the PGLite fallback.
-const rawDatabaseUrl =
-  typeof process !== "undefined" ? process.env.DATABASE_URL : undefined;
-const databaseUrl =
-  rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
+// Cloud Run additionally sets CLOUD_SQL_CONNECTION_NAME so the URL targets
+// the unix socket Google injects at /cloudsql/PROJECT:REGION:INSTANCE.
+// Rewrite process.env so Better Auth's own Pool (auth/server.ts — do not edit)
+// uses the same socket. ESM evaluates this module before auth/server.ts body.
+applyCloudSqlUrlToEnv();
+const databaseUrl = resolvePostgresUrl();
 
 /**
- * Active backend: real **Neon** when `DATABASE_URL` is set (deployed / configured
- * sandbox), otherwise a local embedded **PGLite** (Postgres compiled to WASM) so
- * the app has a working database even with nothing configured — the live preview
- * included. Swap in Neon later by just setting `DATABASE_URL`; no code changes.
+ * Active backend: real **Postgres** when `DATABASE_URL` is set (Neon on Vercel,
+ * Cloud SQL on Google Cloud), otherwise a local embedded **PGLite** so the live
+ * preview has a working database with nothing configured. Google Cloud sets
+ * `GCP_RUNTIME=1` and refuses the throwaway fallback.
  */
 export const dbSource: DbSource = databaseUrl ? "neon" : "pglite";
 
@@ -95,8 +98,8 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_INTERVAL, identity);
     const pool = new Pool({
       connectionString: databaseUrl,
-      max: 4,
-      connectionTimeoutMillis: 4000,
+      max: Number(process.env.DB_POOL_MAX || 5),
+      connectionTimeoutMillis: durableDatabaseRequired() ? 10_000 : 4000,
       idleTimeoutMillis: 20_000,
     });
     await applyNeonMigrations(pool);
@@ -118,7 +121,10 @@ async function applyNeonMigrations(pool: import("pg").Pool) {
     eager: true,
   }) as Record<string, string>;
   const client = await pool.connect();
+  // Session lock so Cloud Run min/max scale-out cannot double-apply the same file.
+  const lockKey = 74188201;
   try {
+    await client.query("select pg_advisory_lock($1)", [lockKey]);
     await client.query(
       "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
     );
@@ -139,6 +145,11 @@ async function applyNeonMigrations(pool: import("pg").Pool) {
       }
     }
   } finally {
+    try {
+      await client.query("select pg_advisory_unlock($1)", [lockKey]);
+    } catch {
+      /* session end releases the lock */
+    }
     client.release();
   }
 }
@@ -173,7 +184,7 @@ async function createPgliteSql(): Promise<Sql> {
   // auth schema under migrations/auth/ stays out. Runs once per module instance
   // — so an HMR reload after adding a migration file applies it live — with
   // passes serialized on a global chain so concurrent callers never
-  // double-apply.
+  // double-apply. 0008_os_writeback.sql is in this glob.
   const migrate = async (): Promise<void> => {
     const migrations = import.meta.glob("/migrations/*.sql", {
       query: "?raw",
@@ -213,6 +224,9 @@ async function createSql(): Promise<Sql> {
       "@/lib/db is server-only — call getSql() from a createServerFn handler " +
         "or a server route loader, never from client code.",
     );
+  }
+  if (durableDatabaseRequired() && !databaseUrl) {
+    throw new Error("DATABASE_URL is required on Google Cloud (Cloud SQL). PGLite is preview-only.");
   }
   return dbSource === "neon" ? createNeonSql() : createPgliteSql();
 }
@@ -258,6 +272,7 @@ export async function getPglite(): Promise<import("@electric-sql/pglite").PGlite
  * module kick it off immediately (see bottom of file).
  */
 export function ensureDbReady(): Promise<void> {
+  if (durableDatabaseRequired() && !databaseUrl) return Promise.resolve();
   if (dbSource !== "pglite") return Promise.resolve();
   return getSql().then(() => undefined);
 }
@@ -267,7 +282,7 @@ export function ensureDbReady(): Promise<void> {
 const globalBoot = globalThis as typeof globalThis & {
   __pgBootstrapPromise__?: Promise<void>;
 };
-if (typeof window === "undefined" && dbSource === "pglite") {
+if (typeof window === "undefined" && dbSource === "pglite" && !durableDatabaseRequired()) {
   globalBoot.__pgBootstrapPromise__ ??= ensureDbReady().catch((err) => {
     globalBoot.__pgBootstrapPromise__ = undefined;
     console.error("[db] PGLite bootstrap failed:", err);

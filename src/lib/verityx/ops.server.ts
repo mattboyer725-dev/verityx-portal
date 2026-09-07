@@ -15,6 +15,7 @@ import {
 } from "./billing";
 import { newId } from "./format";
 import { VERITYX_BOOK, outreachCopy } from "./book";
+import { evidenceFromPacket, pickDeskScenario, poFromEvidence, sapHoldAfterApproval } from "./desk-packet";
 import { allowedOrigin } from "./http";
 import {
   mapAudit,
@@ -40,6 +41,7 @@ import type {
   Prospect,
   ProspectStage,
   Report,
+  SapWritebackReceipt,
   Workspace,
 } from "./types";
 
@@ -55,6 +57,80 @@ async function scopedProspect(orgId: string, id: string): Promise<Prospect> {
   const rows = await sql`select * from prospects where id = ${id} and organization_id = ${orgId} limit 1`;
   if (!rows[0]) throw new Error("Prospect not found");
   return mapProspect(rows[0]);
+}
+
+async function signOsCore(
+  actor: { userId: string },
+  type: "decision.record" | "artifact.record",
+  payload: Record<string, unknown>,
+) {
+  try {
+    const { appendCoreEvent } = await import("@/lib/core-ledger");
+    await appendCoreEvent(type, payload, actor.userId.slice(0, 80));
+    const { persistCoreLedger } = await import("@/lib/core-store.server");
+    void persistCoreLedger();
+  } catch {
+    /* analog core must not fail the OS write */
+  }
+}
+
+async function applyApprovedSapHold(input: {
+  actor: { userId: string; organizationId: string };
+  pilot: Pilot;
+  decisionId: string;
+  proposedAction: string;
+  status: string;
+  evidence: EvidenceItem[];
+}): Promise<SapWritebackReceipt | null> {
+  if (sapHoldAfterApproval({
+    proposedAction: input.proposedAction,
+    status: input.status,
+    isSample: input.pilot.isSample,
+  }) !== "HOLD") {
+    return null;
+  }
+  const po = input.pilot.deskPacket?.po || poFromEvidence(input.evidence);
+  if (!po) return null;
+  try {
+    const { hydrateAdapters } = await import("@/lib/adapter-store.server");
+    await hydrateAdapters();
+  } catch {
+    /* in-memory analog is enough */
+  }
+  const { sapWriteback, getSapPo, seedSapPo } = await import("@/lib/sap");
+  if (!getSapPo(po)) {
+    seedSapPo({
+      po,
+      id: input.pilot.deskPacket?.scenarioId || input.pilot.id,
+      supplier: "OS writeback",
+      title: input.pilot.title,
+      plant: "BRND",
+      commodity: "magnetics",
+      amount: 0,
+      currency: "EUR",
+    });
+  }
+  const rec = sapWriteback(po, input.decisionId, "HOLD", "BLOCK");
+  try {
+    const { persistAdapters } = await import("@/lib/adapter-store.server");
+    void persistAdapters();
+  } catch {
+    /* best-effort */
+  }
+  await signOsCore(input.actor, "artifact.record", {
+    title: rec.doc.slice(0, 200),
+    location: rec.odata.path.slice(0, 500),
+    kind: "sap-hold",
+    notes: `BAPI_PO_CHANGE HOLD on ${rec.po}`.slice(0, 500),
+  });
+  return {
+    po: rec.po,
+    action: rec.action,
+    doc: rec.doc,
+    etag: rec.etag,
+    bapi: rec.bapi.function,
+    idoc: rec.idoc.docnum,
+  };
 }
 
 export async function getWorkspace(userId: string): Promise<Workspace> {
@@ -104,6 +180,12 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
         and outreach_count = 0
         and stage not in ('won', 'lost')
     `;
+    const [packets] = await sql<{ n: number }>`
+      select count(*)::int as n from pilots
+      where organization_id = ${org}
+        and desk_packet_json is not null
+        and desk_packet_json <> ''
+    `;
     const [contacted] = await sql<{ n: number }>`
       select count(*)::int as n from prospects
       where organization_id = ${org} and outreach_count > 0
@@ -152,7 +234,15 @@ export async function getDashboard(userId: string): Promise<Dashboard> {
         case "payment":
           return { stage, complete: paidN > 0, detail: `${paidN} paid` };
         case "analysis":
-          return { stage, complete: paidN > 0, detail: paidN ? "Unlocked after payment" : "Opens after payment" };
+          return {
+            stage,
+            complete: (packets?.n ?? 0) > 0 || paidN > 0,
+            detail: (packets?.n ?? 0)
+              ? `${packets?.n} live packets`
+              : paidN
+                ? "Unlocked — pull the live magnetics packet"
+                : "Opens after payment",
+          };
         case "decision":
           return { stage, complete: pendingN + reportN > 0 || paidN > 0, detail: pendingN ? `${pendingN} awaiting approval` : "Evidence-backed" };
         case "report":
@@ -398,6 +488,72 @@ export async function patchPilot(userId: string, data: {
     return scopedPilot(actor.organizationId, data.id);
 }
 
+export async function pullDeskPacket(userId: string, data: { pilotId: string; scenarioId?: string }) {
+    const actor = await ensureActor(userId);
+    assertCan(actor.role, "decision.write");
+    await mutateGuard(actor, "decision.write");
+    const pilot = await scopedPilot(actor.organizationId, data.pilotId);
+    if (pilot.paymentStatus !== "paid") throw new Error("Pay the pilot before pulling the live desk packet.");
+    const prospect = await scopedProspect(actor.organizationId, pilot.prospectId);
+    const scenarioId = pickDeskScenario({
+      companyName: prospect.companyName,
+      sector: prospect.sector,
+      notes: `${prospect.notes} ${pilot.scope}`,
+      scenarioId: data.scenarioId,
+    });
+    const { fetchLiveBundle, fallbackBundle } = await import("@/lib/feeds");
+    const { runPipeline } = await import("@/lib/engine");
+    const live = await Promise.race([
+      fetchLiveBundle(),
+      new Promise<ReturnType<typeof fallbackBundle>>((resolve) => setTimeout(() => resolve(fallbackBundle()), 2800)),
+    ]).catch(() => fallbackBundle());
+    const packet = await runPipeline(scenarioId, live);
+    const evidence = evidenceFromPacket(packet);
+    const record = {
+      scenarioId,
+      po: packet.scenario.po,
+      message: packet.message,
+      sap: packet.sap?.ReleaseStatus ?? null,
+      circulorLot: packet.provenance.circulorLot,
+      pbft: packet.seal.pbft.commitOk,
+      merkleRoot: packet.ledger.merkleRoot,
+      evidence,
+      pulledAt: new Date().toISOString(),
+    };
+    const sql = await getSql();
+    await sql`
+      update pilots
+      set desk_packet_json = ${JSON.stringify(record)},
+          updated_at = now()
+      where id = ${pilot.id} and organization_id = ${actor.organizationId}
+    `;
+    if (!pilot.inputsReceivedAt) {
+      await patchPilot(userId, { id: pilot.id, markInputsReceived: true });
+    }
+    try {
+      const { persistAdapters } = await import("@/lib/adapter-store.server");
+      void persistAdapters();
+    } catch {
+      /* best-effort */
+    }
+    await writeAudit(actor, "pilot.desk_packet", "pilot", pilot.id, {
+      scenarioId,
+      po: packet.scenario.po,
+      items: evidence.length,
+      message: packet.message,
+    });
+    return {
+      evidence,
+      scenarioId,
+      po: packet.scenario.po,
+      message: packet.message,
+      sap: packet.sap?.ReleaseStatus ?? null,
+      circulorLot: packet.provenance.circulorLot,
+      pbft: packet.seal.pbft.commitOk,
+      merkleRoot: packet.ledger.merkleRoot,
+    };
+}
+
 export async function createCheckout(userId: string, data: { pilotId: string; origin: string }) {
     const actor = await ensureActor(userId);
     assertCan(actor.role, "payment.checkout");
@@ -604,6 +760,11 @@ export async function createDecision(userId: string, data: { pilotId: string; ev
       status,
       ruleVersion: evaluation.ruleVersion,
     });
+    await signOsCore(actor, "decision.record", {
+      title: (pilot.deskPacket?.po || pilot.title).slice(0, 200),
+      choice: evaluation.proposedAction,
+      context: `${evaluation.recommendedBand} · ${evaluation.ruleVersion} · ${status}`.slice(0, 2000),
+    });
     const rows = await sql`select * from decisions where id = ${id} and organization_id = ${actor.organizationId}`;
     return mapDecision(rows[0]);
 }
@@ -695,14 +856,40 @@ export async function approveDecision(userId: string, data: { id: string; note?:
     `;
     if (!rows[0]) throw new Error("No pending decision to approve");
     const decision = mapDecision(rows[0]);
+    const pilot = await scopedPilot(actor.organizationId, decision.pilotId);
     await sql`
       update pilots set status = ${"in_analysis"}, updated_at = now()
       where id = ${decision.pilotId} and organization_id = ${actor.organizationId}
     `;
+    const writeback = await applyApprovedSapHold({
+      actor,
+      pilot,
+      decisionId: decision.id,
+      proposedAction: decision.proposedAction,
+      status: "approved",
+      evidence: decision.evidence,
+    });
+    if (writeback) {
+      await sql`
+        update decisions
+        set writeback_json = ${JSON.stringify(writeback)}, updated_at = now()
+        where id = ${decision.id} and organization_id = ${actor.organizationId}
+      `;
+      if (pilot.deskPacket) {
+        const nextPacket = { ...pilot.deskPacket, sap: writeback.action };
+        await sql`
+          update pilots
+          set desk_packet_json = ${JSON.stringify(nextPacket)}, updated_at = now()
+          where id = ${pilot.id} and organization_id = ${actor.organizationId}
+        `;
+      }
+    }
     await writeAudit(actor, "decision.approve", "decision", decision.id, {
       proposedAction: decision.proposedAction,
+      writeback: writeback?.doc ?? null,
     });
-    return decision;
+    const next = await sql`select * from decisions where id = ${decision.id} and organization_id = ${actor.organizationId}`;
+    return mapDecision(next[0]);
 }
 
 export async function generateReport(userId: string, data: { pilotId: string }): Promise<Report> {
@@ -740,6 +927,9 @@ export async function generateReport(userId: string, data: { pilotId: string }):
         (e) => `• ${e.title} [${e.kind}] source=${e.sourceName} observed=${e.observedAt} confidence=${e.confidence}. ${e.excerpt}`,
       ),
       `Rationale: ${decision.confidenceRationale}`,
+      decision.writeback
+        ? `Analog SAP ${decision.writeback.action} posted as ${decision.writeback.doc} via ${decision.writeback.bapi} on ${decision.writeback.po}. Live analog tenant, not Siemens S/4HANA.`
+        : "No analog SAP writeback — HOLD posts only after a human-approved BLOCK on a live (non-sample) file.",
     ].join("\n");
     await sql`
       insert into reports (
@@ -1048,15 +1238,31 @@ export async function loadOwnBook(userId: string) {
   assertCan(actor.role, "prospect.write");
   await mutateGuard(actor, "book.load");
   const sql = await getSql();
-  const existing = await sql<{ book_key: string }>`
-    select book_key from prospects
+  const existing = await sql<{ book_key: string; contact_email: string }>`
+    select book_key, contact_email from prospects
     where organization_id = ${actor.organizationId}
       and book_key is not null and book_key <> ''
   `;
   const have = new Set(existing.map((r) => r.book_key));
+  const emptyEmail = new Set(
+    existing.filter((r) => !String(r.contact_email ?? "").trim()).map((r) => r.book_key),
+  );
   let created = 0;
+  let filled = 0;
   for (const row of VERITYX_BOOK) {
-    if (have.has(row.key)) continue;
+    if (have.has(row.key)) {
+      if (emptyEmail.has(row.key) && row.contactEmail.trim()) {
+        await sql`
+          update prospects
+          set contact_email = ${row.contactEmail.trim()}
+          where organization_id = ${actor.organizationId}
+            and book_key = ${row.key}
+            and (contact_email is null or btrim(contact_email) = '')
+        `;
+        filled += 1;
+      }
+      continue;
+    }
     const id = newId();
     await sql`
       insert into prospects (
@@ -1073,6 +1279,7 @@ export async function loadOwnBook(userId: string) {
   }
   await writeAudit(actor, "book.load", "prospect", actor.organizationId, {
     created,
+    filled,
     total: VERITYX_BOOK.length,
   });
   const prospects = await sql`
@@ -1083,6 +1290,7 @@ export async function loadOwnBook(userId: string) {
   `;
   return {
     created,
+    filled,
     existing: VERITYX_BOOK.length - created,
     total: VERITYX_BOOK.length,
     prospects: prospects.map(mapProspect),

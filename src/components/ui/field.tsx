@@ -18,7 +18,7 @@ export function Label({
 }
 
 const control =
-  "h-11 w-full rounded-[8px] border border-line bg-ink px-3 text-sm text-paper placeholder:text-mute/80 focus:border-mist/40 focus:outline-none focus:ring-2 focus:ring-paper/15";
+  "h-11 w-full rounded-[8px] border border-line bg-ink px-3 text-sm text-paper placeholder:text-mute/80 focus:border-gold/40 focus:outline-none focus:ring-2 focus:ring-gold/20";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(control, className)} {...props} />;

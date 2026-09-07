@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { ErrorNote } from "@/components/page-header";
 import { SiteNav } from "@/components/site-nav";
+import { VxWordmark } from "@/components/vx-mark";
 import { MIN_PASSWORD_LENGTH } from "@/lib/verityx/constants";
 import { normalizeEmail, safeAppPath } from "@/lib/verityx/format";
 import { enterOwnerSeat } from "@/lib/owner-enter";
@@ -93,9 +94,9 @@ function Login() {
 
   return (
     <main className="grid min-h-dvh bg-ink lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between border-r border-line px-12 py-12 lg:flex">
-        <Link to="/" className="font-display text-2xl tracking-tight">
-          VerityX
+      <section className="login-plane relative hidden flex-col justify-between border-r border-line px-12 py-12 lg:flex">
+        <Link to="/" className="login-lockup">
+          <VxWordmark />
         </Link>
         <div>
           <p className="text-[11px] uppercase tracking-[0.2em] text-mute">Supply chain risk audit</p>

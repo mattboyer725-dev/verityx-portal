@@ -1,6 +1,7 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   ClipboardList,
+  Compass,
   Crown,
   FileText,
   Fingerprint,
@@ -15,43 +16,50 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { UserButton } from "@/lib/auth/gates";
-import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { useWorkspaceLive } from "@/lib/verityx/live";
 import { cn } from "@/lib/cn";
+import { OS_LINKS, SURFACES, openCommandPalette } from "@/lib/nav";
 import { LivePulse, Pill } from "./status";
+import { VxMark } from "./vx-mark";
 
-const NAV = [
-  { to: "/", label: "Hub", icon: Home, exact: true },
-  { to: "/desk", label: "Live desk", icon: Shield },
-  { to: "/core", label: "Local core", icon: Fingerprint },
-  { to: "/work", label: "Workspace", icon: LayoutDashboard, exact: true },
-  { to: "/work/prospects", label: "Prospects", icon: Users },
-  { to: "/work/pilots", label: "Pilots", icon: ClipboardList },
-  { to: "/work/decisions", label: "Decisions", icon: Scale },
-  { to: "/work/reports", label: "Reports", icon: FileText },
-  { to: "/work/learning", label: "Learning", icon: Gavel },
-  { to: "/work/audit", label: "Audit", icon: ScrollText },
-  { to: "/work/settings", label: "Settings", icon: Settings },
-  { to: "/admin", label: "Owner", icon: Crown },
-];
+const ICONS: Record<string, ComponentType<{ className?: string; strokeWidth?: number }>> = {
+  "/": Home,
+  "/desk": Shield,
+  "/field": Compass,
+  "/core": Fingerprint,
+  "/work": LayoutDashboard,
+  "/work/prospects": Users,
+  "/work/pilots": ClipboardList,
+  "/work/decisions": Scale,
+  "/work/reports": FileText,
+  "/work/learning": Gavel,
+  "/work/audit": ScrollText,
+  "/work/settings": Settings,
+  "/admin": Crown,
+};
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const items = [
+    ...SURFACES.filter((s) => s.to !== "/work" && s.to !== "/admin"),
+    ...OS_LINKS,
+    ...SURFACES.filter((s) => s.to === "/admin"),
+  ];
   return (
     <nav className="flex flex-col gap-1">
-      {NAV.map((item) => {
-        const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
-        const Icon = item.icon;
+      {items.map((item) => {
+        const active = item.exact ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`);
+        const Icon = ICONS[item.to] ?? LayoutDashboard;
         return (
           <Link
             key={item.to}
-            to={item.to}
+            to={item.to as "/"}
             onClick={onNavigate}
             className={cn(
               "flex h-11 items-center gap-3 rounded-[12px] px-3 text-sm transition-colors",
-              active ? "bg-raised text-paper" : "text-mute hover:bg-raised/60 hover:text-paper",
+              active ? "bg-raised text-gold" : "text-mute hover:bg-raised/60 hover:text-paper",
             )}
           >
             <Icon className="size-4" strokeWidth={1.6} />
@@ -66,11 +74,9 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <Link to="/work" className="flex items-center gap-3 px-1">
-      <span className="grid size-8 place-items-center rounded-[8px] border border-line bg-ink font-display text-lg text-paper">
-        V
-      </span>
+      <VxMark className="size-8 shrink-0" title="VerityX" />
       <span>
-        <span className="block font-display text-lg leading-none tracking-tight">VerityX</span>
+        <span className="block font-display vx-wordmark-name text-lg leading-none">VerityX</span>
         <span className="mt-1 block text-[10px] uppercase tracking-[0.18em] text-mute">Customer Zero OS</span>
       </span>
     </Link>
@@ -78,7 +84,6 @@ function Brand() {
 }
 
 export function AppShell() {
-  const user = useCurrentUser();
   const { data: workspace, refreshing, updatedAt } = useWorkspaceLive();
   const [open, setOpen] = useState(false);
 
@@ -104,20 +109,30 @@ export function AppShell() {
           ) : (
             <div className="h-10 animate-pulse rounded-[8px] bg-raised" />
           )}
+          <button type="button" className="site-nav-cmd site-nav-cmd-rail" onClick={() => openCommandPalette()}>
+            <span className="site-nav-cmd-label">Menu</span>
+            <kbd>⌘K</kbd>
+          </button>
           <UserButton />
         </div>
       </aside>
 
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-ink/90 px-4 backdrop-blur lg:hidden">
         <Brand />
-        <button
-          type="button"
-          className="grid size-11 place-items-center rounded-[12px] border border-line"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-        >
-          {open ? <X className="size-4" /> : <Menu className="size-4" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button type="button" className="site-nav-cmd" aria-label="Open platform menu" onClick={() => openCommandPalette()}>
+            <span className="site-nav-cmd-label">Menu</span>
+            <kbd>⌘K</kbd>
+          </button>
+          <button
+            type="button"
+            className="grid size-11 place-items-center rounded-[12px] border border-line"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X className="size-4" /> : <Menu className="size-4" />}
+          </button>
+        </div>
       </header>
 
       {open ? (

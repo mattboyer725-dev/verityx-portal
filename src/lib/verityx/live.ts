@@ -26,6 +26,7 @@ import {
   loadSampleWalkthrough,
   loadOwnBook,
   logOutreach,
+  pullDeskPacket,
   patchDecision,
   patchPilot,
   patchProspect,
@@ -303,6 +304,8 @@ export function useLiveMutations() {
     loadOwnBook: () => loadOwnBook().then(after),
     logOutreach: (data: { id: string; channel?: OutreachChannel; subject?: string; body?: string }) =>
       logOutreach({ data }).then(after),
+    pullDeskPacket: (data: { pilotId: string; scenarioId?: string }) =>
+      pullDeskPacket({ data }).then(after),
     invalidate,
   };
 }

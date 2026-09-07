@@ -56,9 +56,9 @@ INGEST · ORACLE · CONSENSUS · RISK · PROVENANCE · SCREEN · COMPLIANCE · S
 
 ## Remaining fakes (honest)
 
-- Siemens Gamesa SAP S/4HANA / Ariba **tenant** is not connected — the desk runs a live OData-shaped store with mutating HOLD/RELEASE, ETag, CSRF and IDoc, plus TED overlay
+- Siemens Gamesa SAP S/4HANA / Ariba **tenant** is not connected — the desk runs a live OData-shaped store with mutating HOLD/RELEASE, ETag, CSRF and IDoc, plus an Ariba sourcing v2 RFQ tenant and TED overlay
 - Argus Metals **paid socket** is not subscribed — NdPr is derived from live MP Materials + Westmetall LME cash
-- EcoVadis / Prewave / RapidRatings / Circulor / Minespider **vendor APIs** are paid — scores and DPP are computed from GLEIF, UN sanctions, news RSS and USGS coordinates
+- EcoVadis / Prewave / RapidRatings / Circulor / Minespider **vendor APIs** are paid — EcoVadis is a 21-criteria analog from GLEIF + news, Prewave is RSS heat on the same PO, RapidRatings is listed-tape FHR with opacity; lots and Minespider batches are hashed ledgers on this host
 - 27-node PBFT is an in-process HMAC cluster (quorum `2f+1=19`, 2 Byzantine), not 27 networked hosts
 - Okta Workforce **tenant** is not provisioned — the desk issues Okta-shaped OIDC RS256 JWTs with JWKS
 - Local Core v1.6.0 HMAC + Merkle **is real and bit-identical** to [mattboyer725-dev/verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) (`319af22`) — in-memory on Vercel (no durable FS)

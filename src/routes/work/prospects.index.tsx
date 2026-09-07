@@ -177,7 +177,7 @@ function ProspectsPage() {
                 type="button"
                 onClick={() => setFilter(key)}
                 className={`h-11 rounded-[8px] border px-3 text-sm ${
-                  filter === key ? "border-paper bg-paper text-ink" : "border-line text-mute hover:text-paper"
+                  filter === key ? "border-gold bg-gold text-plum" : "border-line text-mute hover:text-paper"
                 }`}
               >
                 {label}

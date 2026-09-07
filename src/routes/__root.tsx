@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { CommandPalette } from "@/components/command-palette";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 
@@ -42,7 +43,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: APP_NAME },
-      { name: "theme-color", content: "#0b0c0e" },
+      { name: "theme-color", content: "#120c1a" },
       {
         name: "description",
         content:
@@ -71,14 +72,15 @@ function RootDocument() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <Outlet />
+            <CommandPalette />
             <Toaster
               theme="dark"
               position="bottom-right"
               toastOptions={{
                 style: {
-                  background: "#14161a",
-                  border: "1px solid #2a2d33",
-                  color: "#e8e4d9",
+                  background: "var(--color-graphite)",
+                  border: "1px solid color-mix(in oklab, var(--color-gold) 18%, var(--color-line))",
+                  color: "var(--color-paper)",
                 },
               }}
             />

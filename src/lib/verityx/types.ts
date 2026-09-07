@@ -32,6 +32,27 @@ export type EvidenceItem = {
   confidence: EvidenceConfidence;
 };
 
+export type DeskPacketRecord = {
+  scenarioId: string;
+  po: string;
+  message: string;
+  sap: string | null;
+  circulorLot: string;
+  pbft: number;
+  merkleRoot: string;
+  evidence: EvidenceItem[];
+  pulledAt: string;
+};
+
+export type SapWritebackReceipt = {
+  po: string;
+  action: "HOLD" | "RELEASE";
+  doc: string;
+  etag: string;
+  bapi: string;
+  idoc: string;
+};
+
 export type RecommendedBand = "MONITOR" | "WATCH" | "ESCALATE";
 export type ProposedAction = "MONITOR" | "WATCH" | "ESCALATE" | "BLOCK";
 export type DecisionStatus =
@@ -116,6 +137,7 @@ export type Pilot = {
   paidNote: string;
   inputsReceivedAt: string | null;
   isSample: boolean;
+  deskPacket: DeskPacketRecord | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -136,6 +158,7 @@ export type Decision = {
   approvedByUserId: string | null;
   approvedAt: string | null;
   approvalNote: string;
+  writeback: SapWritebackReceipt | null;
   createdAt: string;
   updatedAt: string;
 };

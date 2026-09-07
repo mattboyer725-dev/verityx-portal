@@ -1,0 +1,112 @@
+# Cloud Build → Artifact Registry → Cloud Run.
+# From the repo root (after gcp/bootstrap.sh):
+#   gcloud builds submit --config gcp/cloudbuild.yaml \
+#     --substitutions=_REGION=us-central1,_SERVICE=verityx,_AR_REPO=verityx,_SQL=PROJECT:us-central1:verityx-pg
+#
+# Required substitutions:
+#   _REGION   e.g. us-central1
+#   _SERVICE  e.g. verityx
+#   _AR_REPO  Artifact Registry Docker repo
+#   _SQL      Cloud SQL connection name project:region:instance
+# Optional:
+#   _AUTH_URL public origin (https://…). Empty = set from the Cloud Run URL after first deploy.
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: verityx
+  _AR_REPO: verityx
+  _SQL: PROJECT:us-central1:verityx-pg
+  _AUTH_URL: ""
+
+timeout: 1800s
+
+serviceAccount: projects/${PROJECT_ID}/serviceAccounts/verityx-build@${PROJECT_ID}.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 50
+  substitutionOption: ALLOW_LOOSE
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:latest"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}
+      - --tag
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}
+
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:latest
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --cpu=1
+      - --memory=2Gi
+      - --concurrency=40
+      - --timeout=60
+      - --min-instances=1
+      - --max-instances=8
+      - --cpu-boost
+      - --no-cpu-throttling
+      - --execution-environment=gen2
+      - --ingress=all
+      - --service-account=verityx-run@${PROJECT_ID}.iam.gserviceaccount.com
+      - --add-cloudsql-instances=${_SQL}
+      - --update-labels=app=${_SERVICE},stack=tanstack
+      - --set-env-vars=HOST=0.0.0.0,NITRO_HOST=0.0.0.0,PORT=8080,NITRO_PORT=8080,GCP_RUNTIME=1,NODE_ENV=production,VITE_AUTH_ENABLED=true,CLOUD_SQL_CONNECTION_NAME=${_SQL}
+      - --set-secrets=DATABASE_URL=verityx-database-url:latest,BETTER_AUTH_SECRET=verityx-better-auth-secret:latest,BETTER_AUTH_URL=verityx-better-auth-url:latest,GROK_AUTH_CLIENT_ID=verityx-grok-auth-client-id:latest,GROK_AUTH_CLIENT_SECRET=verityx-grok-auth-client-secret:latest
+      - --startup-probe=httpGet.path=/health/ready,httpGet.port=8080,initialDelaySeconds=5,periodSeconds=15,failureThreshold=16,timeoutSeconds=15
+      - --liveness-probe=httpGet.path=/health/live,httpGet.port=8080,periodSeconds=20,timeoutSeconds=2,failureThreshold=3
+      - --readiness-probe=httpGet.path=/health/ready,httpGet.port=8080,periodSeconds=10,timeoutSeconds=10,failureThreshold=3
+
+  - id: auth-url
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        CURRENT="$$(gcloud secrets versions access latest --secret=verityx-better-auth-url)"
+        if [ -n "${_AUTH_URL}" ]; then
+          TARGET="${_AUTH_URL}"
+        elif printf '%s' "$$CURRENT" | grep -q PLACEHOLDER; then
+          TARGET="$$(gcloud run services describe ${_SERVICE} --region=${_REGION} --format='value(status.url)')"
+        else
+          TARGET="$$CURRENT"
+        fi
+        if [ "$$CURRENT" != "$$TARGET" ]; then
+          printf '%s' "$$TARGET" | gcloud secrets versions add verityx-better-auth-url --data-file=-
+          gcloud run services update ${_SERVICE} --region=${_REGION} \
+            --update-secrets=BETTER_AUTH_URL=verityx-better-auth-url:latest \
+            --update-env-vars=FRONTEND_ORIGINS=$$TARGET
+          echo "BETTER_AUTH_URL -> $$TARGET"
+        else
+          echo "BETTER_AUTH_URL already $$TARGET"
+        fi

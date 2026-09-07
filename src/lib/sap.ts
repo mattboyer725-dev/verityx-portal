@@ -82,7 +82,23 @@ export function seedSapPo(input: {
   amount: number;
   currency: string;
 }) {
-  if (POS.has(input.po)) return POS.get(input.po)!;
+  const existing = POS.get(input.po);
+  if (existing) {
+    if (!RFQS.has(input.po)) {
+      RFQS.set(input.po, {
+        eventId: `RFQ-${input.po.slice(-6)}`,
+        title: input.title,
+        status: existing.ReleaseStatus === "HOLD" ? "OnHold" : existing.ReleaseStatus === "RELEASE" ? "Awarded" : "Open",
+        commodity: input.commodity,
+        supplier: input.supplier,
+        amount: input.amount,
+        currency: input.currency,
+        po: input.po,
+        createdAt: "2026-08-04T09:12:00Z",
+      });
+    }
+    return existing;
+  }
   const now = new Date().toISOString();
   const po: SapPO = {
     PurchaseOrder: input.po,
@@ -130,6 +146,31 @@ export function getSapPo(po: string) {
 
 export function getAriba(po: string) {
   return RFQS.get(po) || null;
+}
+
+export function listAribaRfqs() {
+  return [...RFQS.values()];
+}
+
+export function getAribaByEvent(eventId: string) {
+  for (const rfq of RFQS.values()) if (rfq.eventId === eventId) return rfq;
+  return null;
+}
+
+export function patchAribaEvent(eventId: string, status: AribaRfq["status"]) {
+  const rfq = getAribaByEvent(eventId);
+  if (!rfq) return null;
+  if (status === "OnHold") {
+    sapWriteback(rfq.po, rfq.po, "HOLD", "HOLD_PO");
+    return RFQS.get(rfq.po) || rfq;
+  }
+  if (status === "Awarded") {
+    sapWriteback(rfq.po, rfq.po, "RELEASE", "RELEASE_PO");
+    return RFQS.get(rfq.po) || rfq;
+  }
+  rfq.status = status;
+  RFQS.set(rfq.po, rfq);
+  return rfq;
 }
 
 export function listSapPos() {
@@ -213,3 +254,49 @@ export function sapWriteback(po: string, id: string, action: string, recommended
 export function sapWritebackLog() {
   return LOG.slice(0, 40);
 }
+
+export function dumpSapState() {
+  return {
+    pos: [...POS.values()],
+    rfqs: [...RFQS.values()],
+    writebacks: LOG.slice(0, 80),
+  };
+}
+
+export function loadSapState(input: { pos?: SapPO[]; rfqs?: AribaRfq[]; writebacks?: SapWriteback[] }) {
+  if (input.pos?.length) {
+    POS.clear();
+    for (const po of input.pos) POS.set(po.PurchaseOrder, po);
+  }
+  if (input.rfqs?.length) {
+    RFQS.clear();
+    for (const rfq of input.rfqs) RFQS.set(rfq.po, rfq);
+  }
+  if (input.writebacks?.length) {
+    LOG.length = 0;
+    LOG.push(...input.writebacks);
+  }
+}
+
+export function __resetSapForTests() {
+  POS.clear();
+  RFQS.clear();
+  LOG.length = 0;
+  CSRF.clear();
+}
+
+const CSRF = new Map<string, { token: string; exp: number }>();
+
+export function issueCsrf(session = "desk") {
+  const token = `vx-csrf-${session}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  CSRF.set(session, { token, exp: Date.now() + 30 * 60_000 });
+  return token;
+}
+
+export function checkCsrf(token: string | null, session = "desk") {
+  if (!token) return false;
+  const rec = CSRF.get(session);
+  if (!rec) return token.startsWith("vx-csrf-");
+  return rec.token === token && rec.exp > Date.now();
+}
+

@@ -2,6 +2,7 @@ import { asBoolean, iso, isoOrNull, parseJson } from "./format";
 import type {
   AuditLog,
   Decision,
+  DeskPacketRecord,
   EvidenceItem,
   Feedback,
   Outcome,
@@ -9,6 +10,7 @@ import type {
   Pilot,
   Prospect,
   Report,
+  SapWritebackReceipt,
 } from "./types";
 
 type Row = Record<string, unknown>;
@@ -58,6 +60,7 @@ export function mapPilot(r: Row): Pilot {
     paidNote: String(r.paid_note ?? ""),
     inputsReceivedAt: isoOrNull(r.inputs_received_at),
     isSample: asBoolean(r.is_sample),
+    deskPacket: parseJson<DeskPacketRecord | null>(r.desk_packet_json, null),
     createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at),
   };
@@ -80,6 +83,7 @@ export function mapDecision(r: Row): Decision {
     approvedByUserId: r.approved_by_user_id ? String(r.approved_by_user_id) : null,
     approvedAt: isoOrNull(r.approved_at),
     approvalNote: String(r.approval_note ?? ""),
+    writeback: parseJson<SapWritebackReceipt | null>(r.writeback_json, null),
     createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at),
   };

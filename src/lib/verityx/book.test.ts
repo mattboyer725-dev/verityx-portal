@@ -12,9 +12,11 @@ describe("VERITYX_BOOK", () => {
     for (const row of VERITYX_BOOK) {
       assert.ok(row.companyName);
       assert.ok(row.contactName);
-      assert.equal(row.contactEmail, "");
+      assert.match(row.contactEmail, /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       assert.doesNotMatch(row.notes, /live intelligence/i);
     }
+    const emails = VERITYX_BOOK.map((r) => r.contactEmail.toLowerCase());
+    assert.equal(new Set(emails).size, emails.length);
   });
 });
 
