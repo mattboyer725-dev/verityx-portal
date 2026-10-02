@@ -7,8 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
-: "${PROJECT_ID:?set PROJECT_ID or gcloud config set project}"
+PROJECT_ID="${PROJECT_ID:-veridex-exchange-6712}"
 REGION="${REGION:-us-central1}"
 SQL_INSTANCE="${SQL_INSTANCE:-verityx-pg}"
 AR_REPO="${AR_REPO:-verityx}"

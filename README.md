@@ -48,7 +48,7 @@ Production is **Cloud Run + Cloud SQL Postgres 16**, not Vercel. The Grok previe
 Runbook: [`gcp/DEPLOY.md`](gcp/DEPLOY.md)
 
 ```bash
-export PROJECT_ID=your-gcp-project
+export PROJECT_ID=veridex-exchange-6712
 ./gcp/bootstrap.sh          # APIs, SQL, IAM, secret placeholders
 # put Grok broker id/secret into Secret Manager
 ./gcp/deploy.sh             # image + Cloud Run

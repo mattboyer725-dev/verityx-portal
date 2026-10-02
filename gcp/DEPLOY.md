@@ -25,7 +25,7 @@ Rough idle cost in `us-central1`: Cloud Run min-1 + Cloud SQL regional `db-custo
 Billing must be enabled on the project. You need `roles/owner` (or equivalent) for the first run.
 
 ```bash
-export PROJECT_ID=your-gcp-project
+export PROJECT_ID=veridex-exchange-6712
 export REGION=us-central1
 export SQL_INSTANCE=verityx-pg
 gcloud config set project "$PROJECT_ID"
