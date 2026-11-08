@@ -6,7 +6,8 @@ export function SiteFooter() {
     <footer className="site-footer">
       <p>
         VerityX Sovereign · advisory · HMAC + Merkle. BLOCK never auto-applies. Vendor tenants named on the field are
-        not subscribed.
+        not subscribed. The demo desk uses illustrative purchase orders: the companies named there are not VerityX
+        customers and have not endorsed it.
       </p>
       <nav aria-label="Product">
         {SURFACES.map((s) => (

@@ -219,7 +219,7 @@ function Home() {
           <AdapterStrip adapters={adapters} />
         </div>
         <p className="mt-5 max-w-3xl text-xs leading-relaxed text-mute">
-          VerityX is independent and not affiliated with SAP, Argus Media, Fastmarkets, the LME, EcoVadis, Prewave, RapidRatings, Circulor,
+          VerityX is independent and not affiliated with Siemens Gamesa, SAP, Argus Media, Fastmarkets, the LME, EcoVadis, Prewave, RapidRatings, Circulor,
           Minespider or Okta, and subscribes to none of them. The adapters above are VerityX’s own implementations —
           OData with CSRF/ETag, sourcing RFQs, an SSE rare-earth index socket, a 21-criteria ESG scorecard, media-risk
           heat on the PO, public screening, hashed lot custody and batch passports, a 27-voter PBFT round, and an
