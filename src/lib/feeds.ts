@@ -398,26 +398,32 @@ function decodeXml(s: string) {
 export const GDELT_ATTRIBUTION = "Headlines via the GDELT Project (gdeltproject.org)";
 async function fetchNews(): Promise<NewsHit[]> {
   if (age(newsCache, 15 * 60_000) && newsCache) return newsCache.value;
-  const queries = ['"rare earth" export China', 'NdFeB magnet', 'copper smelter supply', 'Infineon IGBT'];
+  // ONE request: GDELT asks for no more than one query every few seconds per client.
+  const q = '("rare earth" OR NdFeB OR "electrical steel" OR "copper cathode" OR "permanent magnet") sourcelang:english';
   try {
-    const packs = await Promise.all(
-      queries.map(async (q) => {
-        const url =
-          "https://api.gdeltproject.org/api/v2/doc/doc?mode=artlist&format=json&maxrecords=5&sort=datedesc&timespan=7d&query=" +
-          encodeURIComponent(`${q} sourcelang:english`);
-        const data = (await getJson(url)) as { articles?: { title?: string; url?: string; domain?: string }[] };
-        return (data.articles ?? [])
-          .filter((a) => a.title && a.url && /^https?:\/\//.test(a.url))
-          .slice(0, 3)
-          .map((a) => ({
-            title: decodeXml(String(a.title)).slice(0, 180),
-            source: `${a.domain ?? "news"} · via GDELT`,
-            url: String(a.url),
-            query: q,
-          }));
-      }),
-    );
-    const news = packs.flat().slice(0, 10);
+    const url =
+      "https://api.gdeltproject.org/api/v2/doc/doc?mode=artlist&format=json&maxrecords=15&sort=datedesc&timespan=7d&query=" +
+      encodeURIComponent(q);
+    const t0 = Date.now();
+    const res = await timed(fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } }), 6000);
+    const text = await res.text();
+    pushTrace("gdelt", url.split("?")[0], res.status, Date.now() - t0, res.ok ? "GDELT" : text.slice(0, 80));
+    if (!res.ok) throw new Error(`GDELT ${res.status}`);
+    let data: { articles?: { title?: string; url?: string; domain?: string }[] } = {};
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("GDELT returned non-JSON"); // rate-limit notices come back as plain text
+    }
+    const news: NewsHit[] = (data.articles ?? [])
+      .filter((a) => a.title && a.url && /^https?:\/\//.test(a.url))
+      .slice(0, 10)
+      .map((a) => ({
+        title: decodeXml(String(a.title)).slice(0, 180),
+        source: `${a.domain ?? "news"} · via GDELT`,
+        url: String(a.url),
+        query: "rare earths · magnets · copper · electrical steel",
+      }));
     if (news.length) newsCache = { at: Date.now(), value: news };
     return news.length ? news : newsCache?.value || [];
   } catch {
@@ -560,6 +566,25 @@ export function fallbackBundle(): LiveBundle {
     [],
     [],
   );
+}
+
+/** Per-source status for operations (/api/readiness?sources=1): latest call per source, no secrets. */
+export async function feedDiagnostics() {
+  const b = await timed(fetchLiveBundle(true), 9000).catch(() => null);
+  await new Promise((r) => setTimeout(r, 2500)); // let the slow group (GLEIF, UN, TED, GDELT) report
+  const latestBy = new Map<string, FeedTrace>();
+  for (const t of TRACES) {
+    const key = t.id === "json" || t.id === "text" ? new URL(t.url).host : t.id;
+    if (!latestBy.has(key)) latestBy.set(key, t);
+  }
+  return {
+    health: b?.health ?? null,
+    news: newsCache?.value.length ?? 0,
+    gleif: gleifCache ? Object.values(gleifCache.value).filter(Boolean).length : 0,
+    sanctionsScanned: sanctionCache?.value.scanned ?? 0,
+    ted: tedCache?.value.length ?? 0,
+    calls: [...latestBy.entries()].map(([source, t]) => ({ source, status: t.status, ms: t.ms, note: t.note.slice(0, 80), at: t.ts })),
+  };
 }
 
 export async function fetchLiveBundle(force = false): Promise<LiveBundle> {

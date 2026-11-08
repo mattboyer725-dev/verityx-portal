@@ -4,9 +4,14 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/readiness")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
         const { readiness } = await import("@/lib/readiness.server");
-        return Response.json(await readiness(), { headers: { "Cache-Control": "no-store" } });
+        const body: Record<string, unknown> = await readiness();
+        if (new URL(request.url).searchParams.get("sources") === "1") {
+          const { feedDiagnostics } = await import("@/lib/feeds");
+          body.sources = await feedDiagnostics();
+        }
+        return Response.json(body, { headers: { "Cache-Control": "no-store" } });
       },
     },
   },
