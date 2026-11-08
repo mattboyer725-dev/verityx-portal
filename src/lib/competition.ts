@@ -204,7 +204,7 @@ export function provePath(row: CompetitorClass): "/desk" | "/core" {
   return row.analogPath === "/core" ? "/core" : "/desk";
 }
 
-export type DeskTab = "pipe" | "sap" | "mkt" | "screen" | "prov" | "seal" | "core";
+export type DeskTab = "pipe" | "sap" | "mkt" | "cost" | "screen" | "prov" | "seal" | "core";
 
 export function adapterIdFromProve(prove?: string): string | undefined {
   if (!prove) return undefined;

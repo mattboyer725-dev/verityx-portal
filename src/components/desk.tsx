@@ -12,6 +12,7 @@ import {
 import { getDeskControls, recordDeskEvent } from "@/lib/desk-ops";
 import { CORE_SHA, CORE_VERSION } from "@/lib/core-meta";
 import { DeskTour, tourSeen } from "@/components/desk-tour";
+import { ShouldCostPanel } from "@/components/should-cost-panel";
 import { postSapWriteback, runLiveVerify } from "@/lib/live-api";
 import { deskKeys, useDeskTape } from "@/lib/desk-live";
 import { useQueryClient } from "@tanstack/react-query";
@@ -429,6 +430,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
             ariba: packet.ariba,
             risk: packet.risk,
             seal: { hash: packet.seal.hash, quorum: packet.seal.quorum, committed: packet.seal.pbft.committed },
+            shouldCost: packet.shouldCost,
             provenance: packet.provenance,
             screen: {
               ecovadis: packet.screen.ecovadis,
@@ -777,6 +779,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                 ["pipe", "Pipeline"],
                 ["sap", "SAP / Ariba"],
                 ["mkt", "LME / NdPr index"],
+                ["cost", "Should-cost"],
                 ["screen", "Screens"],
                 ["prov", "Custody"],
                 ["seal", "PBFT 27"],
@@ -866,18 +869,27 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
             </div>
           ) : null}
 
+          {tab === "cost" ? (
+            <ShouldCostPanel
+              key={current.s.id}
+              commodity={current.s.commodity}
+              quoteTotal={(view?.scenario ?? current.s).proposed}
+              quoteCurrency={current.s.currency}
+              tape={live}
+            />
+          ) : null}
           {tab === "mkt" ? (
             <div>
               <div className="mkt-hero">
                 <div className="score-card">
                   <div className="k">LME Cu cash</div>
-                  <div className="v">{live?.lme ? live.lme.copperUsdMt.toFixed(0) : "—"}</div>
+                  <div className="v">{feedLive(live, "lme") && live?.lme ? live.lme.copperUsdMt.toFixed(0) : "standby"}</div>
                   <div className="s">{live?.lme?.settlementDate || "Westmetall"} · USD/mt</div>
                   <Spark values={cuHist} />
                 </div>
                 <div className="score-card">
                   <div className="k">NdPr index</div>
-                  <div className="v">{live?.argus ? live.argus.ndprUsdKg.toFixed(1) : "—"}</div>
+                  <div className="v">{feedLive(live, "argus") && live?.argus ? live.argus.ndprUsdKg.toFixed(1) : "standby"}</div>
                   <div className="s">USD/kg · listed REE tape</div>
                   <Spark values={ndprHist} />
                 </div>
@@ -888,7 +900,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                   <span>{money(p.value)}</span>
                 </div>
               ))}
-              {live?.lme ? (
+              {feedLive(live, "lme") && live?.lme ? (
                 <>
                   <div className="screen-row">
                     <span>LME Al cash</span>
@@ -912,7 +924,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                   ) : null}
                 </>
               ) : null}
-              {live?.fx ? (
+              {feedLive(live, "fx") && live?.fx ? (
                 <div className="screen-row">
                   <span>ECB FX</span>
                   <span className="mono">USD/EUR {live.fx.usdEur.toFixed(4)}</span>

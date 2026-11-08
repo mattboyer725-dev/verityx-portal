@@ -17,6 +17,7 @@ import { runPbft, PBFT_N, PBFT_QUORUM, clusterSnapshot, type PbftRound } from "@
 import { getAriba, getSapPo, seedSapPo, sapWriteback as postSap, sapWritebackLog as sapLog, type SapPO, type AribaRfq } from "@/lib/sap";
 import { recordCirculorLot } from "@/lib/circulor";
 import { evaluateDecision, type Evaluation } from "@/lib/verityx/decision-engine";
+import { shouldCost, type LivePrices, type ShouldCost } from "@/lib/should-cost";
 import type { EvidenceItem } from "@/lib/verityx/types";
 
 export type ScreenLevel = "CLEAR" | "LOW" | "MED" | "HIGH" | "WATCH";
@@ -709,7 +710,20 @@ export type PipelineResult = {
   live: LiveBundle | null;
   message: string;
   advisory: Evaluation | null;
+  shouldCost: ShouldCost;
 };
+
+/** Prices for SHOULD-COST from the live bundle, LIVE feeds only (no fallback constants). */
+export function shouldCostPrices(live?: LiveBundle): LivePrices {
+  const up = (k: string) => live?.health?.[k] === "LIVE";
+  return {
+    ndprOxideUsdKg: up("argus") ? live?.argus?.ndprUsdKg : undefined,
+    dyOxideUsdKg: up("argus") ? live?.argus?.dyUsdKg : undefined,
+    copperUsdT: up("lme") ? live?.lme?.copperUsdMt : undefined,
+    usdEur: up("fx") ? live?.fx?.usdEur : undefined,
+    asOf: live?.fetchedAt,
+  };
+}
 
 export async function runPipeline(scenarioId: string, live?: LiveBundle): Promise<PipelineResult> {
   await ensureGenesis();
@@ -729,6 +743,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   const dual = dualSourceAgent(scenario, consensus);
   const seal = await sealAgent(scenario, consensus);
   const advisory = advisoryFromScreen(scenario, screen, live);
+  const fair = shouldCost(scenario.commodity, shouldCostPrices(live));
   // One unit: the seal artifact and its decision land together or not at all.
   const [artifact] = await appendCoreEvents([
     {
@@ -746,7 +761,9 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
       payload: {
         title: scenario.po,
         choice: risk.action,
-        context: `${scenario.title} · ${scenario.supplier}`,
+        context: `${scenario.title} · ${scenario.supplier}${
+          fair.ok ? ` · should-cost ${fair.perKg.low}–${fair.perKg.high} ${fair.currency}/kg (mid ${fair.perKg.mid})` : ""
+        }`,
       },
       actor: BUYER.email,
     },
@@ -760,6 +777,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
       ? `${oracle.quote.symbol} ${oracle.quote.price}`
       : "no tape";
   return {
+    shouldCost: fair,
     scenario,
     ingest,
     oracle,
