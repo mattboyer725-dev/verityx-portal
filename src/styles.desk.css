@@ -1192,3 +1192,53 @@
 .mkt-hero .score-card .spark {
   margin-top: 0.4rem;
 }
+
+/* ------------------------------------------------------------------ *
+ * Guided tour (ported from verityx-demo, recoloured to the VerityX seal)
+ * ------------------------------------------------------------------ */
+.tour-overlay { position: fixed; inset: 0; z-index: 1000; pointer-events: none; }
+.tour-backdrop { position: absolute; inset: 0; pointer-events: auto; background: transparent; }
+.tour-spotlight {
+  position: fixed;
+  border-radius: var(--radius-md, 10px);
+  box-shadow:
+    0 0 0 9999px rgba(18, 12, 26, 0.78),
+    0 0 0 1.5px #c9b07a,
+    0 0 26px rgba(201, 176, 122, 0.28);
+  pointer-events: none;
+  transition: top 0.38s cubic-bezier(0.4, 0, 0.2, 1), left 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.38s cubic-bezier(0.4, 0, 0.2, 1), height 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tour-tooltip {
+  position: fixed;
+  pointer-events: auto;
+  background: #1a1324;
+  color: #f2ede4; /* fixed: the desk theme is light, so --color-fg is dark ink */
+  border: 1px solid rgba(201, 176, 122, 0.35);
+  border-radius: var(--radius-lg, 14px);
+  padding: 1rem 1.15rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  transition: top 0.32s cubic-bezier(0.4, 0, 0.2, 1), left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tour-step-pill { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: #c9b07a; margin-bottom: 0.45rem; }
+.tour-heading { font-family: var(--font-display); font-size: 1.05rem; line-height: 1.25; margin: 0 0 0.4rem; color: #f2ede4; }
+.tour-body { font-size: 0.85rem; line-height: 1.6; color: #c9c0d4; margin: 0 0 0.9rem; }
+.tour-actions { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.tour-nav { display: flex; gap: 0.4rem; }
+.tour-btn-skip {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--font-mono); font-size: 11px; color: #a79fb3; text-decoration: underline;
+}
+.tour-btn {
+  min-height: 34px; padding: 0 0.85rem; cursor: pointer;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid rgba(242, 237, 228, 0.28);
+  background: transparent; color: #f2ede4;
+  font-size: 0.8rem;
+}
+.tour-btn:disabled { opacity: 0.35; cursor: default; }
+.tour-btn-next { background: #c9b07a; border-color: #c9b07a; color: #120c1a; font-weight: 600; }
+.tour-btn:focus-visible, .tour-btn-skip:focus-visible { outline: 2px solid #c9b07a; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight, .tour-tooltip { transition: none; }
+}

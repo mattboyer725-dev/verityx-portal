@@ -11,6 +11,7 @@ import {
 } from "@/lib/engine";
 import { getDeskControls, recordDeskEvent } from "@/lib/desk-ops";
 import { CORE_SHA, CORE_VERSION } from "@/lib/core-meta";
+import { DeskTour, tourSeen } from "@/components/desk-tour";
 import { postSapWriteback, runLiveVerify } from "@/lib/live-api";
 import { deskKeys, useDeskTape } from "@/lib/desk-live";
 import { useQueryClient } from "@tanstack/react-query";
@@ -213,6 +214,13 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
   const [wb, setWb] = useState("");
   const [frozen, setFrozen] = useState(false);
   const [announce, setAnnounce] = useState("");
+  const [tourOpen, setTourOpen] = useState(false);
+  // First visit to the desk opens the tour once; a deep link from the field (prove) does not.
+  useEffect(() => {
+    if (prove || tourSeen()) return;
+    const t = window.setTimeout(() => setTourOpen(true), 600);
+    return () => window.clearTimeout(t);
+  }, [prove]);
   const tapeQ = useDeskTape();
   const live = (tapeQ.data as LiveSnap | undefined) ?? null;
   const qc = useQueryClient();
@@ -400,6 +408,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
 
   return (
     <div className="vx-shell">
+      <DeskTour open={tourOpen} onClose={() => setTourOpen(false)} />
       <header className="vx-top">
         <div className="vx-brand">
           <VxMark />
@@ -426,6 +435,9 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           <Link className="vx-btn vx-btn-ghost" to="/core">
             Core
           </Link>
+          <button className="vx-btn vx-btn-ghost" type="button" onClick={() => setTourOpen(true)}>
+            Tour
+          </button>
           <button className="vx-btn vx-btn-ghost" type="button" onClick={() => openCommandPalette()}>
             Menu
           </button>
@@ -435,7 +447,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
         </div>
       </header>
 
-      <div className="ticker" aria-label="Live tape">
+      <div className="ticker" aria-label="Live tape" data-tour="tape">
         {live?.lme ? (
           <span>
             LME Cu cash <b>{live.lme.copperUsdMt.toFixed(0)}</b> USD/mt {chg(live.lme.copperChangePct)}
@@ -539,7 +551,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
         </nav>
 
         <section className="desk-list">
-          <div className="vx-kpis" style={{ marginBottom: "0.9rem" }}>
+          <div className="vx-kpis" style={{ marginBottom: "0.9rem" }} data-tour="kpis">
             <div className="vx-kpi">
               <div className="k">POs</div>
               <div className="v">{kpis.n}</div>
@@ -595,7 +607,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
             </button>
           </div>
 
-          <section className="vx-card">
+          <section className="vx-card" data-tour="pos">
             <div className="vx-card-h">
               Purchase orders
               <span>{wb || note}</span>
@@ -653,7 +665,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           <p className="inspect-sub">
             {current.s.supplier} · {current.s.commodity} · buyer {current.s.buyer}
           </p>
-          <div className="inspect-stats">
+          <div className="inspect-stats" data-tour="stats">
             <div>
               <div className="l">Proposed</div>
               <div className="n">{money((view?.scenario ?? current.s).proposed)}</div>
@@ -668,10 +680,10 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
             </div>
           </div>
           <div className="vx-actions" style={{ marginBottom: "1rem" }}>
-            <button className="vx-btn vx-btn-primary" type="button" disabled={running || frozen} onClick={() => verify(current.s.id)}>
+            <button className="vx-btn vx-btn-primary" type="button" data-tour="verify" disabled={running || frozen} onClick={() => verify(current.s.id)}>
               {frozen ? "Frozen" : running ? "Sealing…" : "Verify PO"}
             </button>
-            <button className="vx-btn vx-btn-ghost" type="button" onClick={() => writeback("HOLD")}>
+            <button className="vx-btn vx-btn-ghost" type="button" data-tour="sap" onClick={() => writeback("HOLD")}>
               Hold in SAP
             </button>
             <button className="vx-btn vx-btn-ghost" type="button" onClick={() => writeback("RELEASE")}>
@@ -685,7 +697,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
             </button>
           </div>
 
-          <div className="chip-row">
+          <div className="chip-row" data-tour="evidence">
             {(
               [
                 ["pipe", "Pipeline"],
