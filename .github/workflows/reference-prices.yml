@@ -27,7 +27,7 @@ jobs:
         run: python3 scripts/refresh_reference_prices.py
       - name: Commit if changed
         run: |
-          if git diff --quiet -- src/data/reference-prices.json; then
+          if [ -z "$(git status --porcelain -- src/data/reference-prices.json)" ]; then
             echo "No change."; exit 0
           fi
           git config user.name "verityx-bot"
