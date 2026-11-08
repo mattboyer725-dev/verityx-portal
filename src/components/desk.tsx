@@ -255,7 +255,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           <li>
             <span className="n">02</span>
             <strong>Consensus</strong>
-            <span>Outlier prints dropped (MAD); agreement scored by coefficient of variation. VERIFIED at 0.80 or better.</span>
+            <span>Outlier prints dropped (MAD); agreement scored by coefficient of variation. VERIFIED at 0.80 or better. Quoted price compared with a low / mid / high should-cost band.</span>
           </li>
           <li>
             <span className="n">03</span>
@@ -265,12 +265,20 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           <li>
             <span className="n">04</span>
             <strong>Seal</strong>
-            <span>A 27-voter PBFT round (quorum 19) commits the packet; Local Core signs it with a server-held HMAC key.</span>
+            <span>A 27-voter PBFT round (quorum 19) commits the packet; Local Core chains it with a server-held HMAC key and issues an Ed25519-signed receipt.</span>
           </li>
           <li>
             <span className="n">05</span>
             <strong>Decide</strong>
             <span>An advisory HOLD or RELEASE. A BLOCK never auto-applies — SAP changes only when a person approves.</span>
+          </li>
+          <li>
+            <span className="n">06</span>
+            <strong>Prove</strong>
+            <span>
+              Anyone can check the receipt at <Link className="underline underline-offset-2" to="/verify">/verify</Link> — no account, no trust in us. Quick price
+              check on any PO at <Link className="underline underline-offset-2" to="/check">/check</Link>.
+            </span>
           </li>
         </ol>
       </section>

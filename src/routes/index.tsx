@@ -15,6 +15,37 @@ import { AdapterStrip } from "@/components/adapter-strip";
 
 export const Route = createFileRoute("/")({ component: Home });
 
+const TOOLS = [
+  {
+    to: "/check",
+    kicker: "Check a PO",
+    title: "Is this price fair?",
+    body: "Paste supplier, commodity, kg and total. Get PROCEED, REVIEW or HOLD against live prices and a should-cost band. Sign in to seal it.",
+    cta: "Check a quote",
+  },
+  {
+    to: "/verify",
+    kicker: "Verify a receipt",
+    title: "Prove it wasn't changed",
+    body: "Drop a sealed receipt. Three checks — content, ledger, Ed25519 signature — run in your browser against the published key.",
+    cta: "Verify a receipt",
+  },
+  {
+    to: "/desk",
+    kicker: "Should-cost",
+    title: "What it should cost",
+    body: "Material × live price ÷ yield, plus conversion, loss and margin, shown as a low / mid / high band. Figures only when the feed is LIVE.",
+    cta: "Open should-cost",
+  },
+  {
+    to: "/desk",
+    kicker: "Price history",
+    title: "Know when prices move",
+    body: "Daily snapshots over 30 days. Any move past 10% against the 24-hour baseline raises a drift alert above the PO list.",
+    cta: "See price drift",
+  },
+] as const;
+
 function Home() {
   const { user } = useCurrentUserState();
   const { adapters } = useLiveAdapters();
@@ -36,6 +67,29 @@ function Home() {
           HMAC + Merkle continuity from local-core v{CORE_VERSION}. Advisory decisions — never an automatic fraud finding.
         </p>
         <SurfaceLoop className="mt-8" />
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-10">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Use it now · no account needed to check</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {TOOLS.map((t) => (
+            <Link
+              key={t.title}
+              to={t.to}
+              className="panel vx-enter group flex h-full flex-col justify-between p-6 transition-colors hover:bg-raised"
+            >
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-gold">{t.kicker}</p>
+                <h2 className="mt-3 font-display text-2xl tracking-tight">{t.title}</h2>
+                <p className="mt-3 text-sm leading-relaxed text-mute">{t.body}</p>
+              </div>
+              <p className="mt-6 flex items-center gap-2 text-sm text-paper">
+                {t.cta}
+                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+              </p>
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-16 sm:grid-cols-2">
