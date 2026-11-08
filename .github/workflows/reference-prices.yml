@@ -1,0 +1,37 @@
+name: Reference prices
+
+# Monthly refresh of licensed public reference prices (World Bank Pink Sheet,
+# USGS Mineral Commodity Summaries). Commits src/data/reference-prices.json
+# only when it changed; the push redeploys Vercel.
+on:
+  schedule:
+    - cron: "17 14 6 * *" # 6th of each month, after the Pink Sheet's early-month release
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install parsers
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+          pip install --quiet openpyxl==3.1.5
+      - name: Refresh
+        run: python3 scripts/refresh_reference_prices.py
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- src/data/reference-prices.json; then
+            echo "No change."; exit 0
+          fi
+          git config user.name "verityx-bot"
+          git config user.email "verityx-bot@users.noreply.github.com"
+          git add src/data/reference-prices.json
+          git commit -m "Reference prices: monthly refresh (World Bank Pink Sheet, USGS MCS)"
+          git push
