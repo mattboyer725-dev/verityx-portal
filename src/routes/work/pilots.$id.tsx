@@ -34,6 +34,7 @@ function PilotDetail() {
   const [confirm, setConfirm] = useState("");
   const [evidence, setEvidence] = useState<EvidenceItem[]>([emptyEvidence()]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [payLink, setPayLink] = useState<{ url: string; at: number } | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [scope, setScope] = useState("");
@@ -196,7 +197,14 @@ function PilotDetail() {
         toast.message("Stripe is not configured in this environment. Record an authorized payment below.");
         return;
       }
-      window.location.href = result.url;
+      // The BUYER pays, not the owner: show the link to send them instead of opening it here.
+      setPayLink({ url: result.url, at: Date.now() });
+      try {
+        await navigator.clipboard.writeText(result.url);
+        toast.success("Payment link copied — send it to the buyer. It works for 24 hours.");
+      } catch {
+        toast.success("Payment link ready — copy it below and send it to the buyer.");
+      }
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -491,12 +499,21 @@ function PilotDetail() {
               <p className="text-xs uppercase tracking-[0.14em] text-mute">Stripe Checkout</p>
               <p className="mt-2 text-sm text-mute">
                 {stripeConfigured
-                  ? "Opens Stripe in test or live mode according to the server key."
+                  ? "Creates a Stripe payment page for the buyer, in test or live mode according to the server key."
                   : "No Stripe secret is configured here. Use authorized manual recording to complete the loop in this environment."}
               </p>
               <Button className="mt-4" variant="ghost" disabled={busy !== null} onClick={checkout}>
-                {busy === "checkout" ? "Opening…" : "Create Stripe checkout"}
+                {busy === "checkout" ? "Creating…" : payLink ? "Create a fresh payment link" : "Create payment link for the buyer"}
               </Button>
+              {payLink ? (
+                <div className="mt-3 grid gap-2 text-sm">
+                  <Input readOnly value={payLink.url} onFocus={(e) => e.currentTarget.select()} aria-label="Payment link" />
+                  <p className="text-xs text-mute">
+                    Send this to the buyer. Created {new Date(payLink.at).toLocaleTimeString()}; Stripe keeps it open for 24 hours, and
+                    the pilot is marked paid automatically when they pay.
+                  </p>
+                </div>
+              ) : null}
             </div>
             <div className="space-y-3">
               <Field label="Authorized payment note">
