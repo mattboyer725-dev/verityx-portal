@@ -778,13 +778,18 @@
 }
 .inspect-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Wrap instead of overflow: EUR millions ran into each other at 1440px. */
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
   gap: 0.75rem;
   margin-bottom: 1.1rem;
 }
+.inspect-stats > div {
+  min-width: 0;
+}
 .inspect-stats .n {
   font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-size: clamp(1.1rem, 1.25vw + 0.4rem, 1.45rem);
+  white-space: nowrap;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   font-weight: 400;
@@ -1241,4 +1246,47 @@
 .tour-btn:focus-visible, .tour-btn-skip:focus-visible { outline: 2px solid #c9b07a; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .tour-spotlight, .tour-tooltip { transition: none; }
+}
+
+/* ------------------------------------------------------------------ *
+ * Gate: feed honesty chips, pilot offer, how it works
+ * ------------------------------------------------------------------ */
+.tape-chip-standby { color: var(--color-faint); border-style: dashed; }
+.tape-chip-live { color: var(--color-green); border-color: color-mix(in oklab, var(--color-green) 40%, transparent); }
+.gate-more {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  padding: clamp(1.75rem, 5vw, 4rem) clamp(1.5rem, 5vw, 4.5rem);
+  border-top: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
+  background: var(--color-surface);
+}
+.gate-pilot h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0.6rem 0 0.8rem;
+}
+.gate-pilot h2 span { display: block; color: var(--color-muted); }
+.gate-pilot p { color: var(--color-muted); line-height: 1.6; max-width: 46ch; margin-bottom: 1.25rem; }
+.gate-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.gate-steps li {
+  display: grid;
+  grid-template-columns: 2.5rem 7.5rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  border-top: 1px solid color-mix(in oklab, var(--color-fg) 10%, transparent);
+}
+.gate-steps li:first-child { border-top: 0; }
+.gate-steps .n { font-family: var(--font-mono); font-size: 0.7rem; color: var(--color-faint); }
+.gate-steps strong { font-weight: 600; }
+.gate-steps li > span:last-child { color: var(--color-muted); font-size: 0.9rem; line-height: 1.5; }
+@media (max-width: 900px) {
+  .gate-more { grid-template-columns: 1fr; }
+  .gate-steps li { grid-template-columns: 2rem 1fr; }
+  .gate-steps li > span:last-child { grid-column: 2; }
 }

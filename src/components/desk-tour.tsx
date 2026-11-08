@@ -15,7 +15,7 @@ export const DESK_TOUR: TourStep[] = [
   {
     target: "tape",
     heading: "Live tape",
-    body: "LME copper and aluminium cash, NdPr and Dy, and ECB USD/EUR, refreshed from public feeds. A feed that is down reads “standby” — it is never back-filled with a made-up print.",
+    body: "LME copper and aluminium cash, an NdPr/Dy index scaled from MP Materials, and ECB USD/EUR, refreshed from public feeds. A feed that is down reads “standby” — it is never back-filled with a made-up print.",
   },
   {
     target: "kpis",
@@ -45,7 +45,7 @@ export const DESK_TOUR: TourStep[] = [
   {
     target: "evidence",
     heading: "The evidence behind it",
-    body: "Each tab is one source of the packet: SAP and Ariba, LME and Argus, sanctions screens, Circulor lots, the 27-node PBFT seal, and the Local Core proof. Export hands over the whole packet.",
+    body: "Each tab is one source of the packet: SAP and Ariba, LME and the NdPr index, sanctions screens, Circulor lots, the 27-node PBFT seal, and the Local Core proof. Export hands over the whole packet.",
   },
 ];
 

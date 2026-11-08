@@ -23,7 +23,6 @@ import { Spark } from "@/components/spark";
 import { SiteNav } from "@/components/site-nav";
 import { SurfaceLoop } from "@/components/surface-loop";
 import { SESSION_KEY, type DeskSession } from "@/lib/session";
-import { OWNER_EMAIL } from "@/lib/admin";
 import { openCommandPalette } from "@/lib/nav";
 import { deskTabForProve, proveLabel, type DeskTab } from "@/lib/competition";
 
@@ -62,6 +61,17 @@ type LiveSnap = LiveBundle & {
     events?: { id: string; type: string; hash: string; mac: string; ts: string }[];
   };
 };
+
+/** A figure is shown only when its own feed reports LIVE; a fallback constant is never presented as a print. */
+function feedLive(snap: { health?: Record<string, string> } | null | undefined, k: string) {
+  return snap?.health?.[k] === "LIVE";
+}
+
+function asOfUtc(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${d.toISOString().slice(11, 16)} UTC`;
+}
 
 function chg(n: number) {
   const sign = n >= 0 ? "+" : "";
@@ -135,20 +145,39 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           </div>
           <h1>One provable version of the purchase order.</h1>
           <p className="lede">
-            Siemens Gamesa magnetics. Live LME cash, SAP OData tenant, OpenSanctions screens, Circulor lot ledger, sealed by a
-            27-host PBFT network and an HMAC local-core ledger.
+            Siemens Gamesa magnetics. LME cash and ECB FX from public feeds, an SAP OData analog tenant, UN and OpenSanctions
+            screens, a Circulor-shaped lot ledger — each packet sealed by a 27-voter PBFT round and an HMAC-signed Local Core
+            ledger.
           </p>
-          <div className="gate-tape">
-            {tape?.lme ? <span className="tape-chip">LME Cu {tape.lme.copperUsdMt.toFixed(0)} USD/mt</span> : null}
-            {tape?.lme ? <span className="tape-chip">LME Al {tape.lme.aluminiumUsdMt.toFixed(0)} USD/mt</span> : null}
-            {tape?.argus ? <span className="tape-chip">Argus NdPr {tape.argus.ndprUsdKg.toFixed(1)} USD/kg</span> : null}
-            {tape?.fx ? <span className="tape-chip">USD/EUR {tape.fx.usdEur.toFixed(4)}</span> : null}
+          <div className="gate-tape" aria-label="Market tape">
+            {feedLive(tape, "lme") && tape?.lme ? (
+              <>
+                <span className="tape-chip">LME Cu {tape.lme.copperUsdMt.toFixed(0)} USD/mt</span>
+                <span className="tape-chip">LME Al {tape.lme.aluminiumUsdMt.toFixed(0)} USD/mt</span>
+              </>
+            ) : null}
+            {feedLive(tape, "argus") && tape?.argus ? (
+              <span className="tape-chip" title="NdPr index scaled from MP Materials (NYSE: MP). Not an Argus assessment.">
+                NdPr {tape.argus.ndprUsdKg.toFixed(1)} USD/kg · MP-indexed
+              </span>
+            ) : null}
+            {feedLive(tape, "fx") && tape?.fx ? <span className="tape-chip">USD/EUR {tape.fx.usdEur.toFixed(4)} · ECB</span> : null}
             {tape?.core ? (
               <span className="tape-chip">
                 Core {tape.core.ok ? "HMAC ok" : "break"} · {tape.core.leaf_count} leaves
               </span>
             ) : null}
-            {!tape?.lme && !tape?.fx ? <span className="tape-chip">LME · Argus · ECB standby</span> : null}
+            {(() => {
+              const down = [
+                !feedLive(tape, "lme") && "LME",
+                !feedLive(tape, "argus") && "NdPr",
+                !feedLive(tape, "fx") && "ECB",
+              ].filter(Boolean);
+              return down.length ? <span className="tape-chip tape-chip-standby">{down.join(" · ")} standby</span> : null;
+            })()}
+            {tape && (feedLive(tape, "lme") || feedLive(tape, "fx")) ? (
+              <span className="tape-chip tape-chip-live">Live · {asOfUtc(tape.fetchedAt)}</span>
+            ) : null}
           </div>
         </div>
         <p className="hint">SAP OData · Ariba · LME · REE socket · OpenSanctions · Circulor lots · PBFT 27 · Local Core HMAC · OIDC</p>
@@ -196,9 +225,52 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
             {" · "}
             <Link to="/core">Local Core</Link>
             {" · "}
-            <Link to="/admin">Owner command · {OWNER_EMAIL}</Link>
+            <Link to="/admin">Owner command</Link>
           </p>
         </div>
+      </section>
+      <section className="gate-more" aria-labelledby="pilot-h">
+        <div className="gate-pilot">
+          <div className="vx-label">Pilot</div>
+          <h2 id="pilot-h">
+            $2,500 · 72 hours
+            <span>one live PO file</span>
+          </h2>
+          <p>
+            Send one magnetics, wind or rare-earth purchase order. Within 72 hours you get a sealed evidence packet and an
+            advisory decision on it — and nothing changes in your systems unless a person approves it.
+          </p>
+          <Link className="vx-btn vx-btn-primary" to="/work">
+            Start a pilot
+          </Link>
+        </div>
+        <ol className="gate-steps">
+          <li>
+            <span className="n">01</span>
+            <strong>Ingest</strong>
+            <span>The PO and its RFQ from SAP OData and Ariba, priced against LME cash, the NdPr index and ECB FX.</span>
+          </li>
+          <li>
+            <span className="n">02</span>
+            <strong>Consensus</strong>
+            <span>Outlier prints dropped (MAD); agreement scored by coefficient of variation. VERIFIED at 0.80 or better.</span>
+          </li>
+          <li>
+            <span className="n">03</span>
+            <strong>Screen</strong>
+            <span>Supplier checked against GLEIF, the UN consolidated list and OpenSanctions; lots traced on the Circulor ledger.</span>
+          </li>
+          <li>
+            <span className="n">04</span>
+            <strong>Seal</strong>
+            <span>A 27-voter PBFT round (quorum 19) commits the packet; Local Core signs it with a server-held HMAC key.</span>
+          </li>
+          <li>
+            <span className="n">05</span>
+            <strong>Decide</strong>
+            <span>An advisory HOLD or RELEASE. A BLOCK never auto-applies — SAP changes only when a person approves.</span>
+          </li>
+        </ol>
       </section>
     </div>
   );
@@ -448,34 +520,36 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
       </header>
 
       <div className="ticker" aria-label="Live tape" data-tour="tape">
-        {live?.lme ? (
+        {feedLive(live, "lme") && live?.lme ? (
           <span>
             LME Cu cash <b>{live.lme.copperUsdMt.toFixed(0)}</b> USD/mt {chg(live.lme.copperChangePct)}
           </span>
         ) : (
-          <span>LME Cu cash standby</span>
+          <span>LME cash standby</span>
         )}
-        {live?.lme ? (
+        {feedLive(live, "lme") && live?.lme ? (
           <span>
             LME Al cash <b>{live.lme.aluminiumUsdMt.toFixed(0)}</b> USD/mt {chg(live.lme.aluminiumChangePct)}
           </span>
         ) : null}
-        {live?.lme?.copper3mUsdMt ? (
+        {feedLive(live, "lme") && live?.lme?.copper3mUsdMt ? (
           <span>
             Cu 3M <b>{live.lme.copper3mUsdMt.toFixed(0)}</b>
           </span>
         ) : null}
-        {live?.argus ? (
-          <span>
-            Argus NdPr <b>{live.argus.ndprUsdKg.toFixed(1)}</b> USD/kg {chg(live.argus.ndprChangePct)}
+        {feedLive(live, "argus") && live?.argus ? (
+          <span title="NdPr index scaled from MP Materials (NYSE: MP). Not an Argus assessment.">
+            NdPr idx <b>{live.argus.ndprUsdKg.toFixed(1)}</b> USD/kg {chg(live.argus.ndprChangePct)}
+          </span>
+        ) : (
+          <span>NdPr index standby</span>
+        )}
+        {feedLive(live, "argus") && live?.argus ? (
+          <span title="Dy index scaled from MP Materials (NYSE: MP). Not an Argus assessment.">
+            Dy idx <b>{live.argus.dyUsdKg.toFixed(0)}</b> USD/kg
           </span>
         ) : null}
-        {live?.argus ? (
-          <span>
-            Argus Dy <b>{live.argus.dyUsdKg.toFixed(0)}</b> USD/kg
-          </span>
-        ) : null}
-        {live?.fx ? (
+        {feedLive(live, "fx") && live?.fx ? (
           <span>
             USD/EUR <b>{live.fx.usdEur.toFixed(4)}</b>
           </span>

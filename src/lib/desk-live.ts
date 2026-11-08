@@ -40,7 +40,12 @@ export function useDeskTape(enabled = true) {
             argus: tick.argus || prev.argus,
             fx: tick.fx || prev.fx,
             lme: tick.lme ? { ...prev.lme, ...tick.lme } : prev.lme,
-            health: { ...prev.health, argus: tick.argus ? "LIVE" : prev.health.argus },
+            // A tick carrying a fallback print ("feed timeout" / "stale") must not flip a feed to LIVE.
+            health: {
+              ...prev.health,
+              ...(tick.argus ? { argus: /feed timeout/i.test(tick.argus.source) ? "STALE" : "LIVE" } : {}),
+              ...(tick.fx ? { fx: /stale/i.test(tick.fx.source) ? "STALE" : "LIVE" } : {}),
+            },
           };
         });
       } catch {

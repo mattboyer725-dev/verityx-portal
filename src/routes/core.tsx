@@ -114,7 +114,7 @@ function CoreStatus() {
 
       <section className="mx-auto grid max-w-6xl grid-cols-2 border-y border-line lg:grid-cols-4">
         {[
-          { v: "112", l: "Python tests" },
+          { v: "128", l: "Python tests (v1.7.0)" },
           { v: String(data?.chain.depth ?? "—"), l: "Signed events" },
           { v: String(data?.snap.leaf_count ?? "—"), l: "Merkle leaves" },
           { v: "0", l: "Public writes" },
