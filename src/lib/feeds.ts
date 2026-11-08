@@ -1,4 +1,4 @@
-import { nameCore, pickGleif, type GleifRec } from "@/lib/name-match";
+import { nameCore, pickGleif, type GleifRec } from "./name-match.ts";
 import { scoreEcovadis, type EcoVadisScore } from "./ecovadis.ts";
 import { scorePrewave, type PrewaveRisk } from "./prewave.ts";
 
