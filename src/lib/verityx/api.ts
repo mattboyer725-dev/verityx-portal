@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { ids } from "./validate";
 import type { EvidenceItem, Outcome, OutreachChannel, Pilot, ProspectStage } from "./types";
 
 export const getWorkspace = createServerFn({ method: "GET" })
@@ -33,7 +34,7 @@ export const listProspects = createServerFn({ method: "GET" })
 
 export const getProspect = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((data: { id: string }) => data)
+  .validator(ids<{ id: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.getProspect(context.userId, data);
@@ -58,7 +59,7 @@ export const createProspect = createServerFn({ method: "POST" })
 
 export const patchProspect = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: {
+  .validator(ids<{
     id: string;
     companyName?: string;
     contactName?: string;
@@ -68,7 +69,7 @@ export const patchProspect = createServerFn({ method: "POST" })
     region?: string;
     stage?: ProspectStage;
     notes?: string;
-  }) => data)
+  }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.patchProspect(context.userId, data);
@@ -76,7 +77,7 @@ export const patchProspect = createServerFn({ method: "POST" })
 
 export const deleteProspect = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string }) => data)
+  .validator(ids<{ id: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.deleteProspect(context.userId, data);
@@ -84,7 +85,7 @@ export const deleteProspect = createServerFn({ method: "POST" })
 
 export const createPilot = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { prospectId: string; title?: string; scope?: string }) => data)
+  .validator(ids<{ prospectId: string; title?: string; scope?: string }>("prospectId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.createPilot(context.userId, data);
@@ -99,7 +100,7 @@ export const listPilots = createServerFn({ method: "GET" })
 
 export const getPilot = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((data: { id: string }) => data)
+  .validator(ids<{ id: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.getPilot(context.userId, data);
@@ -107,7 +108,7 @@ export const getPilot = createServerFn({ method: "GET" })
 
 export const patchPilot = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string; title?: string; scope?: string; status?: Pilot["status"]; markInputsReceived?: boolean }) => data)
+  .validator(ids<{ id: string; title?: string; scope?: string; status?: Pilot["status"]; markInputsReceived?: boolean }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.patchPilot(context.userId, data);
@@ -115,7 +116,7 @@ export const patchPilot = createServerFn({ method: "POST" })
 
 export const createCheckout = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { pilotId: string; origin: string }) => data)
+  .validator(ids<{ pilotId: string; origin: string }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.createCheckout(context.userId, data);
@@ -123,7 +124,7 @@ export const createCheckout = createServerFn({ method: "POST" })
 
 export const recordManualPayment = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { pilotId: string; note: string; confirm: string }) => data)
+  .validator(ids<{ pilotId: string; note: string; confirm: string }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.recordManualPayment(context.userId, data);
@@ -139,7 +140,7 @@ export const previewDecision = createServerFn({ method: "POST" })
 
 export const createDecision = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { pilotId: string; evidence: EvidenceItem[] }) => data)
+  .validator(ids<{ pilotId: string; evidence: EvidenceItem[] }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.createDecision(context.userId, data);
@@ -154,7 +155,7 @@ export const listDecisions = createServerFn({ method: "GET" })
 
 export const getDecision = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((data: { id: string }) => data)
+  .validator(ids<{ id: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.getDecision(context.userId, data);
@@ -162,7 +163,7 @@ export const getDecision = createServerFn({ method: "GET" })
 
 export const patchDecision = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string; evidence?: EvidenceItem[]; approvalNote?: string }) => data)
+  .validator(ids<{ id: string; evidence?: EvidenceItem[]; approvalNote?: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.patchDecision(context.userId, data);
@@ -170,7 +171,7 @@ export const patchDecision = createServerFn({ method: "POST" })
 
 export const approveDecision = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string; note?: string }) => data)
+  .validator(ids<{ id: string; note?: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.approveDecision(context.userId, data);
@@ -178,7 +179,7 @@ export const approveDecision = createServerFn({ method: "POST" })
 
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { pilotId: string }) => data)
+  .validator(ids<{ pilotId: string }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.generateReport(context.userId, data);
@@ -193,7 +194,7 @@ export const listReports = createServerFn({ method: "GET" })
 
 export const getReport = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((data: { id: string }) => data)
+  .validator(ids<{ id: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.getReport(context.userId, data);
@@ -201,7 +202,7 @@ export const getReport = createServerFn({ method: "GET" })
 
 export const getReportPdf = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string }) => data)
+  .validator(ids<{ id: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.getReportPdf(context.userId, data);
@@ -216,7 +217,7 @@ export const listFeedback = createServerFn({ method: "GET" })
 
 export const createFeedback = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { pilotId: string; kind: string; rating?: number; comment?: string }) => data)
+  .validator(ids<{ pilotId: string; kind: string; rating?: number; comment?: string }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.createFeedback(context.userId, data);
@@ -224,7 +225,7 @@ export const createFeedback = createServerFn({ method: "POST" })
 
 export const upsertOutcome = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: {
+  .validator(ids<{
     pilotId: string;
     outcomeAccuracy?: Outcome["outcomeAccuracy"];
     outcomeValue?: string;
@@ -232,7 +233,7 @@ export const upsertOutcome = createServerFn({ method: "POST" })
     caseStudyPermission?: Outcome["caseStudyPermission"];
     followUpAt?: string | null;
     notes?: string;
-  }) => data)
+  }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.upsertOutcome(context.userId, data);
@@ -275,7 +276,7 @@ export const loadOwnBook = createServerFn({ method: "POST" })
 
 export const logOutreach = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string; channel?: OutreachChannel; subject?: string; body?: string }) => data)
+  .validator(ids<{ id: string; channel?: OutreachChannel; subject?: string; body?: string }>("id"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.logOutreach(context.userId, data);
@@ -283,7 +284,7 @@ export const logOutreach = createServerFn({ method: "POST" })
 
 export const pullDeskPacket = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { pilotId: string; scenarioId?: string }) => data)
+  .validator(ids<{ pilotId: string; scenarioId?: string }>("pilotId"))
   .handler(async ({ context, data }) => {
     const ops = await import("./ops.server");
     return ops.pullDeskPacket(context.userId, data);

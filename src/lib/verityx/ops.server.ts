@@ -7,10 +7,9 @@ import {
 } from "./constants";
 import { evaluateDecision } from "./decision-engine";
 import { bytesToBase64, buildReportPdf } from "./pdf";
+import { applyVerifiedStripeEventWith } from "./stripe-apply";
 import {
   interpretWebhook,
-  paymentIntentIdFromSession,
-  shouldMarkPaid,
   type StripeLikeEvent,
 } from "./billing";
 import { newId } from "./format";
@@ -646,56 +645,8 @@ export async function recordManualPayment(userId: string, data: { pilotId: strin
     return mapPilot(rows[0]);
 }
 
-export async function applyVerifiedStripeEvent(event: StripeLikeEvent): Promise<{ duplicate: boolean; pilotId: string | null }> {
-  const sql = await getSql();
-  const seen = await sql`select id from stripe_events where id = ${event.id} limit 1`;
-  if (seen[0]) return { duplicate: true, pilotId: null };
-  const obj = event.data.object;
-  const meta = obj.metadata ?? {};
-  const sessionId = obj.id ?? null;
-  const intent = paymentIntentIdFromSession(obj);
-  let pilotId = meta.pilot_id ?? obj.client_reference_id ?? null;
-  let orgId = meta.organization_id ?? null;
-  if (!pilotId && sessionId) {
-    const found = await sql<{ id: string; organization_id: string }>`
-      select id, organization_id from pilots where stripe_checkout_session_id = ${sessionId} limit 1
-    `;
-    if (found[0]) {
-      pilotId = found[0].id;
-      orgId = found[0].organization_id;
-    }
-  }
-  await sql`
-    insert into stripe_events (id, event_type, organization_id, pilot_id)
-    values (${event.id}, ${event.type}, ${orgId}, ${pilotId})
-  `;
-  if (!pilotId || !shouldMarkPaid(event.type, obj.payment_status)) {
-    return { duplicate: false, pilotId };
-  }
-  const updated = await sql`
-    update pilots
-    set payment_status = ${"paid"},
-        paid_at = now(),
-        paid_via = ${"stripe_webhook"},
-        stripe_payment_intent_id = ${intent},
-        status = ${"in_analysis"},
-        updated_at = now()
-    where id = ${pilotId}
-      and (${orgId}::text is null or organization_id = ${orgId})
-      and payment_status <> ${"paid"}
-    returning id, organization_id
-  `;
-  if (updated[0]) {
-    await sql`
-      insert into audit_logs (
-        id, organization_id, actor_user_id, action, entity_type, entity_id, metadata_json, request_id
-      ) values (
-        ${newId()}, ${String(updated[0].organization_id)}, ${"stripe"}, ${"billing.paid_stripe"},
-        ${"pilot"}, ${pilotId}, ${JSON.stringify({ eventId: event.id, type: event.type })}, ${event.id}
-      )
-    `;
-  }
-  return { duplicate: false, pilotId };
+export async function applyVerifiedStripeEvent(event: StripeLikeEvent) {
+  return applyVerifiedStripeEventWith(await getSql(), event);
 }
 
 export async function handleStripeWebhook(request: Request): Promise<Response> {
@@ -713,7 +664,8 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
   try {
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(secret as string);
-    event = stripe.webhooks.constructEvent(raw, signature as string, secret as string) as unknown as StripeLikeEvent;
+    // Raw body, 300 s replay tolerance (sovereign v5 SEC-02; explicit rather than relying on the SDK default).
+    event = stripe.webhooks.constructEvent(raw, signature as string, secret as string, 300) as unknown as StripeLikeEvent;
   } catch {
     return Response.json({ error: "invalid_signature" }, { status: 400 });
   }

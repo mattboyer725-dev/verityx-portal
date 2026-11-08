@@ -281,57 +281,8 @@ export const SCENARIOS: Scenario[] = [
   },
 ];
 
-function median(s: number[]) {
-  const n = s.length;
-  return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2;
-}
-
-function madFilter(values: number[]) {
-  if (values.length < 3) return values;
-  const sorted = [...values].sort((a, b) => a - b);
-  const med = median(sorted);
-  const mad = median(sorted.map((v) => Math.abs(v - med)).sort((a, b) => a - b));
-  if (mad === 0) return values;
-  const f = values.filter((v) => (0.6745 * Math.abs(v - med)) / mad <= 3.5);
-  return f.length >= 2 ? f : values;
-}
-
-function stdev(values: number[]) {
-  const m = values.reduce((a, b) => a + b, 0) / values.length;
-  return Math.sqrt(values.reduce((a, b) => a + (b - m) ** 2, 0) / (values.length - 1));
-}
-
-export type Consensus = {
-  confidence: number;
-  cv: number;
-  verdict: "VERIFIED" | "DISPUTED" | "INSUFFICIENT_DATA";
-  market: number;
-  n: number;
-  dropped: number;
-  kept: number[];
-};
-
-export function consensusAgent(observations: number[]): Consensus {
-  if (!observations || observations.length < 2) {
-    return { confidence: 0, cv: 0, verdict: "INSUFFICIENT_DATA", market: 0, n: 0, dropped: 0, kept: [] };
-  }
-  const filtered = madFilter(observations);
-  const market = filtered.reduce((a, b) => a + b, 0) / filtered.length;
-  if (Math.abs(market) < 0.01) {
-    return { confidence: 0, cv: 0, verdict: "INSUFFICIENT_DATA", market: 0, n: 0, dropped: 0, kept: filtered };
-  }
-  const cv = stdev(filtered) / Math.abs(market);
-  const confidence = Math.max(0, Math.min(1, 1 - cv));
-  return {
-    confidence,
-    cv,
-    verdict: confidence >= 0.8 ? "VERIFIED" : "DISPUTED",
-    market,
-    n: filtered.length,
-    dropped: observations.length - filtered.length,
-    kept: filtered,
-  };
-}
+export { consensusAgent, type Consensus } from "@/lib/consensus";
+import { consensusAgent, type Consensus } from "@/lib/consensus";
 
 function liveScenario(scenario: Scenario, live?: LiveBundle): Scenario {
   if (!live) return scenario;
