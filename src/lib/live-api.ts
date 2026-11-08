@@ -11,7 +11,7 @@ import { getMinespiderByLot, listMinespiderBatches } from "@/lib/minespider";
 import { buildAdapterCards } from "@/lib/adapters";
 
 const adapterHealth = (h: string | undefined) => (h === "LIVE" || h === "REFERENCE" || h === "DOWN" ? h : "STALE");
-import { ensureGenesis, merkleSnapshot, merkleProofAt, verifyChain, listEvents, LOCAL_CORE, doctor } from "@/lib/core-ledger";
+import { merkleSnapshot, merkleProofAt, verifyChain, listEvents, LOCAL_CORE, doctor } from "@/lib/core-ledger";
 
 async function seedAll() {
   for (const s of SCENARIOS) {
@@ -46,28 +46,28 @@ function withBudget<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   ]);
 }
 
+/** Load the true chain for display. Reads only: a slow database shows the last loaded state, never a new chain. */
 async function hydrateIfDurable() {
   if (typeof process === "undefined") return;
-  if (!process.env.DATABASE_URL?.trim()) return;
   try {
-    const { hydrateCoreLedger } = await import("@/lib/core-store.server");
-    await Promise.race([
-      hydrateCoreLedger(),
-      new Promise<void>((resolve) => setTimeout(resolve, 2800)),
-    ]);
+    const { refreshLedger } = await import("@/lib/core-store.server");
+    await Promise.race([refreshLedger(), new Promise<void>((resolve) => setTimeout(resolve, 2800))]);
   } catch {
-    /* in-memory genesis is enough */
+    /* the status view reports what it has */
   }
+}
+
+/** Every ledger write goes through the store's lock (one chain across all instances). */
+async function ledgerWrite<T>(fn: () => Promise<T>): Promise<T> {
+  const { withLedger } = await import("@/lib/core-store.server");
+  return withLedger(fn);
 }
 
 async function persistIfDurable() {
   if (typeof process === "undefined") return;
   try {
+    // The core ledger persists inside its own locked write; only adapters remain here.
     const tasks: Promise<unknown>[] = [];
-    if (process.env.DATABASE_URL?.trim()) {
-      const { persistCoreLedger } = await import("@/lib/core-store.server");
-      tasks.push(persistCoreLedger());
-    }
     const { persistAdapters } = await import("@/lib/adapter-store.server");
     tasks.push(persistAdapters());
     await Promise.race([
@@ -95,7 +95,6 @@ async function hydrateAdaptersIfAny() {
 async function coreSlice() {
   try {
     await hydrateIfDurable();
-    await ensureGenesis();
     const core = await merkleSnapshot();
     const chain = await verifyChain();
     const coreDoctor = await doctor();
@@ -165,10 +164,13 @@ export const runLiveVerify = createServerFn({ method: "POST" })
     await hydrateAdaptersIfAny();
     await seedAll();
     const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
-    const packet = await runPipeline(data.id, live);
+    // Pipeline + receipt under the ledger lock: if the entry does not commit, no receipt leaves.
+    const { packet, receiptJson } = await ledgerWrite(async () => {
+      const packet = await runPipeline(data.id, live);
+      // The receipt travels as its exact JSON text: a proof must not be re-encoded on the way.
+      return { packet, receiptJson: await receiptFor(packet.sealed!.decision) };
+    });
     await persistIfDurable();
-    // The receipt travels as its exact JSON text: a proof must not be re-encoded on the way.
-    const receiptJson = await receiptFor(packet.sealed!.decision);
     const { sealed: _sealed, ...rest } = packet;
     void _sealed;
     return { ...rest, receiptJson };
@@ -229,7 +231,6 @@ export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oi
 
 export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
   await hydrateIfDurable();
-  await ensureGenesis();
   const [chain, snap, doc] = await Promise.all([verifyChain(), merkleSnapshot(), doctor()]);
   let proof: Awaited<ReturnType<typeof merkleProofAt>> | null = null;
   if (snap.leaf_count > 0) {

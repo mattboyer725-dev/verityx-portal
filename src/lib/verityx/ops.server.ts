@@ -65,9 +65,8 @@ async function signOsCore(
 ) {
   try {
     const { appendCoreEvent } = await import("@/lib/core-ledger");
-    await appendCoreEvent(type, payload, actor.userId.slice(0, 80));
-    const { persistCoreLedger } = await import("@/lib/core-store.server");
-    void persistCoreLedger();
+    const { withLedger } = await import("@/lib/core-store.server");
+    await withLedger(() => appendCoreEvent(type, payload, actor.userId.slice(0, 80)));
   } catch {
     /* analog core must not fail the OS write */
   }
@@ -1262,23 +1261,24 @@ export async function sealQuoteCheck(userId: string, input: import("@/lib/quote-
   const { ledgerContext } = await import("@/lib/quote-check");
   const assessment = await runQuoteCheck(input);
   const { appendCoreEvent, eventHashes, merkleProofAt } = await import("@/lib/core-ledger");
-  const { hydrateCoreLedger, persistCoreLedger } = await import("@/lib/core-store.server");
-  await hydrateCoreLedger();
-  const entry = await appendCoreEvent(
-    "decision.record",
-    {
-      title: (input.poNumber ? `PO ${input.poNumber}` : `Quote · ${input.supplier}`).slice(0, 200),
-      choice: assessment.verdict,
-      context: ledgerContext(assessment),
-    },
-    actor.userId.slice(0, 80),
-  );
-  await persistCoreLedger();
-  const index = eventHashes().indexOf(entry.hash);
-  const proof = await merkleProofAt(index);
+  const { withLedger } = await import("@/lib/core-store.server");
+  // Append, then prove inclusion against the committed chain — all under the ledger lock.
+  const { entry, index, proof, leafCount } = await withLedger(async () => {
+    const entry = await appendCoreEvent(
+      "decision.record",
+      {
+        title: (input.poNumber ? `PO ${input.poNumber}` : `Quote · ${input.supplier}`).slice(0, 200),
+        choice: assessment.verdict,
+        context: ledgerContext(assessment),
+      },
+      actor.userId.slice(0, 80),
+    );
+    const index = eventHashes().indexOf(entry.hash);
+    return { entry, index, proof: await merkleProofAt(index), leafCount: eventHashes().length };
+  });
   await writeAudit(actor, "quote.sealed", "quote", entry.event_id, { verdict: assessment.verdict, hash: entry.hash });
   const { issueReceipt } = await import("@/lib/receipt.server");
-  const receipt = await issueReceipt(entry, { root: proof.root, index, leafCount: eventHashes().length, path: proof.path });
+  const receipt = await issueReceipt(entry, { root: proof.root, index, leafCount, path: proof.path });
   return {
     receiptJson: receipt ? JSON.stringify(receipt, null, 2) : null,
     assessment,

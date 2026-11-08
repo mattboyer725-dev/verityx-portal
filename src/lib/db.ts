@@ -49,6 +49,7 @@ export interface Sql {
  */
 const globalRef = globalThis as typeof globalThis & {
   __pgSqlPromise__?: Promise<Sql>;
+  __pgPool__?: import("pg").Pool;
   __pgliteInstance__?: Promise<import("@electric-sql/pglite").PGlite>;
   __pgliteMigrateChain__?: Promise<void>;
 };
@@ -103,6 +104,7 @@ function createNeonSql(): Promise<Sql> {
       idleTimeoutMillis: 20_000,
     });
     await applyNeonMigrations(pool);
+    globalRef.__pgPool__ = pool;
     return toSql(async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
@@ -244,6 +246,27 @@ export function getSql(): Promise<Sql> {
     throw err;
   });
   return sqlPromise;
+}
+
+/**
+ * Run `fn` on ONE dedicated connection, so a transaction and its
+ * transaction-scoped advisory locks hold for every statement inside it.
+ * Remote Postgres only (`DATABASE_URL`); returns null on the PGLite fallback,
+ * which is single-process and needs no cross-instance lock.
+ */
+export async function withDbClient<T>(
+  fn: (q: <R = Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>) => Promise<T>,
+): Promise<T | null> {
+  if (dbSource !== "neon") return null;
+  await getSql(); // creates the pool and applies migrations
+  const pool = globalRef.__pgPool__;
+  if (!pool) throw new Error("database pool unavailable");
+  const client = await pool.connect();
+  try {
+    return await fn(async <R,>(text: string, params: unknown[] = []) => (await client.query(text, params)).rows as R[]);
+  } finally {
+    client.release();
+  }
 }
 
 /**

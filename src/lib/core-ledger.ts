@@ -501,6 +501,17 @@ export function loadLog(events: CoreEvent[]) {
   seeded = true;
 }
 
+/**
+ * Replace the in-memory log with the durable store's copy (taken under the
+ * store's lock). The next append re-verifies the whole loaded history.
+ */
+export function replaceLog(events: CoreEvent[]) {
+  LOG.length = 0;
+  LOG.push(...events);
+  verifiedTip = null;
+  seeded = events.length > 0;
+}
+
 export function __resetForTests() {
   LOG.length = 0;
   seeded = false;

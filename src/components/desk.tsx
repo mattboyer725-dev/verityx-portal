@@ -419,10 +419,15 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
       void recordDeskEvent({
         data: { kind: "desk.verify", target: id, detail: result.message.slice(0, 280) },
       }).catch(() => undefined);
-    } catch {
+    } catch (err) {
       // No client-side fallback: the seal is signed by the server key only.
       setRunning(false);
-      setNote("VERIFY · the server did not answer in 12s — nothing was sealed. Retry.");
+      const msg = err instanceof Error ? err.message : "";
+      setNote(
+        msg === "timeout"
+          ? "VERIFY · the server did not answer in 12s — nothing was sealed. Retry."
+          : `VERIFY · not sealed: ${msg.slice(0, 160) || "the server refused"}. Nothing was recorded.`,
+      );
       return;
     }
     setRunning(false);

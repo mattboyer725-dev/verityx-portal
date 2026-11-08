@@ -752,7 +752,12 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   const ledger = await ledgerAgent();
   const merkle = await merkleAgent(artifact.hash);
   const auth = authStamp();
-  const tape = oracle.metals ? `Cu ${oracle.metals.copperUsdMt.toFixed(0)} (World Bank ${oracle.metals.periodLabel})` : "no reference";
+  const tape =
+    scenario.refSeries === "copper" && oracle.metals
+      ? `Cu ${oracle.metals.copperUsdMt.toFixed(0)} (World Bank ${oracle.metals.periodLabel})`
+      : /NdFeB|NdPr|Dy/i.test(scenario.commodity) && oracle.rareEarths
+        ? `REE ref USGS ${oracle.rareEarths.periodLabel} (context)`
+        : "sample prices";
   return {
     shouldCost: fair,
     sealed: { artifact, decision },
