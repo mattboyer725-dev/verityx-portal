@@ -15,6 +15,9 @@
  *   runtime hook's return value, and `render:html` does not exist in Nitro v3.
  */
 import installPageTemplate from "../../scripts/install-page.html?raw";
+// VerityX identity for the install manifest (name, plum theme, seal icons). The
+// platform default names every app "Grok App" with a black theme off grok.me.
+import verityxManifest from "../../public/manifest.webmanifest?raw";
 import { grokOgIdentity } from "virtual:grok-og-identity";
 import {
   acceptsHtml,
@@ -22,7 +25,6 @@ import {
   isDocumentPath,
   isInstallQuery,
   renderInstallPageHtml,
-  renderWebManifest,
 } from "../../scripts/grok-pwa-shared.mjs";
 
 interface GrokPwaEvent {
@@ -71,7 +73,7 @@ export default async function grokPwaMiddleware(
   const urlWithQuery = path + event.url.search;
 
   if (path === "/__grok/manifest.webmanifest" || path === "/__grok/manifest.json") {
-    return new Response(renderWebManifest(requestHost(event)), {
+    return new Response(verityxManifest, {
       headers: {
         "content-type": "application/manifest+json; charset=utf-8",
         "cache-control": "no-cache",
