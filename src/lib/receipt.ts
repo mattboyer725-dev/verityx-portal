@@ -8,8 +8,11 @@
  *   1. CONTENT  — SHA-256(canonical entry ‖ HMAC) equals the entry's hash, so
  *                 the payload shown is exactly what was sealed.
  *   2. LEDGER   — the hash is a leaf of the Merkle root at the stated index.
- *   3. SIGNATURE — VerityX's Ed25519 key signed this receipt, root included;
- *                 compared against the key published at /api/seal-key.
+ *   3. SIGNATURE — the Ed25519 key named in the receipt signed it, root included.
+ *   4. KEY      — that key is in VerityX's append-only public keyring
+ *                 (src/data/seal-keyring.json, published at /api/seal-key)
+ *                 and was in force when the receipt was issued. Rotating the
+ *                 key never invalidates older receipts; revoking one does.
  *
  * The HMAC on the entry itself needs the server's secret and is not
  * re-checked here; the public signature is what a third party relies on.
@@ -17,6 +20,7 @@
  */
 import { canonicalJson } from "./canonical.ts";
 import { sha256, verifyInclusion, type MerklePath } from "./merkle.ts";
+import { checkReceiptKey, KEYRING, type Keyring } from "./seal-keyring.ts";
 
 export type ReceiptEntry = {
   event_id: string;
@@ -99,7 +103,11 @@ export function findReceipt(json: unknown): SealReceipt | null {
   return walk(json, 0);
 }
 
-export async function verifyReceipt(r: SealReceipt, publishedKey?: string | null): Promise<ReceiptVerdict> {
+/**
+ * `trust` is VerityX's keyring (preferred — fetched from /api/seal-key, or the
+ * copy bundled with this code), or a single published public key (legacy).
+ */
+export async function verifyReceipt(r: SealReceipt, trust: Keyring | string | null = KEYRING): Promise<ReceiptVerdict> {
   const fail = (detail: string): CheckResult => ({ ok: false, detail });
   const shapeOk =
     r &&
@@ -172,11 +180,15 @@ export async function verifyReceipt(r: SealReceipt, publishedKey?: string | null
     signature = fail("This browser cannot check Ed25519 signatures. Use a current Chrome, Edge, Safari or Firefox.");
   }
 
-  // KEY — is it VerityX's published key?
+  // KEY — was this VerityX's key, in force at the time?
   let key: CheckResult;
-  if (!publishedKey) key = fail("The published VerityX key could not be fetched, so the signer was not compared.");
-  else if (publishedKey === r.publicKey) key = { ok: true, detail: `Signed by VerityX’s published seal key ${r.kid}.` };
-  else key = fail("Signed by a key that is not VerityX’s published seal key.");
+  if (!trust) key = fail("VerityX’s published keyring could not be fetched, so the signer was not compared.");
+  else if (typeof trust === "string")
+    key = trust === r.publicKey ? { ok: true, detail: `Signed by VerityX’s published seal key ${r.kid}.` } : fail("Signed by a key that is not VerityX’s published seal key.");
+  else {
+    const kc = checkReceiptKey(r, trust);
+    key = { ok: kc.ok, detail: kc.detail };
+  }
 
   return { valid: content.ok && ledger.ok && signature.ok && key.ok, content, ledger, signature, key };
 }

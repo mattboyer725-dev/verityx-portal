@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { findReceipt, verifyReceipt, type ReceiptVerdict, type SealReceipt } from "@/lib/receipt";
+import { KEYRING, KEYRING_HISTORY_URL, type Keyring } from "@/lib/seal-keyring";
 
 export const Route = createFileRoute("/verify")({
   head: () => ({ meta: [{ title: "Verify a seal · VerityX" }] }),
   component: VerifyPage,
 });
 
-type Published = { available: boolean; publicKey?: string; kid?: string; ephemeral?: boolean };
+type Published = { available: boolean; publicKey?: string; kid?: string; ephemeral?: boolean; reason?: string; keyring?: Keyring };
 
 function Row({ label, r }: { label: string; r: { ok: boolean; detail: string } }) {
   return (
@@ -53,7 +54,8 @@ function VerifyPage() {
       return;
     }
     setReceipt(r);
-    setVerdict(await verifyReceipt(r, published?.available ? published.publicKey : null));
+    // The server's keyring and the copy bundled in this page come from the same public file; prefer the live one.
+    setVerdict(await verifyReceipt(r, published?.keyring ?? KEYRING));
   }
 
   async function onFile(f: File | undefined) {
@@ -122,15 +124,28 @@ function VerifyPage() {
             </p>
           ) : null}
           <div className="panel p-5 text-xs leading-relaxed text-mute">
-            <p className="text-paper">VerityX’s published seal key</p>
-            {published?.available ? (
-              <p className="mt-2 break-all font-mono">
-                {published.publicKey} <span className="text-mute">· id {published.kid}</span>
-                {published.ephemeral ? <span className="text-warn"> · ephemeral development key</span> : null}
-              </p>
-            ) : (
-              <p className="mt-2">Not available from this server right now.</p>
-            )}
+            <p className="text-paper">VerityX’s seal keyring</p>
+            <ul className="mt-2 grid gap-1.5">
+              {(published?.keyring ?? KEYRING).keys.map((k) => (
+                <li key={k.kid} className="break-all font-mono">
+                  <span className={k.status === "active" ? "text-ok" : k.status === "revoked" ? "text-bad" : "text-paper"}>
+                    {k.status}
+                  </span>{" "}
+                  · {k.kid} · from {k.activatedAt.slice(0, 10)}
+                  {k.retiredAt ? ` to ${k.retiredAt.slice(0, 10)}` : ""}
+                  {k.revokedReason ? ` · revoked: ${k.revokedReason}` : ""}
+                </li>
+              ))}
+            </ul>
+            {published && !published.available ? <p className="mt-2 text-warn">Signing is paused: {published.reason}</p> : null}
+            {published?.ephemeral ? <p className="mt-2 text-warn">This server uses an ephemeral development key.</p> : null}
+            <p className="mt-3">
+              Append-only and public: every key change is a commit you can audit in the{" "}
+              <a className="text-gold hover:text-paper" href={KEYRING_HISTORY_URL}>
+                keyring history
+              </a>
+              . Rotating the key never invalidates older receipts.
+            </p>
             <p className="mt-3">
               Prefer not to trust this page? The same checks run with Python and OpenSSL alone:{" "}
               <a className="text-gold hover:text-paper" href="https://github.com/mattboyer725-dev/verityx-portal/blob/main/scripts/verify-receipt.py">

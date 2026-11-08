@@ -1,0 +1,24 @@
+name: Seal keyring guard
+
+# Rejects any change to the seal keyring that removes a key, alters a key,
+# moves a status backwards, or leaves anything but exactly one active key.
+on:
+  push:
+    paths: ["src/data/seal-keyring.json", "src/lib/seal-keyring.ts", "scripts/check-keyring.mjs"]
+  pull_request:
+    paths: ["src/data/seal-keyring.json"]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate keyring and its transition
+        run: |
+          PREV="${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}"
+          node --experimental-strip-types scripts/check-keyring.mjs "$PREV"

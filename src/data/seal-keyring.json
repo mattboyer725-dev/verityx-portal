@@ -1,0 +1,13 @@
+{
+  "issuer": "https://verityx-portal.vercel.app",
+  "policy": "Append-only. Keys are never removed. Status only moves active -> retired -> revoked. Exactly one key is active. Changed only by scripts/rotate-seal-key.mjs and checked in CI.",
+  "keys": [
+    {
+      "kid": "230be6f0463f70c9",
+      "alg": "Ed25519",
+      "publicKey": "Vgq_xx2uyEeiOZhMfDutVixHIuedc7GF9WolUmoigXc",
+      "status": "active",
+      "activatedAt": "2026-11-08T18:56:05Z"
+    }
+  ]
+}

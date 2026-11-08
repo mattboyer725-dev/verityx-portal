@@ -4,12 +4,19 @@ Verify a VerityX seal receipt with no VerityX code: Python standard library
 for the content and ledger checks, the stock `openssl` binary (3.x) for the
 Ed25519 signature.
 
-    python3 verify-receipt.py receipt.json [published-public-key]
+    python3 verify-receipt.py receipt.json            fetch the keyring from the live site
+    python3 verify-receipt.py receipt.json KEYRING    a saved keyring / seal-key JSON file, or a URL
+    python3 verify-receipt.py receipt.json PUBKEY     a single base64url public key (legacy)
 
-The published key is at https://verityx-portal.vercel.app/api/seal-key
-("publicKey"). Exit code 0 only when every check passes.
+The keyring is append-only and public: /api/seal-key on the site, and
+src/data/seal-keyring.json (with its git history) in the repository. A
+receipt passes the key check when its key is active, or was retired after
+the receipt was issued. Revoked keys never pass on signature alone.
+Exit code 0 only when every check passes.
 """
-import base64, hashlib, json, os, subprocess, sys, tempfile
+import base64, datetime, hashlib, json, os, subprocess, sys, tempfile, urllib.request
+
+SEAL_KEY_URL = "https://verityx-portal.vercel.app/api/seal-key"
 
 
 def canonical(obj) -> bytes:
@@ -29,11 +36,48 @@ def pair(a: str, b: str) -> str:
     return hashlib.sha256(b"\x01" + bytes.fromhex(a) + bytes.fromhex(b)).hexdigest()
 
 
+def iso(s: str) -> datetime.datetime:
+    return datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
+
+
+def load_trust(arg):
+    """Returns ("keyring", dict) or ("key", str)."""
+    if arg is None or arg.startswith("http"):
+        url = arg or SEAL_KEY_URL
+        with urllib.request.urlopen(url, timeout=20) as r:
+            j = json.load(r)
+        return "keyring", j.get("keyring", j)
+    if os.path.exists(arg):
+        j = json.load(open(arg, encoding="utf-8"))
+        return "keyring", j.get("keyring", j)
+    return "key", arg
+
+
+def key_check(r, trust):
+    kind, t = trust
+    if kind == "key":
+        return t == r["publicKey"], "matches the given public key" if t == r["publicKey"] else "does not match the given public key"
+    k = next((k for k in t.get("keys", []) if k["kid"] == r["kid"]), None)
+    if not k:
+        return False, "key is not in VerityX's keyring"
+    if k["publicKey"] != r["publicKey"]:
+        return False, "receipt names a keyring kid but carries a different public key"
+    issued = iso(r["issuedAt"])
+    if issued < iso(k["activatedAt"]) - datetime.timedelta(minutes=5):
+        return False, "issued before the key was activated"
+    if k["status"] == "active":
+        return True, f"current key {k['kid']}"
+    if k["status"] == "retired":
+        ok = issued <= iso(k["retiredAt"])
+        return ok, f"key {k['kid']} retired {k['retiredAt'][:10]}" + ("" if ok else "; receipt claims a later issue time")
+    return False, f"key {k['kid']} revoked {k.get('revokedAt', '')[:10]}: {k.get('revokedReason', '')}"
+
+
 def main() -> int:
     r = json.load(open(sys.argv[1], encoding="utf-8"))
     if r.get("type") != "verityx.seal-receipt":
         r = next((v for v in (r.get("receipt"),) if isinstance(v, dict)), r)
-    published = sys.argv[2] if len(sys.argv) > 2 else None
+    trust = load_trust(sys.argv[2] if len(sys.argv) > 2 else None)
     e = r["entry"]
     results = []
 
@@ -65,7 +109,8 @@ def main() -> int:
             capture_output=True,
         )
     results.append(("signature", proc.returncode == 0))
-    results.append(("published key", published is not None and published == r["publicKey"]))
+    kok, kdetail = key_check(r, trust)
+    results.append((f"key ({kdetail})", kok))
 
     for name, passed in results:
         print(f"{'PASS' if passed else 'FAIL'}  {name}")

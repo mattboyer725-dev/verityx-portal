@@ -34,7 +34,13 @@ test("a fresh receipt passes all three checks against the published key", async 
   assert.ok(pub.available);
   const v = await verifyReceipt(r, pub.available ? pub.publicKey : null);
   assert.equal(v.valid, true, JSON.stringify(v));
-  assert.equal(r.issuer, "https://verityx-portal.vercel.app");
+  // The test seed is not in the committed keyring, so its receipts say so…
+  assert.equal(r.issuer, "https://verityx-portal.vercel.app (unpublished dev key)");
+  // …and fail the keyring check while every cryptographic check still passes.
+  const byRing = await verifyReceipt(r);
+  assert.equal(byRing.content.ok && byRing.ledger.ok && byRing.signature.ok, true);
+  assert.equal(byRing.key.ok, false);
+  assert.match(byRing.key.detail, /not in VerityX’s published keyring/);
 });
 
 test("changing one character of the sealed payload fails the content and signature checks", async () => {
