@@ -10,7 +10,6 @@ import { SiteNav } from "@/components/site-nav";
 import { VxWordmark } from "@/components/vx-mark";
 import { MIN_PASSWORD_LENGTH } from "@/lib/verityx/constants";
 import { normalizeEmail, safeAppPath } from "@/lib/verityx/format";
-import { enterOwnerSeat } from "@/lib/owner-enter";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
@@ -33,19 +32,6 @@ function Login() {
   const [busy, setBusy] = useState(false);
 
   if (user && !busy) return <Navigate to={dest} replace />;
-
-  async function enterOwner() {
-    setError(null);
-    setBusy(true);
-    try {
-      await enterOwnerSeat();
-      queryClient.clear();
-      await navigate({ to: "/admin", replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not open command");
-      setBusy(false);
-    }
-  }
 
   async function returnToPlatform() {
     queryClient.clear();
@@ -156,14 +142,6 @@ function Login() {
             </Button>
           </form>
 
-          <button
-            type="button"
-            className="mt-3 flex h-11 w-full items-center justify-center rounded-[8px] border border-line text-sm text-paper hover:bg-raised"
-            disabled={busy}
-            onClick={() => void enterOwner()}
-          >
-            {busy ? "Opening…" : "Enter as owner"}
-          </button>
 
           <button
             type="button"

@@ -194,11 +194,11 @@ function Home() {
             <p className="text-[11px] uppercase tracking-[0.18em] text-mute">05 · Command</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Owner</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              Fleet, seats, policies, keys, freeze, backup. One click as {OWNER_EMAIL}.
+              Fleet, seats, policies, keys, freeze, backup. Owner account only.
             </p>
           </div>
           <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-            Enter as owner
+            Owner sign-in
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </p>
         </Link>

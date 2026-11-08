@@ -24,7 +24,6 @@ import {
 } from "@/lib/admin-api";
 import { VxMark } from "@/components/vx-mark";
 import { SiteNav } from "@/components/site-nav";
-import { enterOwnerSeat } from "@/lib/owner-enter";
 import { openCommandPalette } from "@/lib/nav";
 
 type Panel =
@@ -131,23 +130,6 @@ function AdminSignIn() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
-  async function enterOwner() {
-    setBusy(true);
-    setErr("");
-    try {
-      if (!authEnabled) {
-        setErr("Sign-in is disabled in this build.");
-        setBusy(false);
-        return;
-      }
-      await enterOwnerSeat();
-      queryClient.clear();
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Could not open command.");
-      setBusy(false);
-    }
-  }
-
   async function oauth(providerId: string) {
     setErr("");
     try {
@@ -156,7 +138,7 @@ function AdminSignIn() {
       setErr(
         e instanceof Error
           ? e.message
-          : "Google / X sign-in needs a pop-up. Use Enter as owner instead.",
+          : "Google / X sign-in needs a pop-up. Use email sign-in instead.",
       );
     }
   }
@@ -174,8 +156,8 @@ function AdminSignIn() {
         </div>
         <h1>Enter platform command</h1>
         <p>
-          Identities, seats, live desk, agents, gates, and the sealed ledger. One click opens the owner seat — no
-          pop-up.
+          Identities, seats, live desk, agents, gates, and the sealed ledger. Sign in with the owner account; command
+          opens only for the one account pinned as owner on the server.
         </p>
         <div className="seat-card">
           <div className="vx-avatar">MB</div>
@@ -186,15 +168,9 @@ function AdminSignIn() {
           </div>
         </div>
         {err ? <p className="login-err">{err}</p> : null}
-        <button
-          className="vx-btn vx-btn-primary"
-          type="button"
-          style={{ width: "100%" }}
-          disabled={busy}
-          onClick={() => void enterOwner()}
-        >
-          {busy ? "Opening command…" : "Enter as owner"}
-        </button>
+        <Link className="vx-btn vx-btn-primary" style={{ width: "100%" }} to="/login" search={{ redirect: "/admin" }}>
+          Sign in as owner
+        </Link>
         <div className="vx-stack" style={{ marginTop: "0.75rem" }}>
           {GROK_PROVIDERS.map((p) => (
             <button

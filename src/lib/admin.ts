@@ -1,10 +1,10 @@
 export const OWNER_EMAIL = "mattboyer725@gmail.com";
 
+/** Display only. No credential ever ships in code: the owner signs in like anyone else. */
 export const OWNER_SEAT = {
   email: OWNER_EMAIL,
   name: "Matt Boyer",
   title: "Platform owner",
-  password: "Sovereign26",
 };
 
 export type AdminRole =
@@ -122,19 +122,15 @@ export function normalizeEmail(email: string): string {
   return trimmed;
 }
 
-export function isOwnerIdentity(email?: string | null, name?: string | null): boolean {
-  const e = (email ?? "").trim();
-  const n = (name ?? "").trim().toLowerCase();
-  if (e) {
-    const norm = normalizeEmail(e);
-    if (norm === OWNER_EMAIL) return true;
-    if (norm.includes("mattboyer725")) return true;
-    const local = norm.split("@")[0] ?? "";
-    if (local === "mattboyer725") return true;
-  }
-  const compact = n.replace(/[^a-z]/g, "");
-  if (compact === "mattboyer" || n.includes("matt boyer")) return true;
-  return false;
+/**
+ * The platform owner is ONE account, pinned by its user id in the server env
+ * OWNER_USER_ID. Nothing else confers ownership: not a name, not an email
+ * pattern, not an email address alone (sign-up does not verify email, so an
+ * address proves nothing). Unset = no owner: platform command stays closed.
+ */
+export function isPinnedOwner(userId?: string | null): boolean {
+  const pinned = typeof process !== "undefined" ? (process.env.OWNER_USER_ID ?? "").trim() : "";
+  return !!pinned && !!userId && userId === pinned;
 }
 
 export const CONSOLE_ROLES: AdminRole[] = [

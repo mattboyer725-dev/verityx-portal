@@ -8,7 +8,7 @@ import {
   CONSOLE_ROLES,
   OWNER_EMAIL,
   can,
-  isOwnerIdentity,
+  isPinnedOwner,
   permissionsFor,
   presenceOf,
   type AdminPerm,
@@ -294,7 +294,7 @@ async function resolveActor(sql: Sql, userId: string): Promise<AdminActor> {
   const u = users[0];
   const email = u?.email ?? "";
   const name = u?.name ?? "";
-  const owner = isOwnerIdentity(email, name);
+  const owner = isPinnedOwner(userId);
 
   const existing = await sql<{ role: string; status: string }>`
     select role, status from admin_identities where user_id = ${userId}`;
