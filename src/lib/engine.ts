@@ -403,6 +403,7 @@ export function screenAgent(scenario: Scenario, live?: LiveBundle) {
     scenario.screens.exportPermit !== "CLEAR" && { type: "EXPORT", text: "China rare-earth export permit lag" },
     eco && eco.score < 50 && { type: "ESG", text: `ESG scorecard ${eco.medal} · ${eco.score}` },
     pre && (pre.level === "HIGH" || pre.level === "CRITICAL") && { type: "MEDIA", text: `Media risk ${pre.level} · ${pre.headlines[0] || "media risk"}` },
+    pre && pre.checked === false && { type: "MEDIA", text: "Media headlines could not be checked this pass" },
     rapid && rapid.fhr < 50 && { type: "FIN", text: `Financial health ${rapid.fhr} · ${rapid.outlook}` },
     scenario.screens.dualUse !== "CLEAR" && { type: "DUAL_USE", text: "Dual-use / export-control watch" },
     hit?.matched && { type: "SANCTIONS", text: `UN consolidated hit on ${hit.name}` },

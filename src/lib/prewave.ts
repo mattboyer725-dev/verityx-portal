@@ -26,6 +26,8 @@ export type PrewaveRisk = {
   incidents: PrewaveIncident[];
   source: string;
   issuer: "VerityX media-risk heat";
+  /** False when the headline source could not be reached: the heat is then a baseline, not a finding. */
+  checked: boolean;
 };
 
 export const PREWAVE_BANDS: { level: PrewaveLevel; min: number }[] = [
@@ -82,7 +84,10 @@ export function scorePrewave(input: {
   news: PrewaveNews[];
   sanctionsHit: boolean;
   now?: string;
+  /** Whether headlines were actually fetched this pass (default: any headline present). */
+  newsAvailable?: boolean;
 }): PrewaveRisk {
+  const checked = input.newsAvailable ?? input.news.length > 0;
   const now = input.now || new Date().toISOString();
   const key = input.supplier.split(/\s+/)[0].toLowerCase();
   const related = input.news.filter(
@@ -129,8 +134,11 @@ export function scorePrewave(input: {
     level: prewaveLevel(heat),
     headlines: top.slice(0, 3).map((i) => i.title),
     incidents: top,
-    source: "Prewave media-risk analog · live GDELT headlines on the PO",
+    source: checked
+      ? "VerityX media-risk heat · GDELT headlines on the PO"
+      : "VerityX media-risk heat · NOT CHECKED: headline source unavailable; baseline only",
     issuer: "VerityX media-risk heat",
+    checked,
   };
 }
 

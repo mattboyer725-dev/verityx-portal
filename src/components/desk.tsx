@@ -970,7 +970,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                 <div className="score-card">
                   <div className="k">Media</div>
                   <div className="v">{pre ? pre.heat ?? pre.risk : "—"}</div>
-                  <div className="s">{pre ? `${pre.level} heat on the PO` : "live GDELT headlines"}</div>
+                  <div className="s">{pre ? (pre.checked === false ? "headlines unavailable — not checked" : `${pre.level} heat on the PO`) : "GDELT headlines"}</div>
                 </div>
                 <div className="score-card">
                   <div className="k">Fin. health</div>

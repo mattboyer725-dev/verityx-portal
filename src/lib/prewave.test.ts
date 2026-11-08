@@ -67,3 +67,11 @@ describe("Prewave analog", () => {
     assert.equal(missing!.status, 404);
   });
 });
+
+it("no headlines fetched = not checked, never a clean bill", () => {
+  const r = scorePrewave({ supplier: "Nanjing RareTech Ltd.", news: [], sanctionsHit: false, now: "2026-11-08T00:00:00Z" });
+  assert.equal(r.checked, false);
+  assert.match(r.source, /NOT CHECKED/);
+  const ok = scorePrewave({ supplier: "Nanjing RareTech Ltd.", news: [], sanctionsHit: false, newsAvailable: true, now: "2026-11-08T00:00:00Z" });
+  assert.equal(ok.checked, true);
+});
