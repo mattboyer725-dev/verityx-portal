@@ -130,7 +130,7 @@ test("rotation away from the public legacy key: v1.0 history verifies, doctor wa
 test("v1.0 history with non-ASCII (old serializer) still verifies under the previous key, and only there", async () => {
   // The old portal hashed with JSON.stringify: "·" raw, not \u00b7. Every desk decision context had one.
   const draft = {
-    actor: "elena.hartmann@siemensgamesa.com",
+    actor: "elena.hartmann@siemensgamesa.example",
     event_id: "00000000-0000-4000-8000-000000000002",
     event_type: "decision.record" as const,
     payload: { title: "4500196604", choice: "HOLD_PO", context: "NdFeB magnets · Ningbo" },

@@ -33,7 +33,7 @@ const packet: DeskPacketSlice = {
   compliance: { cbam: "IN_SCOPE", gate: "REVIEW" },
   seal: { hash: "abc123def456", quorum: "2f+1=19", finality: "committed", pbft: { commitOk: 25 } },
   ledger: { merkleRoot: "00ff11aa", depth: 4, intact: true },
-  auth: { issuer: "https://verityx.okta.com/oauth2/default", seat: { email: "elena.hartmann@siemensgamesa.com" } },
+  auth: { issuer: "https://verityx.okta.com/oauth2/default", seat: { email: "elena.hartmann@siemensgamesa.example" } },
   message: "HOLD PO · VERIFIED · PBFT 25/27",
 };
 

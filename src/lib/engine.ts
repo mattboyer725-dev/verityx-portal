@@ -63,7 +63,7 @@ export type Scenario = {
 export const BUYER = {
   name: "Elena Hartmann",
   title: "Head of Magnetics Procurement",
-  email: "elena.hartmann@siemensgamesa.com",
+  email: "elena.hartmann@siemensgamesa.example",
   password: "demo2026",
   tenant: "SIEMENS-GAMESA",
   plant: "Hamburg · Brande · Hull",
@@ -321,13 +321,18 @@ export function ingestAgent(scenario: Scenario, live?: LiveBundle) {
 
 export function oracleAgent(scenario: Scenario, live?: LiveBundle) {
   const q: LiveQuote | undefined = live?.quotes[scenario.oracleSymbol];
+  // A feed's print enters the sealed packet as live only when that feed reported LIVE.
+  // On timeout the bundle carries fallback constants; they must not be signed in as prints.
+  const lmeUp = live?.health?.lme === "LIVE";
+  const argusUp = live?.health?.argus === "LIVE";
+  const fxUp = live?.health?.fx === "LIVE";
   const prints = scenario.observations.map((value, i) => ({
     source: scenario.observationSources[i] || `oracle-${i + 1}`,
     value,
     outlier: false,
     live: i === 0 && !!q,
   }));
-  if (live?.lme && scenario.oracleSymbol === "HG=F") {
+  if (lmeUp && live?.lme && scenario.oracleSymbol === "HG=F") {
     prints.unshift({
       source: `LME Cu cash ${live.lme.copperUsdMt.toFixed(0)} USD/mt`,
       value: scaleByLive(scenario.observations[0], scenario.oracleSymbol, scenario.baselinePx, live.quotes),
@@ -335,7 +340,7 @@ export function oracleAgent(scenario: Scenario, live?: LiveBundle) {
       live: true,
     });
   }
-  if (live?.lme && scenario.oracleSymbol === "ALI=F") {
+  if (lmeUp && live?.lme && scenario.oracleSymbol === "ALI=F") {
     prints.unshift({
       source: `LME Al cash ${live.lme.aluminiumUsdMt.toFixed(0)} USD/mt`,
       value: scaleByLive(scenario.observations[0], scenario.oracleSymbol, scenario.baselinePx, live.quotes),
@@ -343,9 +348,9 @@ export function oracleAgent(scenario: Scenario, live?: LiveBundle) {
       live: true,
     });
   }
-  if (live?.argus && scenario.oracleSymbol === "MP") {
+  if (argusUp && live?.argus && scenario.oracleSymbol === "MP") {
     prints.unshift({
-      source: `Argus NdPr ${live.argus.ndprUsdKg.toFixed(1)} USD/kg`,
+      source: `NdPr index (MP-scaled) ${live.argus.ndprUsdKg.toFixed(1)} USD/kg`,
       value: scaleByLive(scenario.observations[0], scenario.oracleSymbol, scenario.baselinePx, live.quotes),
       outlier: false,
       live: true,
@@ -355,10 +360,12 @@ export function oracleAgent(scenario: Scenario, live?: LiveBundle) {
     agent: "ORACLE" as const,
     prints,
     quote: q || null,
-    lme: live?.lme || null,
-    argus: live?.argus || null,
-    fx: live?.fx || null,
-    pattern: live?.lme ? "Live LME cash + Argus REE + ECB FX" : "Waiting on live tape",
+    lme: lmeUp ? live?.lme || null : null,
+    argus: argusUp ? live?.argus || null : null,
+    fx: fxUp ? live?.fx || null : null,
+    pattern:
+      [lmeUp && "LME cash", argusUp && "NdPr index (MP)", fxUp && "ECB FX"].filter(Boolean).join(" + ") ||
+      "Live tape on standby — scenario prints only",
   };
 }
 

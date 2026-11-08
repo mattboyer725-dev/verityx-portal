@@ -5,7 +5,7 @@ export const OIDC_AUD = "verityx-sgre-desk";
 export const OIDC_CLIENT = "0oa_verityx_sgre";
 
 const SEAT = {
-  email: "elena.hartmann@siemensgamesa.com",
+  email: "elena.hartmann@siemensgamesa.example",
   password: "demo2026",
   name: "Elena Hartmann",
   title: "Head of Magnetics Procurement",
