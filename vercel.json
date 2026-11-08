@@ -7,10 +7,87 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "verityx-sovereign-desk.vercel.app"
+        }
+      ],
+      "destination": "https://verityx-portal.vercel.app/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "verityx-sgre-live.vercel.app"
+        }
+      ],
+      "destination": "https://verityx-portal.vercel.app/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "verityx-sovereign-live.vercel.app"
+        }
+      ],
+      "destination": "https://verityx-portal.vercel.app/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "verityx-live-core.vercel.app"
+        }
+      ],
+      "destination": "https://verityx-portal.vercel.app/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "verityx-steel.vercel.app"
+        }
+      ],
+      "destination": "https://verityx-portal.vercel.app/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "vxsg-desk-20260906.vercel.app"
+        }
+      ],
+      "destination": "https://verityx-portal.vercel.app/:path*",
+      "permanent": false
     }
   ]
 }

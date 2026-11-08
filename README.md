@@ -2,7 +2,7 @@
 
 Three planes plus a signed continuity core. One product.
 
-**Live:** [verityx-portal.vercel.app](https://verityx-portal.vercel.app) · [sovereign desk](https://verityx-sovereign-desk.vercel.app) · [sgre-live](https://verityx-sgre-live.vercel.app) · [vxsg-desk](https://vxsg-desk-20260906.vercel.app) · [live-core](https://verityx-live-core.vercel.app)
+**Live:** [verityx-portal.vercel.app](https://verityx-portal.vercel.app) — the one URL. The former hosts (sovereign-desk, sgre-live, sovereign-live, live-core, verityx-steel, vxsg-desk) redirect here with their path.
 
 **Hub:** `/` · **Desk:** `/desk` · **Field:** `/field` · **OS:** `/work` · **Core:** `/core` · **Command:** `/admin`
 
