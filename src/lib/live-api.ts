@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseQuoteInput } from "@/lib/quote-check";
 import { z } from "zod";
 import { fallbackBundle, fetchLiveBundle } from "@/lib/feeds";
 import { runPipeline, sapWriteback, SCENARIOS, BUYER } from "@/lib/engine";
@@ -239,3 +240,14 @@ export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () 
     core: LOCAL_CORE,
   };
 });
+
+/**
+ * Check any quote — public and read-only: nothing is written to the ledger.
+ * Sealing a result needs a signed-in workspace seat (sealQuoteCheck).
+ */
+export const checkCustomQuote = createServerFn({ method: "POST" })
+  .validator((data: unknown) => parseQuoteInput(data))
+  .handler(async ({ data }) => {
+    const { runQuoteCheck } = await import("@/lib/quote-check.server");
+    return runQuoteCheck(data);
+  });

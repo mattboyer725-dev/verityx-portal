@@ -1248,3 +1248,38 @@ export async function loadOwnBook(userId: string) {
     prospects: prospects.map(mapProspect),
   };
 }
+
+/**
+ * Seal a quote check into Local Core. The check is re-run here from the input;
+ * the client's result is never trusted. Signing failures are raised, not
+ * swallowed: a buyer asking for proof must know if none was made.
+ */
+export async function sealQuoteCheck(userId: string, input: import("@/lib/quote-check").QuoteInput) {
+  const actor = await ensureActor(userId);
+  assertCan(actor.role, "decision.write");
+  await mutateGuard(actor, "decision.write");
+  const { runQuoteCheck } = await import("@/lib/quote-check.server");
+  const { ledgerContext } = await import("@/lib/quote-check");
+  const assessment = await runQuoteCheck(input);
+  const { appendCoreEvent, eventHashes, merkleProofAt } = await import("@/lib/core-ledger");
+  const { hydrateCoreLedger, persistCoreLedger } = await import("@/lib/core-store.server");
+  await hydrateCoreLedger();
+  const entry = await appendCoreEvent(
+    "decision.record",
+    {
+      title: (input.poNumber ? `PO ${input.poNumber}` : `Quote · ${input.supplier}`).slice(0, 200),
+      choice: assessment.verdict,
+      context: ledgerContext(assessment),
+    },
+    actor.userId.slice(0, 80),
+  );
+  await persistCoreLedger();
+  const index = eventHashes().indexOf(entry.hash);
+  const proof = await merkleProofAt(index);
+  await writeAudit(actor, "quote.sealed", "quote", entry.event_id, { verdict: assessment.verdict, hash: entry.hash });
+  return {
+    assessment,
+    entry: { id: entry.event_id, hash: entry.hash, signature: entry.signature, timestamp: entry.timestamp, index },
+    proof,
+  };
+}

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ids } from "./validate";
+import { parseQuoteInput } from "@/lib/quote-check";
 import type { EvidenceItem, Outcome, OutreachChannel, Pilot, ProspectStage } from "./types";
 
 export const getWorkspace = createServerFn({ method: "GET" })
@@ -290,3 +291,10 @@ export const pullDeskPacket = createServerFn({ method: "POST" })
     return ops.pullDeskPacket(context.userId, data);
   });
 
+export const sealQuoteCheck = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: unknown) => parseQuoteInput(data))
+  .handler(async ({ context, data }) => {
+    const ops = await import("./ops.server");
+    return ops.sealQuoteCheck(context.userId, data);
+  });

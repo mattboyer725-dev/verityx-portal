@@ -1,3 +1,4 @@
+import { nameCore, pickGleif, type GleifRec } from "@/lib/name-match";
 import { scoreEcovadis, type EcoVadisScore } from "./ecovadis.ts";
 import { scorePrewave, type PrewaveRisk } from "./prewave.ts";
 
@@ -355,19 +356,11 @@ async function gleifLookup(query: string): Promise<GleifHit | null> {
   try {
     const url =
       "https://api.gleif.org/api/v1/lei-records?" +
-      "page%5Bsize%5D=1&filter%5Bentity.legalName%5D=" +
+      "page%5Bsize%5D=10&filter%5Bentity.legalName%5D=" +
       encodeURIComponent(query);
     const data = await getJson(url, { headers: { Accept: "application/vnd.api+json" } });
-    const rec = data?.data?.[0];
-    if (!rec) return null;
-    const ent = rec.attributes?.entity;
-    return {
-      lei: rec.attributes?.lei || rec.id,
-      name: ent?.legalName?.name || query,
-      country: ent?.legalAddress?.country || "",
-      status: ent?.status || rec.attributes?.registration?.status || "",
-      query,
-    };
+    const hit = pickGleif(query, data?.data);
+    return hit ? { ...hit, query } : null;
   } catch {
     return null;
   }
@@ -423,6 +416,40 @@ async function screenSanctions(): Promise<LiveBundle["sanctions"]> {
       hits: SCREEN_NAMES.map((name) => ({ name, list: "UN", matched: false })),
     };
   }
+}
+
+/**
+ * Screen any supplier name: GLEIF legal-entity lookup and the UN consolidated
+ * list. A UN hit is a whole-word match of the name's core (6+ characters) and
+ * is reported as a POSSIBLE match for human review, never as a finding. A list
+ * that cannot be reached is reported as unavailable, never as clear.
+ */
+export async function screenSupplierByName(name: string) {
+  const core = nameCore(name);
+  const [gleifRes, unRes] = await Promise.allSettled([
+    timed(
+      (async () => {
+        const url =
+          "https://api.gleif.org/api/v1/lei-records?page%5Bsize%5D=10&filter%5Bentity.legalName%5D=" + encodeURIComponent(name);
+        return getJson(url, { headers: { Accept: "application/vnd.api+json" } });
+      })(),
+      3500,
+    ),
+    timed(fetchSanctionsBlob(), 4500),
+  ]);
+  const gleifAvailable = gleifRes.status === "fulfilled" && gleifRes.value != null;
+  const gleif = gleifAvailable ? pickGleif(name, (gleifRes.value as { data?: GleifRec[] })?.data) : null;
+  let un: "possible-match" | "no-match" | "unavailable" = "unavailable";
+  let unSource = "UN Security Council Consolidated List";
+  if (unRes.status === "fulfilled" && unRes.value.scanned !== 0) {
+    unSource = unRes.value.source;
+    if (core.length < 6) un = "no-match";
+    else {
+      const re = new RegExp(`(^|[^A-Z0-9])${core.replace(/ /g, "[^A-Z0-9]+")}([^A-Z0-9]|$)`);
+      un = re.test(unRes.value.blob) ? "possible-match" : "no-match";
+    }
+  }
+  return { gleif, gleifAvailable, un, unSource, checkedAt: new Date().toISOString() };
 }
 
 async function fetchTed(): Promise<TedNotice[]> {

@@ -1,4 +1,4 @@
-export type SurfaceTo = "/" | "/desk" | "/field" | "/core" | "/work" | "/admin";
+export type SurfaceTo = "/" | "/desk" | "/check" | "/field" | "/core" | "/work" | "/admin";
 
 export type SurfaceLink = {
   to: SurfaceTo;
@@ -12,6 +12,7 @@ export type SurfaceLink = {
 export const SURFACES: SurfaceLink[] = [
   { to: "/", label: "Hub", hint: "Platform home", keywords: "home start sovereign", exact: true },
   { to: "/desk", label: "Desk", hint: "Magnetics PO tape", keywords: "elena hartmann sap ariba magnetics siemens gamesa" },
+  { to: "/check", label: "Check", hint: "Check any quote", keywords: "quote price fair should-cost supplier screen sanctions" },
   { to: "/field", label: "Field", hint: "Competitor field", keywords: "compare contrast map" },
   { to: "/core", label: "Core", hint: "HMAC + Merkle doctor", keywords: "ledger merkle hmac continuity local-core" },
   { to: "/work", label: "OS", hint: "Customer Zero workspace", keywords: "pilot prospect report decision audit" },
