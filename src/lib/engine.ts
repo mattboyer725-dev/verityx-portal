@@ -2,6 +2,7 @@ import type { LiveBundle, LiveQuote } from "@/lib/feeds";
 import { scaleByLive, SUPPLIER_GLEIF } from "@/lib/feeds";
 import {
   appendCoreEvents,
+  type CoreEvent,
   ensureGenesis,
   eventHashes,
   inclusionProof,
@@ -711,6 +712,8 @@ export type PipelineResult = {
   message: string;
   advisory: Evaluation | null;
   shouldCost: ShouldCost;
+  /** The two ledger entries this verify sealed, for receipts. */
+  sealed?: { artifact: CoreEvent; decision: CoreEvent };
 };
 
 /** Prices for SHOULD-COST from the live bundle, LIVE feeds only (no fallback constants). */
@@ -745,7 +748,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   const advisory = advisoryFromScreen(scenario, screen, live);
   const fair = shouldCost(scenario.commodity, shouldCostPrices(live));
   // One unit: the seal artifact and its decision land together or not at all.
-  const [artifact] = await appendCoreEvents([
+  const [artifact, decision] = await appendCoreEvents([
     {
       type: "artifact.record",
       payload: {
@@ -778,6 +781,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
       : "no tape";
   return {
     shouldCost: fair,
+    sealed: { artifact, decision },
     scenario,
     ingest,
     oracle,

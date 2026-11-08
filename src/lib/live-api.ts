@@ -163,7 +163,11 @@ export const runLiveVerify = createServerFn({ method: "POST" })
     const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
     const packet = await runPipeline(data.id, live);
     await persistIfDurable();
-    return packet;
+    // The receipt travels as its exact JSON text: a proof must not be re-encoded on the way.
+    const receiptJson = await receiptFor(packet.sealed!.decision);
+    const { sealed: _sealed, ...rest } = packet;
+    void _sealed;
+    return { ...rest, receiptJson };
   });
 
 export const postSapWriteback = createServerFn({ method: "POST" })
@@ -251,3 +255,19 @@ export const checkCustomQuote = createServerFn({ method: "POST" })
     const { runQuoteCheck } = await import("@/lib/quote-check.server");
     return runQuoteCheck(data);
   });
+
+/** Ed25519 seal receipt for one ledger entry, with its Merkle proof at the current root. */
+async function receiptFor(entry: { hash: string } & Parameters<typeof import("@/lib/receipt.server").issueReceipt>[0]) {
+  try {
+    const { eventHashes, inclusionProof } = await import("@/lib/core-ledger");
+    const { issueReceipt } = await import("@/lib/receipt.server");
+    const hashes = eventHashes();
+    const index = hashes.indexOf(entry.hash);
+    if (index < 0) return null;
+    const { root, path } = await inclusionProof(hashes, index);
+    const r = await issueReceipt(entry, { root, index, leafCount: hashes.length, path });
+    return r ? JSON.stringify(r, null, 2) : null;
+  } catch {
+    return null;
+  }
+}

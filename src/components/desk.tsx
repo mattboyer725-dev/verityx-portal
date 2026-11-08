@@ -431,6 +431,10 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
             risk: packet.risk,
             seal: { hash: packet.seal.hash, quorum: packet.seal.quorum, committed: packet.seal.pbft.committed },
             shouldCost: packet.shouldCost,
+            receipt: (() => {
+              const j = (packet as PipelineResult & { receiptJson?: string | null }).receiptJson;
+              return j ? JSON.parse(j) : null;
+            })(),
             provenance: packet.provenance,
             screen: {
               ecovadis: packet.screen.ecovadis,

@@ -242,9 +242,32 @@ function CheckPage() {
                     <p className="break-all font-mono text-xs">
                       Merkle root {sealed.proof.root} · proof {sealed.proof.valid ? "VALID" : "INVALID"}
                     </p>
-                    <Link to="/core" className="text-gold hover:text-paper">
-                      See it on the ledger →
-                    </Link>
+                    {sealed.receiptJson ? (
+                      <button
+                        type="button"
+                        className="inline-flex h-11 w-fit items-center rounded-[8px] border border-gold/60 px-4 text-sm text-gold"
+                        onClick={() => {
+                          const blob = new Blob([sealed.receiptJson!], { type: "application/json" });
+                          const a = document.createElement("a");
+                          a.href = URL.createObjectURL(blob);
+                          a.download = `verityx-receipt-${sealed.entry.hash.slice(0, 12)}.json`;
+                          a.click();
+                          URL.revokeObjectURL(a.href);
+                        }}
+                      >
+                        Download receipt — anyone can verify it
+                      </button>
+                    ) : (
+                      <p className="text-xs text-warn">No public receipt: this server has no seal key configured.</p>
+                    )}
+                    <div className="flex flex-wrap gap-4">
+                      <Link to="/verify" className="text-gold hover:text-paper">
+                        Verify a receipt →
+                      </Link>
+                      <Link to="/core" className="text-gold hover:text-paper">
+                        See it on the ledger →
+                      </Link>
+                    </div>
                   </>
                 ) : user ? (
                   <>

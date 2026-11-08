@@ -16,12 +16,14 @@ import { Route as CoreRouteImport } from './routes/core'
 import { Route as DeskRouteImport } from './routes/desk'
 import { Route as FieldRouteImport } from './routes/field'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as WorkRouteImport } from './routes/work'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
 import { Route as ApiAdaptersRouteImport } from './routes/api.adapters'
 import { Route as ApiCompetitionRouteImport } from './routes/api.competition'
 import { Route as ApiOracleRouteImport } from './routes/api.oracle'
 import { Route as ApiPbftRouteImport } from './routes/api.pbft'
+import { Route as ApiSealKeyRouteImport } from './routes/api.seal-key'
 import { Route as AribaSplatRouteImport } from './routes/ariba.$'
 import { Route as EcovadisSplatRouteImport } from './routes/ecovadis.$'
 import { Route as HealthLiveRouteImport } from './routes/health.live'
@@ -85,6 +87,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyRoute = VerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkRoute = WorkRouteImport.update({
   id: '/work',
   path: '/work',
@@ -113,6 +120,11 @@ const ApiOracleRoute = ApiOracleRouteImport.update({
 const ApiPbftRoute = ApiPbftRouteImport.update({
   id: '/api/pbft',
   path: '/api/pbft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSealKeyRoute = ApiSealKeyRouteImport.update({
+  id: '/api/seal-key',
+  path: '/api/seal-key',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AribaSplatRoute = AribaSplatRouteImport.update({
@@ -259,12 +271,14 @@ export interface FileRoutesByFullPath {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/verify': typeof VerifyRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
   '/api/adapters': typeof ApiAdaptersRoute
   '/api/competition': typeof ApiCompetitionRoute
   '/api/oracle': typeof ApiOracleRouteWithChildren
   '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/api/seal-key': typeof ApiSealKeyRoute
   '/ariba/$': typeof AribaSplatRoute
   '/ecovadis/$': typeof EcovadisSplatRoute
   '/health/live': typeof HealthLiveRoute
@@ -301,11 +315,13 @@ export interface FileRoutesByTo {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/verify': typeof VerifyRoute
   '/api/$': typeof ApiSplatRoute
   '/api/adapters': typeof ApiAdaptersRoute
   '/api/competition': typeof ApiCompetitionRoute
   '/api/oracle': typeof ApiOracleRouteWithChildren
   '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/api/seal-key': typeof ApiSealKeyRoute
   '/ariba/$': typeof AribaSplatRoute
   '/ecovadis/$': typeof EcovadisSplatRoute
   '/health/live': typeof HealthLiveRoute
@@ -343,12 +359,14 @@ export interface FileRoutesById {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/verify': typeof VerifyRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
   '/api/adapters': typeof ApiAdaptersRoute
   '/api/competition': typeof ApiCompetitionRoute
   '/api/oracle': typeof ApiOracleRouteWithChildren
   '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/api/seal-key': typeof ApiSealKeyRoute
   '/ariba/$': typeof AribaSplatRoute
   '/ecovadis/$': typeof EcovadisSplatRoute
   '/health/live': typeof HealthLiveRoute
@@ -387,12 +405,14 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/verify'
     | '/work'
     | '/api/$'
     | '/api/adapters'
     | '/api/competition'
     | '/api/oracle'
     | '/api/pbft'
+    | '/api/seal-key'
     | '/ariba/$'
     | '/ecovadis/$'
     | '/health/live'
@@ -429,11 +449,13 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/verify'
     | '/api/$'
     | '/api/adapters'
     | '/api/competition'
     | '/api/oracle'
     | '/api/pbft'
+    | '/api/seal-key'
     | '/ariba/$'
     | '/ecovadis/$'
     | '/health/live'
@@ -470,12 +492,14 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/verify'
     | '/work'
     | '/api/$'
     | '/api/adapters'
     | '/api/competition'
     | '/api/oracle'
     | '/api/pbft'
+    | '/api/seal-key'
     | '/ariba/$'
     | '/ecovadis/$'
     | '/health/live'
@@ -513,12 +537,14 @@ export interface RootRouteChildren {
   DeskRoute: typeof DeskRoute
   FieldRoute: typeof FieldRoute
   LoginRoute: typeof LoginRoute
+  VerifyRoute: typeof VerifyRoute
   WorkRoute: typeof WorkRouteWithChildren
   ApiSplatRoute: typeof ApiSplatRoute
   ApiAdaptersRoute: typeof ApiAdaptersRoute
   ApiCompetitionRoute: typeof ApiCompetitionRoute
   ApiOracleRoute: typeof ApiOracleRouteWithChildren
   ApiPbftRoute: typeof ApiPbftRouteWithChildren
+  ApiSealKeyRoute: typeof ApiSealKeyRoute
   AribaSplatRoute: typeof AribaSplatRoute
   EcovadisSplatRoute: typeof EcovadisSplatRoute
   HealthLiveRoute: typeof HealthLiveRoute
@@ -585,6 +611,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify': {
+      id: '/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/work': {
       id: '/work'
       path: '/work'
@@ -625,6 +658,13 @@ declare module '@tanstack/react-router' {
       path: '/api/pbft'
       fullPath: '/api/pbft'
       preLoaderRoute: typeof ApiPbftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/seal-key': {
+      id: '/api/seal-key'
+      path: '/api/seal-key'
+      fullPath: '/api/seal-key'
+      preLoaderRoute: typeof ApiSealKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ariba/$': {
@@ -882,12 +922,14 @@ const rootRouteChildren: RootRouteChildren = {
   DeskRoute: DeskRoute,
   FieldRoute: FieldRoute,
   LoginRoute: LoginRoute,
+  VerifyRoute: VerifyRoute,
   WorkRoute: WorkRouteWithChildren,
   ApiSplatRoute: ApiSplatRoute,
   ApiAdaptersRoute: ApiAdaptersRoute,
   ApiCompetitionRoute: ApiCompetitionRoute,
   ApiOracleRoute: ApiOracleRouteWithChildren,
   ApiPbftRoute: ApiPbftRouteWithChildren,
+  ApiSealKeyRoute: ApiSealKeyRoute,
   AribaSplatRoute: AribaSplatRoute,
   EcovadisSplatRoute: EcovadisSplatRoute,
   HealthLiveRoute: HealthLiveRoute,

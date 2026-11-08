@@ -16,8 +16,12 @@
  */
 
 import { CORE_REPO, CORE_SHA, CORE_VERSION, LOCAL_CORE } from "./core-meta.ts";
+import { canonicalJson, pyJson } from "./canonical.ts";
+import { buildLevels, hashPair, hex, inclusionProof, leafHash, macEqual, merkleRootOf, sha256, verifyInclusion, type MerklePath } from "./merkle.ts";
 
 export { CORE_REPO, CORE_SHA, CORE_VERSION, LOCAL_CORE };
+export { canonicalJson };
+export { buildLevels, hashPair, inclusionProof, leafHash, merkleRootOf, verifyInclusion, type MerklePath };
 
 /* ------------------------------------------------------------------------- *
  * Secret policy — mirrors local-core v1.7.0 config.py.
@@ -120,7 +124,6 @@ export type CoreEventView = {
   payload: Record<string, string>;
 };
 
-export type MerklePath = { sibling: string; side: "L" | "R" };
 
 const LOG: CoreEvent[] = [];
 const ALLOWED = new Set<CoreEventType>([
@@ -134,21 +137,6 @@ const ALLOWED = new Set<CoreEventType>([
   "memory.delete",
 ]);
 
-function hex(buf: ArrayBuffer | Uint8Array) {
-  const b = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
-  return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
-}
-
-function bytes(hexStr: string) {
-  const out = new Uint8Array(hexStr.length / 2);
-  for (let i = 0; i < out.length; i++) out[i] = parseInt(hexStr.slice(i * 2, i * 2 + 2), 16);
-  return out;
-}
-
-async function sha256(data: Uint8Array) {
-  return hex(await crypto.subtle.digest("SHA-256", data as unknown as BufferSource));
-}
-
 async function hmacSha256(secret: Uint8Array, message: string) {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -159,61 +147,6 @@ async function hmacSha256(secret: Uint8Array, message: string) {
   );
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
   return hex(sig);
-}
-
-function macEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let x = 0;
-  for (let i = 0; i < a.length; i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return x === 0;
-}
-
-/** Python json.dumps default ensure_ascii=True: every code unit above 0x7F becomes \uXXXX (lowercase). */
-function pyString(s: string) {
-  return JSON.stringify(s).replace(/[\u0080-￿]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
-}
-
-/** Python float repr pads a one-digit exponent ("1e-07"); JS does not ("1e-7"). */
-function pyNumber(n: number) {
-  if (!Number.isFinite(n)) throw new Error("canonical JSON refuses NaN/Infinity (allow_nan=False)");
-  return String(n).replace(/e([+-])(\d)$/, "e$10$2");
-}
-
-function pyJson(v: unknown): string {
-  if (v === null) return "null";
-  switch (typeof v) {
-    case "boolean":
-      return v ? "true" : "false";
-    case "number":
-      return pyNumber(v);
-    case "string":
-      return pyString(v);
-    case "object": {
-      if (Array.isArray(v)) return "[" + v.map(pyJson).join(",") + "]";
-      const o = v as Record<string, unknown>;
-      return (
-        "{" +
-        Object.keys(o)
-          .sort()
-          .map((k) => {
-            if (o[k] === undefined) throw new Error(`canonical JSON refuses undefined at key ${k}`);
-            return pyString(k) + ":" + pyJson(o[k]);
-          })
-          .join(",") +
-        "}"
-      );
-    }
-    default:
-      throw new Error(`canonical JSON refuses ${typeof v}`);
-  }
-}
-
-/**
- * Byte-identical to Python json.dumps(obj, sort_keys=True, separators=(",", ":"),
- * allow_nan=False) — the local-core event_store._canonical contract.
- */
-export function canonicalJson(obj: Record<string, unknown>) {
-  return pyJson(obj);
 }
 
 function envelopeBody(e: Omit<CoreEvent, "signature" | "hash"> | CoreEvent) {
@@ -299,73 +232,6 @@ function validatePayload(type: CoreEventType, payload: Record<string, unknown>) 
       if (!isName(payload.ns, 120) || !isName(payload.key, 120)) throw new Error("invalid ns/key");
     }
   }
-}
-
-/** merkle.py leaf_hash: H(0x00 || event_hash_bytes) */
-export async function leafHash(eventHash: string) {
-  const tagged = new Uint8Array(1 + 32);
-  tagged[0] = 0x00;
-  tagged.set(bytes(eventHash), 1);
-  return sha256(tagged);
-}
-
-/** merkle.py hash_pair: H(0x01 || left || right) */
-export async function hashPair(left: string, right: string) {
-  const tagged = new Uint8Array(1 + 32 + 32);
-  tagged[0] = 0x01;
-  tagged.set(bytes(left), 1);
-  tagged.set(bytes(right), 33);
-  return sha256(tagged);
-}
-
-export async function buildLevels(eventHashes: string[]) {
-  if (!eventHashes.length) return [] as string[][];
-  let level = await Promise.all(eventHashes.map(leafHash));
-  const levels = [level];
-  while (level.length > 1) {
-    const nxt: string[] = [];
-    for (let i = 0; i < level.length; i += 2) {
-      const L = level[i];
-      const R = level[i + 1] ?? L;
-      nxt.push(await hashPair(L, R));
-    }
-    level = nxt;
-    levels.push(level);
-  }
-  return levels;
-}
-
-export async function merkleRootOf(eventHashes: string[]) {
-  if (!eventHashes.length) return "0".repeat(64);
-  const levels = await buildLevels(eventHashes);
-  return levels[levels.length - 1][0];
-}
-
-export async function inclusionProof(eventHashes: string[], index: number) {
-  if (index < 0 || index >= eventHashes.length) throw new Error("leaf index out of range");
-  const levels = await buildLevels(eventHashes);
-  const path: MerklePath[] = [];
-  let idx = index;
-  for (const level of levels.slice(0, -1)) {
-    const even = idx % 2 === 0;
-    const sibIdx = even ? (idx + 1 < level.length ? idx + 1 : idx) : idx - 1;
-    path.push({ sibling: level[sibIdx], side: even ? "R" : "L" });
-    idx = Math.floor(idx / 2);
-  }
-  return { root: levels[levels.length - 1][0], path };
-}
-
-export async function verifyInclusion(eventHash: string, index: number, path: MerklePath[], root: string) {
-  if (index < 0) return false;
-  let running = await leafHash(eventHash);
-  let idx = index;
-  for (const step of path) {
-    const expected = idx % 2 === 0 ? "R" : "L";
-    if (step.side !== expected) return false;
-    running = step.side === "L" ? await hashPair(step.sibling, running) : await hashPair(running, step.sibling);
-    idx = Math.floor(idx / 2);
-  }
-  return idx === 0 && macEqual(running, root);
 }
 
 /**

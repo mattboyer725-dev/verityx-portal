@@ -1277,7 +1277,10 @@ export async function sealQuoteCheck(userId: string, input: import("@/lib/quote-
   const index = eventHashes().indexOf(entry.hash);
   const proof = await merkleProofAt(index);
   await writeAudit(actor, "quote.sealed", "quote", entry.event_id, { verdict: assessment.verdict, hash: entry.hash });
+  const { issueReceipt } = await import("@/lib/receipt.server");
+  const receipt = await issueReceipt(entry, { root: proof.root, index, leafCount: eventHashes().length, path: proof.path });
   return {
+    receiptJson: receipt ? JSON.stringify(receipt, null, 2) : null,
     assessment,
     entry: { id: entry.event_id, hash: entry.hash, signature: entry.signature, timestamp: entry.timestamp, index },
     proof,
