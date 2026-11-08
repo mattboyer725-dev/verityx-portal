@@ -15,10 +15,6 @@
  *   runtime hook's return value, and `render:html` does not exist in Nitro v3.
  */
 import installPageTemplate from "../../scripts/install-page.html?raw";
-// VerityX identity for the install manifest (name, plum theme, seal icons). The
-// platform default names every app "Grok App" with a black theme off grok.me.
-import verityxManifest from "../../public/manifest.webmanifest?raw";
-import { finishHead } from "../../src/lib/head-finish";
 import { grokOgIdentity } from "virtual:grok-og-identity";
 import {
   acceptsHtml,
@@ -26,6 +22,7 @@ import {
   isDocumentPath,
   isInstallQuery,
   renderInstallPageHtml,
+  renderWebManifest,
 } from "../../scripts/grok-pwa-shared.mjs";
 
 interface GrokPwaEvent {
@@ -44,22 +41,13 @@ function injectHeadStreaming(response: Response, host: string): Response {
     host,
     site: grokOgIdentity.site,
   });
-  // The injector emits the whole <head> as one chunk; finishHead edits that chunk only.
-  let headDone = false;
-  const finish = (buf: Uint8Array): Uint8Array => {
-    if (headDone) return buf;
-    const text = new TextDecoder().decode(buf);
-    if (!/<\/head>/i.test(text)) return buf;
-    headDone = true;
-    return new TextEncoder().encode(finishHead(text, process.env));
-  };
   const transformed = response.body!.pipeThrough(
     new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller) {
-        for (const out of injector.push(chunk)) controller.enqueue(finish(out));
+        for (const out of injector.push(chunk)) controller.enqueue(out);
       },
       flush(controller) {
-        for (const out of injector.flush()) controller.enqueue(finish(out));
+        for (const out of injector.flush()) controller.enqueue(out);
       },
     }),
   );
@@ -83,7 +71,7 @@ export default async function grokPwaMiddleware(
   const urlWithQuery = path + event.url.search;
 
   if (path === "/__grok/manifest.webmanifest" || path === "/__grok/manifest.json") {
-    return new Response(verityxManifest, {
+    return new Response(renderWebManifest(requestHost(event)), {
       headers: {
         "content-type": "application/manifest+json; charset=utf-8",
         "cache-control": "no-cache",
