@@ -8,6 +8,7 @@ import {
 import { evaluateDecision } from "./decision-engine";
 import { bytesToBase64, buildReportPdf } from "./pdf";
 import { applyVerifiedStripeEventWith } from "./stripe-apply";
+import { LEGAL } from "@/lib/legal";
 import {
   interpretWebhook,
   type StripeLikeEvent,
@@ -577,12 +578,21 @@ export async function createCheckout(userId: string, data: { pilotId: string; or
     const stripe = new Stripe(key);
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      success_url: `${origin.origin}/work/pilots/${pilot.id}?paid=1`,
-      cancel_url: `${origin.origin}/work/pilots/${pilot.id}?canceled=1`,
+      // The buyer is not a member of this workspace: send them to public pages.
+      success_url: `${origin.origin}/paid?ref=${encodeURIComponent(pilot.id)}`,
+      cancel_url: `${origin.origin}/pilot?canceled=1`,
       client_reference_id: pilot.id,
+      // B2B: a real invoice (PDF + hosted page), the buyer's company details and tax ID.
+      customer_creation: "always",
+      invoice_creation: { enabled: true, invoice_data: { description: `VerityX pilot · ${pilot.title}`.slice(0, 500), footer: `Terms ${LEGAL.version}: ${origin.origin}/terms` } },
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
+      custom_text: { submit: { message: `By paying you agree to the VerityX pilot terms (version ${LEGAL.version}) at ${origin.origin}/terms.` } },
+      payment_intent_data: { statement_descriptor_suffix: "VERITYX PILOT" },
       metadata: {
         pilot_id: pilot.id,
         organization_id: actor.organizationId,
+        terms_version: LEGAL.version,
       },
       line_items: [
         {

@@ -26,6 +26,8 @@ describe("stripe webhook gating", () => {
   it("only marks paid on completed checkout / succeeded intent", () => {
     assert.equal(shouldMarkPaid("checkout.session.completed", "paid"), true);
     assert.equal(shouldMarkPaid("customer.created"), false);
+    assert.equal(shouldMarkPaid("checkout.session.completed", "unpaid"), false, "ACH pending is not paid");
+    assert.equal(shouldMarkPaid("checkout.session.async_payment_succeeded"), true, "ACH settled is paid");
     assert.equal(shouldMarkPaid("checkout.session.expired"), false);
   });
 });

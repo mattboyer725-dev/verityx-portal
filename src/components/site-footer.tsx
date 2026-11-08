@@ -14,6 +14,9 @@ export function SiteFooter() {
             {s.label}
           </Link>
         ))}
+        <a href="/pilot">Start a pilot</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
         <a href="/sources">Sources &amp; licences</a>
         <a href="/health/live">Health</a>
         <a href="/api/competition">Field API</a>

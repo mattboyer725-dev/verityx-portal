@@ -42,6 +42,8 @@ export function shouldMarkPaid(eventType: string, paymentStatus?: string): boole
   if (eventType === "checkout.session.completed") {
     return paymentStatus == null || paymentStatus === "paid";
   }
+  // Bank transfers (ACH) settle later: checkout completes "unpaid", then this event marks it paid.
+  if (eventType === "checkout.session.async_payment_succeeded") return true;
   if (eventType === "payment_intent.succeeded") return true;
   return false;
 }

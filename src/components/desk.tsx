@@ -259,7 +259,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
             Send one magnetics, wind or rare-earth purchase order. Within 72 hours you get a sealed evidence packet and an
             advisory decision on it — and nothing changes in your systems unless a person approves it.
           </p>
-          <Link className="vx-btn vx-btn-primary" to="/work">
+          <Link className="vx-btn vx-btn-primary" to="/pilot">
             Start a pilot
           </Link>
         </div>

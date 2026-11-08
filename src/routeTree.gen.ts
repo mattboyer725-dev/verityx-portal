@@ -16,7 +16,11 @@ import { Route as CoreRouteImport } from './routes/core'
 import { Route as DeskRouteImport } from './routes/desk'
 import { Route as FieldRouteImport } from './routes/field'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as PaidRouteImport } from './routes/paid'
+import { Route as PilotRouteImport } from './routes/pilot'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SourcesRouteImport } from './routes/sources'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as WorkRouteImport } from './routes/work'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
@@ -89,9 +93,29 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaidRoute = PaidRouteImport.update({
+  id: '/paid',
+  path: '/paid',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PilotRoute = PilotRouteImport.update({
+  id: '/pilot',
+  path: '/pilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SourcesRoute = SourcesRouteImport.update({
   id: '/sources',
   path: '/sources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyRoute = VerifyRouteImport.update({
@@ -283,7 +307,11 @@ export interface FileRoutesByFullPath {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/paid': typeof PaidRoute
+  '/pilot': typeof PilotRoute
+  '/privacy': typeof PrivacyRoute
   '/sources': typeof SourcesRoute
+  '/terms': typeof TermsRoute
   '/verify': typeof VerifyRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
@@ -329,7 +357,11 @@ export interface FileRoutesByTo {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/paid': typeof PaidRoute
+  '/pilot': typeof PilotRoute
+  '/privacy': typeof PrivacyRoute
   '/sources': typeof SourcesRoute
+  '/terms': typeof TermsRoute
   '/verify': typeof VerifyRoute
   '/api/$': typeof ApiSplatRoute
   '/api/adapters': typeof ApiAdaptersRoute
@@ -375,7 +407,11 @@ export interface FileRoutesById {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/paid': typeof PaidRoute
+  '/pilot': typeof PilotRoute
+  '/privacy': typeof PrivacyRoute
   '/sources': typeof SourcesRoute
+  '/terms': typeof TermsRoute
   '/verify': typeof VerifyRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
@@ -423,7 +459,11 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/paid'
+    | '/pilot'
+    | '/privacy'
     | '/sources'
+    | '/terms'
     | '/verify'
     | '/work'
     | '/api/$'
@@ -469,7 +509,11 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/paid'
+    | '/pilot'
+    | '/privacy'
     | '/sources'
+    | '/terms'
     | '/verify'
     | '/api/$'
     | '/api/adapters'
@@ -514,7 +558,11 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/paid'
+    | '/pilot'
+    | '/privacy'
     | '/sources'
+    | '/terms'
     | '/verify'
     | '/work'
     | '/api/$'
@@ -561,7 +609,11 @@ export interface RootRouteChildren {
   DeskRoute: typeof DeskRoute
   FieldRoute: typeof FieldRoute
   LoginRoute: typeof LoginRoute
+  PaidRoute: typeof PaidRoute
+  PilotRoute: typeof PilotRoute
+  PrivacyRoute: typeof PrivacyRoute
   SourcesRoute: typeof SourcesRoute
+  TermsRoute: typeof TermsRoute
   VerifyRoute: typeof VerifyRoute
   WorkRoute: typeof WorkRouteWithChildren
   ApiSplatRoute: typeof ApiSplatRoute
@@ -637,11 +689,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/paid': {
+      id: '/paid'
+      path: '/paid'
+      fullPath: '/paid'
+      preLoaderRoute: typeof PaidRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pilot': {
+      id: '/pilot'
+      path: '/pilot'
+      fullPath: '/pilot'
+      preLoaderRoute: typeof PilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sources': {
       id: '/sources'
       path: '/sources'
       fullPath: '/sources'
       preLoaderRoute: typeof SourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify': {
@@ -962,7 +1042,11 @@ const rootRouteChildren: RootRouteChildren = {
   DeskRoute: DeskRoute,
   FieldRoute: FieldRoute,
   LoginRoute: LoginRoute,
+  PaidRoute: PaidRoute,
+  PilotRoute: PilotRoute,
+  PrivacyRoute: PrivacyRoute,
   SourcesRoute: SourcesRoute,
+  TermsRoute: TermsRoute,
   VerifyRoute: VerifyRoute,
   WorkRoute: WorkRouteWithChildren,
   ApiSplatRoute: ApiSplatRoute,

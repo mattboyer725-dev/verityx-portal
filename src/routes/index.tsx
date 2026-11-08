@@ -66,6 +66,15 @@ function Home() {
           Siemens Gamesa procurement on the PO line. Customer Zero operating system for the $2,500 / 72-hour audit.
           HMAC + Merkle continuity from local-core v{CORE_VERSION}. Advisory decisions — never an automatic fraud finding.
         </p>
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Link to="/pilot" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-5 text-sm font-medium text-plum">
+            Start a {money(PILOT_PRICE_USD)} pilot
+            <ArrowRight className="size-4" />
+          </Link>
+          <Link to="/check" className="inline-flex h-11 items-center rounded-[8px] border border-line px-5 text-sm text-paper hover:bg-raised">
+            Check a quote free
+          </Link>
+        </div>
         <SurfaceLoop className="mt-8" />
       </section>
 
