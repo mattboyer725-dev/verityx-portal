@@ -9,6 +9,8 @@ import { getAriba, getSapPo, listSapPos, listAribaRfqs, sapGetEntity, sapWriteba
 import { getCirculorLot, listCirculorLots, recordCirculorLot } from "@/lib/circulor";
 import { getMinespiderByLot, listMinespiderBatches } from "@/lib/minespider";
 import { buildAdapterCards } from "@/lib/adapters";
+
+const adapterHealth = (h: string | undefined) => (h === "LIVE" || h === "REFERENCE" || h === "DOWN" ? h : "STALE");
 import { ensureGenesis, merkleSnapshot, merkleProofAt, verifyChain, listEvents, LOCAL_CORE, doctor } from "@/lib/core-ledger";
 
 async function seedAll() {
@@ -127,11 +129,11 @@ export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async (
   const adapters = buildAdapterCards({
     sapCount: listSapPos().length,
     aribaCount: listAribaRfqs().length,
-    argus: live.health.argus,
-    gleif: live.health.gleif,
-    sanctions: live.health.sanctions,
-    opensanctions: live.health.opensanctions,
-    news: live.health.news,
+    prices: live.health.metals === "DOWN" ? "DOWN" : live.health.fx === "LIVE" ? "LIVE" : "REFERENCE",
+    gleif: adapterHealth(live.health.gleif),
+    sanctions: adapterHealth(live.health.sanctions),
+    opensanctions: adapterHealth(live.health.opensanctions),
+    news: adapterHealth(live.health.news),
     pbftSeq: pbftSeq(),
     pbftCommitted: last?.committed,
     circulorLots: listCirculorLots().length,

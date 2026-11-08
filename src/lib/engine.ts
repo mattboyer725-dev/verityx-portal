@@ -1,5 +1,6 @@
-import type { LiveBundle, LiveQuote } from "@/lib/feeds";
-import { scaleByLive, SUPPLIER_GLEIF } from "@/lib/feeds";
+import type { LiveBundle } from "@/lib/feeds";
+import { scaleByReference, SUPPLIER_GLEIF } from "@/lib/feeds";
+import type { RefKey } from "@/lib/reference-prices";
 import {
   appendCoreEvents,
   type CoreEvent,
@@ -58,8 +59,10 @@ export type Scenario = {
   due: string;
   tiers: Tier[];
   screens: Screens;
-  oracleSymbol: string;
-  baselinePx: number;
+  /** A licensed reference series the sample prices move with; none = prices stay as sampled. */
+  refSeries?: RefKey;
+  /** The reference value when the sample prices were written. */
+  refBaseline?: number;
 };
 
 export const BUYER = {
@@ -81,7 +84,7 @@ export const SCENARIOS: Scenario[] = [
     proposed: 6_950_000,
     observations: [5_680_000, 5_712_000, 5_594_000, 5_748_000, 8_120_000],
     observationSources: [
-      "NdPr index (MP-scaled)",
+      "NdPr oxide print (sample)",
       "Regional NdFeB print (sample)",
       "Internal last-buy SAP (sample)",
       "Magnet cost index (sample)",
@@ -95,8 +98,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Elena Hartmann",
     currency: "EUR",
     due: "2026-10-14",
-    oracleSymbol: "MP",
-    baselinePx: 54.53,
     tiers: [
       { tier: 0, role: "Mine", name: "Bayan Obo pit", country: "CN", evidence: "lot weighbridge", lat: 41.769, lng: 109.973 },
       { tier: 1, role: "Separator", name: "Inner Mongolia REE mill", country: "CN", evidence: "assay cert", lat: 40.657, lng: 109.84 },
@@ -112,7 +113,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "Baotou Rare Earth Co.",
     proposed: 12_400_000,
     observations: [10_350_000, 10_420_000, 10_180_000, 10_660_000],
-    observationSources: ["NdPr index (MP-scaled)", "Regional alloy print (sample)", "Last SAP goods receipt (sample)", "Trader offer (sample)"],
+    observationSources: ["NdPr oxide print (sample)", "Regional alloy print (sample)", "Last SAP goods receipt (sample)", "Trader offer (sample)"],
     assumptions: ["Single-origin melt lot"],
     tenant: "SIEMENS-GAMESA",
     commodity: "NdPr alloy",
@@ -121,8 +122,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Elena Hartmann",
     currency: "EUR",
     due: "2026-11-02",
-    oracleSymbol: "MP",
-    baselinePx: 54.53,
     tiers: [
       { tier: 0, role: "Mine", name: "Baotou pit feed", country: "CN", evidence: "origin declaration", lat: 40.657, lng: 109.84 },
       { tier: 1, role: "Alloy", name: "Baotou Rare Earth Co.", country: "CN", evidence: "melt heat number", lat: 40.657, lng: 109.84 },
@@ -137,7 +136,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "Nordic Conductor AB",
     proposed: 4_820_000,
     observations: [4_610_000, 4_598_000, 4_632_000, 4_605_000],
-    observationSources: ["Copper reference (COMEX-scaled)", "Mill quote (sample)", "Supplier offer (sample)", "Last SAP goods receipt (sample)"],
+    observationSources: ["Copper · World Bank monthly avg (scaled)", "Mill quote (sample)", "Supplier offer (sample)", "Last SAP goods receipt (sample)"],
     assumptions: ["EU origin claimed"],
     tenant: "SIEMENS-GAMESA",
     commodity: "Cu CTC",
@@ -146,8 +145,8 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Mads Sørensen",
     currency: "EUR",
     due: "2026-09-28",
-    oracleSymbol: "HG=F",
-    baselinePx: 6.6825,
+    refSeries: "copper",
+    refBaseline: 14508,
     tiers: [
       { tier: 0, role: "Cathode", name: "Boliden Rönnskär", country: "SE", evidence: "LME warrant", lat: 64.665, lng: 21.266 },
       { tier: 1, role: "Drawer", name: "Nordic Conductor AB", country: "SE", evidence: "mill cert", lat: 59.329, lng: 18.068 },
@@ -162,7 +161,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "Dillinger Hütte",
     proposed: 8_240_000,
     observations: [8_110_000, 8_085_000, 8_152_000, 8_098_000],
-    observationSources: ["Steel producer equity (scaled)", "Mill quote (sample)", "EU plate index (sample)", "SAP last-buy (sample)"],
+    observationSources: ["Plate mill index print (sample)", "Mill quote (sample)", "EU plate index (sample)", "SAP last-buy (sample)"],
     assumptions: ["EU mill of origin", "EN 10025-2"],
     tenant: "SIEMENS-GAMESA",
     commodity: "S355 plate",
@@ -171,8 +170,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Claire Moreau",
     currency: "EUR",
     due: "2026-10-30",
-    oracleSymbol: "TKA.DE",
-    baselinePx: 15.21,
     tiers: [
       { tier: 0, role: "Iron ore", name: "LKAB Kiruna", country: "SE", evidence: "origin cert", lat: 67.851, lng: 20.198 },
       { tier: 1, role: "Mill", name: "Dillinger Hütte", country: "DE", evidence: "heat number", lat: 49.355, lng: 6.728 },
@@ -187,7 +184,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "Hexion GmbH",
     proposed: 3_180_000,
     observations: [2_940_000, 2_975_000, 3_410_000, 2_960_000],
-    observationSources: ["Aluminium reference (scaled)", "Supplier offer (sample)", "Peer resin offer (sample)", "Last SAP goods receipt (sample)"],
+    observationSources: ["Resin index print (sample)", "Supplier offer (sample)", "Peer resin offer (sample)", "Last SAP goods receipt (sample)"],
     assumptions: ["Epoxy + hardener kit"],
     tenant: "SIEMENS-GAMESA",
     commodity: "Epoxy resin kit",
@@ -196,8 +193,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Ingrid Dahl",
     currency: "EUR",
     due: "2026-09-18",
-    oracleSymbol: "ALI=F",
-    baselinePx: 3473.25,
     tiers: [
       { tier: 0, role: "Feedstock", name: "BPA / ECH Duisburg", country: "DE", evidence: "REACH dossier", lat: 51.434, lng: 6.762 },
       { tier: 1, role: "Formulator", name: "Hexion GmbH", country: "DE", evidence: "batch COA", lat: 51.376, lng: 7.703 },
@@ -212,7 +207,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "Infineon Technologies AG",
     proposed: 5_460_000,
     observations: [5_410_000, 5_388_000, 5_425_000, 5_402_000],
-    observationSources: ["Chipmaker equity (scaled)", "Distributor print (sample)", "Last SAP goods receipt (sample)", "Peer OEM price (sample)"],
+    observationSources: ["Distributor list price (sample)", "Distributor print (sample)", "Last SAP goods receipt (sample)", "Peer OEM price (sample)"],
     assumptions: ["Automotive-grade dual-use screen required"],
     tenant: "SIEMENS-GAMESA",
     commodity: "IGBT module",
@@ -221,8 +216,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Elena Hartmann",
     currency: "EUR",
     due: "2026-12-01",
-    oracleSymbol: "IFX.DE",
-    baselinePx: 56.86,
     tiers: [
       { tier: 0, role: "Wafer", name: "Infineon Villach", country: "AT", evidence: "lot traveler", lat: 46.61, lng: 13.856 },
       { tier: 1, role: "Module OEM", name: "Infineon Warstein", country: "DE", evidence: "PPAP", lat: 51.444, lng: 8.349 },
@@ -237,7 +230,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "China Northern Rare Earth",
     proposed: 9_180_000,
     observations: [7_420_000, 7_385_000, 7_510_000, 7_460_000, 11_200_000],
-    observationSources: ["Dy index (MP-scaled)", "Regional Dy metal print (sample)", "Internal last-buy SAP (sample)", "Trader offer EU bonded (sample)", "Supplier quote (unverified)"],
+    observationSources: ["Dy oxide print (sample)", "Regional Dy metal print (sample)", "Internal last-buy SAP (sample)", "Trader offer EU bonded (sample)", "Supplier quote (unverified)"],
     assumptions: ["Heavy REE, export-licence sensitive", "H-grade NdFeB dopant"],
     tenant: "SIEMENS-GAMESA",
     commodity: "Dy metal",
@@ -246,8 +239,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Elena Hartmann",
     currency: "EUR",
     due: "2026-11-20",
-    oracleSymbol: "MP",
-    baselinePx: 54.53,
     tiers: [
       { tier: 0, role: "Mine", name: "Bayan Obo heavy-REE cut", country: "CN", evidence: "lot assay", lat: 41.769, lng: 109.973 },
       { tier: 1, role: "Separator", name: "Northern REE solvent mill", country: "CN", evidence: "export licence", lat: 40.657, lng: 109.84 },
@@ -263,7 +254,7 @@ export const SCENARIOS: Scenario[] = [
     supplier: "thyssenkrupp Steel Europe",
     proposed: 3_640_000,
     observations: [3_580_000, 3_595_000, 3_572_000, 3_610_000],
-    observationSources: ["Steel producer equity (scaled)", "Mill quote (sample)", "Peer mill offer (sample)", "Last SAP goods receipt (sample)"],
+    observationSources: ["Plate mill index print (sample)", "Mill quote (sample)", "Peer mill offer (sample)", "Last SAP goods receipt (sample)"],
     assumptions: ["EU mill of origin", "EN 10106"],
     tenant: "SIEMENS-GAMESA",
     commodity: "NGO electrical steel",
@@ -272,8 +263,6 @@ export const SCENARIOS: Scenario[] = [
     buyer: "Mads Sørensen",
     currency: "EUR",
     due: "2026-10-08",
-    oracleSymbol: "TKA.DE",
-    baselinePx: 15.21,
     tiers: [
       { tier: 0, role: "Iron ore", name: "LKAB Kiruna", country: "SE", evidence: "origin cert", lat: 67.851, lng: 20.198 },
       { tier: 1, role: "Mill", name: "thyssenkrupp Steel Europe", country: "DE", evidence: "coil heat", lat: 51.492, lng: 6.775 },
@@ -288,8 +277,8 @@ import { consensusAgent, type Consensus } from "@/lib/consensus";
 
 function liveScenario(scenario: Scenario, live?: LiveBundle): Scenario {
   if (!live) return scenario;
-  const obs = scenario.observations.map((v) => scaleByLive(v, scenario.oracleSymbol, scenario.baselinePx, live.quotes));
-  const proposed = scaleByLive(scenario.proposed, scenario.oracleSymbol, scenario.baselinePx, live.quotes);
+  const obs = scenario.observations.map((v) => scaleByReference(v, scenario.refSeries, scenario.refBaseline));
+  const proposed = scaleByReference(scenario.proposed, scenario.refSeries, scenario.refBaseline);
   return { ...scenario, observations: obs, proposed };
 }
 
@@ -311,7 +300,7 @@ export function ingestAgent(scenario: Scenario, live?: LiveBundle) {
   const ariba = getAriba(scenario.po);
   return {
     agent: "INGEST" as const,
-    sources: ["SAP S/4HANA OData", "Ariba RFQ", "LME / NdPr index oracles", "GLEIF"],
+    sources: ["SAP S/4HANA OData", "Ariba RFQ", "Reference prices (World Bank, USGS, ECB)", "GLEIF"],
     po: scenario.po,
     sap,
     ariba,
@@ -322,38 +311,21 @@ export function ingestAgent(scenario: Scenario, live?: LiveBundle) {
 }
 
 export function oracleAgent(scenario: Scenario, live?: LiveBundle) {
-  const q: LiveQuote | undefined = live?.quotes[scenario.oracleSymbol];
-  // A feed's print enters the sealed packet as live only when that feed reported LIVE.
-  // On timeout the bundle carries fallback constants; they must not be signed in as prints.
-  const lmeUp = live?.health?.lme === "LIVE";
-  const argusUp = live?.health?.argus === "LIVE";
+  // Reference averages enter the packet with their period and attribution; only
+  // ECB FX is a same-day figure. Nothing here is a spot quote.
+  const metalsUp = live?.health?.metals === "REFERENCE";
+  const reUp = live?.health?.rareEarths === "REFERENCE";
   const fxUp = live?.health?.fx === "LIVE";
   const prints = scenario.observations.map((value, i) => ({
     source: scenario.observationSources[i] || `oracle-${i + 1}`,
     value,
     outlier: false,
-    live: i === 0 && !!q,
+    live: false,
   }));
-  if (lmeUp && live?.lme && scenario.oracleSymbol === "HG=F") {
+  if (metalsUp && live?.metals && scenario.refSeries === "copper") {
     prints.unshift({
-      source: `LME Cu cash ${live.lme.copperUsdMt.toFixed(0)} USD/mt`,
-      value: scaleByLive(scenario.observations[0], scenario.oracleSymbol, scenario.baselinePx, live.quotes),
-      outlier: false,
-      live: true,
-    });
-  }
-  if (lmeUp && live?.lme && scenario.oracleSymbol === "ALI=F") {
-    prints.unshift({
-      source: `LME Al cash ${live.lme.aluminiumUsdMt.toFixed(0)} USD/mt`,
-      value: scaleByLive(scenario.observations[0], scenario.oracleSymbol, scenario.baselinePx, live.quotes),
-      outlier: false,
-      live: true,
-    });
-  }
-  if (argusUp && live?.argus && scenario.oracleSymbol === "MP") {
-    prints.unshift({
-      source: `NdPr index (MP-scaled) ${live.argus.ndprUsdKg.toFixed(1)} USD/kg`,
-      value: scaleByLive(scenario.observations[0], scenario.oracleSymbol, scenario.baselinePx, live.quotes),
+      source: `Copper ${live.metals.copperUsdMt.toFixed(0)} USD/t · World Bank ${live.metals.periodLabel}`,
+      value: scaleByReference(scenario.observations[0], scenario.refSeries, scenario.refBaseline),
       outlier: false,
       live: true,
     });
@@ -361,13 +333,13 @@ export function oracleAgent(scenario: Scenario, live?: LiveBundle) {
   return {
     agent: "ORACLE" as const,
     prints,
-    quote: q || null,
-    lme: lmeUp ? live?.lme || null : null,
-    argus: argusUp ? live?.argus || null : null,
+    metals: metalsUp ? live?.metals || null : null,
+    rareEarths: reUp ? live?.rareEarths || null : null,
     fx: fxUp ? live?.fx || null : null,
     pattern:
-      [lmeUp && "LME cash", argusUp && "NdPr index (MP)", fxUp && "ECB FX"].filter(Boolean).join(" + ") ||
-      "Live tape on standby — scenario prints only",
+      [metalsUp && `World Bank ${live?.metals.periodLabel}`, reUp && `USGS ${live?.rareEarths.periodLabel}`, fxUp && "ECB FX"]
+        .filter(Boolean)
+        .join(" + ") || "Reference prices unavailable — scenario samples only",
   };
 }
 
@@ -424,7 +396,6 @@ export function screenAgent(scenario: Scenario, live?: LiveBundle) {
   const gleifKey = SUPPLIER_GLEIF[scenario.supplier] || scenario.supplier;
   const gleif = live?.gleif[gleifKey] || null;
   const hit = live?.sanctions.hits.find((h) => scenario.supplier.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()));
-  const listed = live?.quotes[scenario.oracleSymbol];
   const eco = live?.ecovadis[scenario.supplier] || live?.ecovadis[gleifKey];
   const pre = live?.prewave[scenario.supplier] || live?.prewave[gleifKey];
   const rapid = live?.rapid[scenario.supplier] || live?.rapid[gleifKey];
@@ -438,7 +409,7 @@ export function screenAgent(scenario: Scenario, live?: LiveBundle) {
   ].filter(Boolean) as { type: string; text: string }[];
   return {
     agent: "SCREEN" as const,
-    pattern: "ESG scorecard + media-risk heat + financial health + GLEIF + OpenSanctions + UN",
+    pattern: "ESG scorecard + media-risk heat + financial health + GLEIF + UN",
     screens: scenario.screens,
     alerts,
     gleif,
@@ -450,8 +421,8 @@ export function screenAgent(scenario: Scenario, live?: LiveBundle) {
       matched: !!hit?.matched,
       ts: live?.sanctions.ts,
     },
-    financial: listed
-      ? { symbol: listed.symbol, price: listed.price, currency: listed.currency, changePct: listed.changePct, source: listed.source }
+    financial: rapid?.listed && rapid.symbol
+      ? { symbol: rapid.symbol, price: 0, currency: "", changePct: 0, source: rapid.source }
       : null,
   };
 }
@@ -634,7 +605,7 @@ function advisoryFromScreen(
   screen: ReturnType<typeof screenAgent>,
   live?: LiveBundle,
 ): Evaluation | null {
-  const observedAt = (live?.sanctions.ts || live?.quotes[scenario.oracleSymbol]?.ts || new Date().toISOString()).slice(
+  const observedAt = (live?.sanctions.ts || new Date().toISOString()).slice(
     0,
     10,
   );
@@ -716,14 +687,21 @@ export type PipelineResult = {
   sealed?: { artifact: CoreEvent; decision: CoreEvent };
 };
 
-/** Prices for SHOULD-COST from the live bundle, LIVE feeds only (no fallback constants). */
+/** Prices for SHOULD-COST: licensed reference averages, each with its basis. No fallback constants. */
 export function shouldCostPrices(live?: LiveBundle): LivePrices {
-  const up = (k: string) => live?.health?.[k] === "LIVE";
+  const h = live?.health ?? {};
+  const re = h.rareEarths === "REFERENCE" ? live?.rareEarths : undefined;
+  const mt = h.metals === "REFERENCE" ? live?.metals : undefined;
   return {
-    ndprOxideUsdKg: up("argus") ? live?.argus?.ndprUsdKg : undefined,
-    dyOxideUsdKg: up("argus") ? live?.argus?.dyUsdKg : undefined,
-    copperUsdT: up("lme") ? live?.lme?.copperUsdMt : undefined,
-    usdEur: up("fx") ? live?.fx?.usdEur : undefined,
+    ndprOxideUsdKg: re?.ndprUsdKg || undefined,
+    dyOxideUsdKg: re?.dyUsdKg || undefined,
+    copperUsdT: mt?.copperUsdMt || undefined,
+    usdEur: h.fx === "LIVE" ? live?.fx?.usdEur : undefined,
+    basis: {
+      ...(re ? { ndprOxideUsdKg: { kind: "reference-annual" as const, label: `USGS NdPr oxide ${re.periodLabel}` } } : {}),
+      ...(re ? { dyOxideUsdKg: { kind: "reference-annual" as const, label: `USGS Dy oxide ${re.periodLabel}` } } : {}),
+      ...(mt ? { copperUsdT: { kind: "reference-monthly" as const, label: `World Bank copper ${mt.periodLabel}` } } : {}),
+    },
     asOf: live?.fetchedAt,
   };
 }
@@ -774,11 +752,7 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   const ledger = await ledgerAgent();
   const merkle = await merkleAgent(artifact.hash);
   const auth = authStamp();
-  const tape = oracle.lme
-    ? `LME Cu ${oracle.lme.copperUsdMt.toFixed(0)}`
-    : oracle.quote
-      ? `${oracle.quote.symbol} ${oracle.quote.price}`
-      : "no tape";
+  const tape = oracle.metals ? `Cu ${oracle.metals.copperUsdMt.toFixed(0)} (World Bank ${oracle.metals.periodLabel})` : "no reference";
   return {
     shouldCost: fair,
     sealed: { artifact, decision },
@@ -808,7 +782,7 @@ export { competitionNotes } from "./competition";
 
 export const AGENTS = [
   { id: "INGEST", exists: true, role: "SAP S/4 + Ariba" },
-  { id: "ORACLE", exists: true, role: "LME + NdPr index + ECB" },
+  { id: "ORACLE", exists: true, role: "World Bank + USGS references + ECB FX" },
   { id: "CONSENSUS", exists: true, role: "CoV + MAD filter" },
   { id: "RISK", exists: true, role: "Anomaly vs proposed" },
   { id: "PROVENANCE", exists: true, role: "Lot custody + batch passport" },

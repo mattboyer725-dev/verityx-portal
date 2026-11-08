@@ -58,7 +58,7 @@ test("no LEI record, or no live price, is a REVIEW", () => {
   assert.equal(noPrice.shouldCost.ok, false);
   assert.equal(noPrice.verdict, "REVIEW", "an unchecked price is never a PROCEED");
   assert.ok(noPrice.reasons.some((r) => /standby/.test(r)));
-  assert.ok(noPrice.reasons.some((r) => /price itself was not checked/.test(r)));
+  assert.ok(noPrice.reasons.some((r) => /price itself was not verified/.test(r)));
   // …but other prices alone are a real price check.
   const viaPeers = assessQuote(parseQuoteInput({ ...base, quoteTotal: 80_000, otherPrices: [79_000, 81_000] }), {}, CLEAN);
   assert.equal(viaPeers.verdict, "PROCEED", viaPeers.reasons.join(" / "));
@@ -70,4 +70,51 @@ test("ledger line is compact and complete", () => {
   assert.match(line, /Acme Magnets GmbH · NdPr alloy · 1000 kg · 80000 EUR/);
   assert.match(line, /LEI 5299000J2N45DDNE4Y28/);
   assert.ok(line.length <= 2000);
+});
+
+// ---- price basis: annual references never decide a verdict; the buyer's licensed benchmark does ----
+const ANNUAL = {
+  ...PRICES,
+  basis: {
+    ndprOxideUsdKg: { kind: "reference-annual" as const, label: "USGS NdPr oxide 2025 avg (est.)" },
+    dyOxideUsdKg: { kind: "reference-annual" as const, label: "USGS Dy oxide 2025 avg (est.)" },
+    copperUsdT: { kind: "reference-monthly" as const, label: "World Bank copper Oct 2026 avg" },
+  },
+};
+
+test("a should-cost built on an annual reference average is indicative and never PROCEEDs or HOLDs on price", () => {
+  const fair = assessQuote(parseQuoteInput({ ...base, quoteTotal: 80_000 }), ANNUAL, CLEAN);
+  assert.equal(fair.shouldCost.ok && fair.shouldCost.indicative, true);
+  assert.equal(fair.verdict, "REVIEW", fair.reasons.join(" / "));
+  assert.ok(fair.reasons.some((r) => /Indicative only/.test(r)));
+  const high = assessQuote(parseQuoteInput({ ...base, quoteTotal: 400_000 }), ANNUAL, CLEAN);
+  assert.equal(high.verdict, "REVIEW", "an annual average alone is not grounds for a HOLD");
+  assert.ok(ledgerContext(fair).includes("(indicative)"));
+});
+
+test("the buyer's own benchmark replaces the reference and restores a real verdict, with its source recorded", () => {
+  const input = parseQuoteInput({
+    ...base,
+    quoteTotal: 80_000,
+    benchmark: { ndprOxideUsdKg: 60, source: "Fastmarkets NdPr oxide, 7 Nov 2026" },
+  });
+  const a = assessQuote(input, ANNUAL, CLEAN);
+  assert.equal(a.verdict, "PROCEED", a.reasons.join(" / "));
+  assert.ok(a.shouldCost.ok && !a.shouldCost.indicative);
+  assert.ok(a.shouldCost.ok && a.shouldCost.basis[0].label.includes("Fastmarkets NdPr oxide, 7 Nov 2026"));
+  const over = assessQuote({ ...input, quoteTotal: 200_000 }, ANNUAL, CLEAN);
+  assert.equal(over.verdict, "HOLD");
+});
+
+test("a copper check on the monthly reference gives a real verdict", () => {
+  const cu = parseQuoteInput({ ...base, commodity: "Cu CTC", quoteTotal: 1_000_000 });
+  const a = assessQuote(cu, ANNUAL, CLEAN);
+  assert.ok(a.shouldCost.ok && !a.shouldCost.indicative);
+  assert.equal(a.verdict, "HOLD", a.reasons.join(" / "));
+});
+
+test("benchmark input is validated: positive numbers and a named source", () => {
+  assert.throws(() => parseQuoteInput({ ...base, quoteTotal: 10, benchmark: { ndprOxideUsdKg: -1, source: "x y" } }), /positive/);
+  assert.throws(() => parseQuoteInput({ ...base, quoteTotal: 10, benchmark: { ndprOxideUsdKg: 90, source: "" } }), /where the benchmark comes from/);
+  assert.equal(parseQuoteInput({ ...base, quoteTotal: 10, benchmark: { source: "" } }).benchmark, undefined);
 });

@@ -16,6 +16,7 @@ import { Route as CoreRouteImport } from './routes/core'
 import { Route as DeskRouteImport } from './routes/desk'
 import { Route as FieldRouteImport } from './routes/field'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as WorkRouteImport } from './routes/work'
 import { Route as ApiSplatRouteImport } from './routes/api/$'
@@ -86,6 +87,11 @@ const FieldRoute = FieldRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SourcesRoute = SourcesRouteImport.update({
+  id: '/sources',
+  path: '/sources',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyRoute = VerifyRouteImport.update({
@@ -277,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/sources': typeof SourcesRoute
   '/verify': typeof VerifyRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
@@ -322,6 +329,7 @@ export interface FileRoutesByTo {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/sources': typeof SourcesRoute
   '/verify': typeof VerifyRoute
   '/api/$': typeof ApiSplatRoute
   '/api/adapters': typeof ApiAdaptersRoute
@@ -367,6 +375,7 @@ export interface FileRoutesById {
   '/desk': typeof DeskRoute
   '/field': typeof FieldRoute
   '/login': typeof LoginRoute
+  '/sources': typeof SourcesRoute
   '/verify': typeof VerifyRoute
   '/work': typeof WorkRouteWithChildren
   '/api/$': typeof ApiSplatRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/sources'
     | '/verify'
     | '/work'
     | '/api/$'
@@ -459,6 +469,7 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/sources'
     | '/verify'
     | '/api/$'
     | '/api/adapters'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/desk'
     | '/field'
     | '/login'
+    | '/sources'
     | '/verify'
     | '/work'
     | '/api/$'
@@ -549,6 +561,7 @@ export interface RootRouteChildren {
   DeskRoute: typeof DeskRoute
   FieldRoute: typeof FieldRoute
   LoginRoute: typeof LoginRoute
+  SourcesRoute: typeof SourcesRoute
   VerifyRoute: typeof VerifyRoute
   WorkRoute: typeof WorkRouteWithChildren
   ApiSplatRoute: typeof ApiSplatRoute
@@ -622,6 +635,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sources': {
+      id: '/sources'
+      path: '/sources'
+      fullPath: '/sources'
+      preLoaderRoute: typeof SourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify': {
@@ -942,6 +962,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeskRoute: DeskRoute,
   FieldRoute: FieldRoute,
   LoginRoute: LoginRoute,
+  SourcesRoute: SourcesRoute,
   VerifyRoute: VerifyRoute,
   WorkRoute: WorkRouteWithChildren,
   ApiSplatRoute: ApiSplatRoute,

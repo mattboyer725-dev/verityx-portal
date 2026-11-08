@@ -15,7 +15,7 @@ export const DESK_TOUR: TourStep[] = [
   {
     target: "tape",
     heading: "Live tape",
-    body: "LME copper and aluminium cash, an NdPr/Dy index scaled from MP Materials, and ECB USD/EUR, refreshed from public feeds. A feed that is down reads “standby” — it is never back-filled with a made-up print.",
+    body: "Licensed reference prices — World Bank monthly copper and aluminium, USGS annual NdPr and Dy oxide — and the ECB’s daily EUR/USD rate, each shown with its period and source. Averages, not spot quotes. A source that is down reads “standby” — it is never back-filled with a made-up print.",
   },
   {
     target: "kpis",
@@ -45,7 +45,7 @@ export const DESK_TOUR: TourStep[] = [
   {
     target: "evidence",
     heading: "The evidence behind it",
-    body: "Each tab is one source of the packet: SAP and Ariba, LME and the NdPr index, sanctions screens, lot custody, the 27-node PBFT seal, and the Local Core proof. Export hands over the whole packet.",
+    body: "Each tab is one source of the packet: SAP and Ariba, reference prices, sanctions screens, lot custody, the 27-node PBFT seal, and the Local Core proof. Export hands over the whole packet.",
   },
 ];
 

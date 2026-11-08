@@ -6,7 +6,7 @@ describe("adapter cards", () => {
   it("names every former honest fake as a live protocol on this host", () => {
     const cards = buildAdapterCards({
       sapCount: 8,
-      argus: "LIVE",
+      prices: "LIVE",
       gleif: "LIVE",
       sanctions: "LIVE",
       opensanctions: "LIVE",
@@ -17,7 +17,7 @@ describe("adapter cards", () => {
       okta: "LIVE",
     });
     const ids = cards.map((c) => c.id);
-    assert.deepEqual(ids, ["sap", "argus", "ecovadis", "prewave", "screen", "circulor", "pbft", "okta"]);
+    assert.deepEqual(ids, ["sap", "prices", "ecovadis", "prewave", "screen", "circulor", "pbft", "okta"]);
     assert.ok(cards.every((c) => c.status === "LIVE"));
     assert.ok(cards.find((c) => c.id === "sap")?.path.includes("/sap/opu/odata"));
     assert.match(cards.find((c) => c.id === "sap")!.detail, /Ariba/i);
@@ -33,7 +33,7 @@ describe("adapter cards", () => {
     assert.equal(cards.find((c) => c.id === "circulor")?.status, "LIVE");
     assert.equal(cards.find((c) => c.id === "okta")?.status, "LIVE");
     assert.equal(cards.find((c) => c.id === "screen")?.status, "STALE");
-    assert.equal(cards.find((c) => c.id === "argus")?.status, "STALE");
+    assert.equal(cards.find((c) => c.id === "prices")?.status, "REFERENCE");
     assert.equal(cards.find((c) => c.id === "ecovadis")?.status, "STALE");
     assert.equal(cards.find((c) => c.id === "prewave")?.status, "STALE");
     assert.match(cards.find((c) => c.id === "ecovadis")!.path, /ecovadis\/api\/v2\/scorecards/);

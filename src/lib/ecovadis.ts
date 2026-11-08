@@ -171,7 +171,7 @@ export function scoreEcovadis(input: {
   }
   if (input.sanctionsHit) {
     ethics -= 35;
-    ethEv.push("UN / OpenSanctions hit on this name");
+    ethEv.push("UN consolidated list hit on this name");
   }
   environment -= Math.min(24, envNews.length * 8);
   labor -= Math.min(24, labNews.length * 10);
@@ -210,7 +210,7 @@ export function scoreEcovadis(input: {
     publishedAt: now,
     validUntil: valid.toISOString(),
     industry: "NACE 27 · Manufacture of electrical equipment",
-    source: "EcoVadis 21-criteria analog · GLEIF + UN/OpenSanctions + news RSS + listing tape",
+    source: "EcoVadis 21-criteria analog · GLEIF + UN list + news RSS",
     issuer: "VerityX ESG scorecard",
   };
 }
@@ -221,7 +221,7 @@ export function ecovadisMethodology() {
     issuer: "VerityX ESG scorecard",
     vendor: {
       subscribed: false,
-      note: "EcoVadis is not a tenant here. This is the public 21-criteria / 4-theme methodology scored from GLEIF, UN/OpenSanctions, news RSS, and listing tape.",
+      note: "EcoVadis is not a tenant here. This is the public 21-criteria / 4-theme methodology scored from GLEIF, the UN list, and news RSS.",
     },
     industry: "NACE 27 · Manufacture of electrical equipment",
     weights: ECOVADIS_WEIGHTS,

@@ -29,23 +29,20 @@ export function useDeskTape(enabled = true) {
     es.addEventListener("tick", (ev) => {
       try {
         const tick = JSON.parse((ev as MessageEvent).data) as {
-          argus?: DeskTape["argus"];
-          lme?: { copperUsdMt: number; aluminiumUsdMt: number; source: string };
+          metals?: DeskTape["metals"];
+          rareEarths?: DeskTape["rareEarths"];
           fx?: DeskTape["fx"];
+          health?: Partial<DeskTape["health"]>;
         };
         client.setQueryData(deskKeys.tape, (prev: DeskTape | undefined) => {
           if (!prev) return prev;
           return {
             ...prev,
-            argus: tick.argus || prev.argus,
+            metals: tick.metals || prev.metals,
+            rareEarths: tick.rareEarths || prev.rareEarths,
             fx: tick.fx || prev.fx,
-            lme: tick.lme ? { ...prev.lme, ...tick.lme } : prev.lme,
-            // A tick carrying a fallback print ("feed timeout" / "stale") must not flip a feed to LIVE.
-            health: {
-              ...prev.health,
-              ...(tick.argus ? { argus: /feed timeout/i.test(tick.argus.source) ? "STALE" : "LIVE" } : {}),
-              ...(tick.fx ? { fx: /stale/i.test(tick.fx.source) ? "STALE" : "LIVE" } : {}),
-            },
+            // Health comes from the server's own assessment, never inferred from a label.
+            health: { ...prev.health, ...(tick.health || {}) } as DeskTape["health"],
           };
         });
       } catch {

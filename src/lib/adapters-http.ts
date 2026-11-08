@@ -1,4 +1,4 @@
-import { buildAdapterCards } from "@/lib/adapters";
+import { type AdapterHealth, buildAdapterCards } from "@/lib/adapters";
 import { listCirculorLots, getCirculorLot, recordCirculorLot } from "@/lib/circulor";
 import { fetchLiveBundle } from "@/lib/feeds";
 import { SCENARIOS } from "@/lib/engine";
@@ -10,6 +10,8 @@ import { handleMinespiderHttp } from "@/lib/minespider-http";
 import { handleEcovadisHttp } from "@/lib/ecovadis-http";
 import { handlePrewaveHttp } from "@/lib/prewave-http";
 import { listSapPos, listAribaRfqs, seedSapPo, sapWritebackLog } from "@/lib/sap";
+
+const asAdapter = (h: string): AdapterHealth => (h === "LIVE" || h === "REFERENCE" || h === "DOWN" ? h : "STALE");
 import { listMinespiderBatches, getMinespiderByLot } from "@/lib/minespider";
 
 async function seedDesk() {
@@ -89,11 +91,11 @@ export async function handlePublicAdapterHttp(request: Request): Promise<Respons
       adapters: buildAdapterCards({
         sapCount: listSapPos().length,
         aribaCount: listAribaRfqs().length,
-        argus: live.health.argus,
-        gleif: live.health.gleif,
-        sanctions: live.health.sanctions,
-        opensanctions: live.health.opensanctions,
-        news: live.health.news,
+        prices: live.health.metals === "REFERENCE" && live.health.fx === "LIVE" ? "LIVE" : live.health.metals === "DOWN" ? "DOWN" : "REFERENCE",
+        gleif: asAdapter(live.health.gleif),
+        sanctions: asAdapter(live.health.sanctions),
+        opensanctions: asAdapter(live.health.opensanctions),
+        news: asAdapter(live.health.news),
         pbftSeq: pbftSeq(),
         pbftCommitted: last?.committed,
         circulorLots: listCirculorLots().length,
@@ -133,7 +135,7 @@ export async function handlePublicAdapterHttp(request: Request): Promise<Respons
         certificate: b.certificate.hash,
       })),
       vendor: {
-        note: "Siemens S/4HANA, Argus Metals, EcoVadis, Prewave, RapidRatings, Circulor, and Okta Workforce are not subscribed. Adapters above are live protocol implementations on this host.",
+        note: "Siemens S/4HANA, Argus Media, Fastmarkets, LME data, EcoVadis, Prewave, RapidRatings, Circulor, and Okta Workforce are not subscribed. Adapters above are live protocol implementations on this host.",
       },
       ecovadis: Object.values(live.ecovadis).slice(0, 8),
       prewave: Object.values(live.prewave).slice(0, 8),
@@ -143,15 +145,11 @@ export async function handlePublicAdapterHttp(request: Request): Promise<Respons
   if ((path === "/api/oracle" || path === "/api/oracle/tape") && method === "GET") {
     const live = await fetchLiveBundle();
     return Response.json({
-      argus: live.argus,
-      lme: {
-        copperUsdMt: live.lme.copperUsdMt,
-        aluminiumUsdMt: live.lme.aluminiumUsdMt,
-        source: live.lme.source,
-        ts: live.lme.ts,
-      },
+      metals: live.metals,
+      rareEarths: live.rareEarths,
       fx: live.fx,
       health: live.health,
+      note: "Reference averages from licensed public sources, with period and attribution. See /sources.",
     });
   }
 
@@ -166,13 +164,10 @@ export async function handlePublicAdapterHttp(request: Request): Promise<Respons
             const live = await fetchLiveBundle();
             const payload = JSON.stringify({
               t: Date.now(),
-              argus: live.argus,
-              lme: {
-                copperUsdMt: live.lme.copperUsdMt,
-                aluminiumUsdMt: live.lme.aluminiumUsdMt,
-                source: live.lme.source,
-              },
+              metals: live.metals,
+              rareEarths: live.rareEarths,
               fx: live.fx,
+              health: { metals: live.health.metals, rareEarths: live.health.rareEarths, fx: live.health.fx },
             });
             controller.enqueue(encoder.encode(`event: tick\ndata: ${payload}\n\n`));
           } catch {

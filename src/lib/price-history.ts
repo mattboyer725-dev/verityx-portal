@@ -20,11 +20,11 @@ export type Snapshot = {
 };
 
 export const DRIVER_LABEL: Record<Driver, string> = {
-  ndpr: "NdPr index (USD/kg)",
-  dy: "Dy index (USD/kg)",
-  cu: "LME copper cash (USD/t)",
-  al: "LME aluminium cash (USD/t)",
-  usdEur: "USD → EUR",
+  ndpr: "NdPr oxide, USGS annual avg (USD/kg)",
+  dy: "Dy oxide, USGS annual avg (USD/kg)",
+  cu: "Copper, World Bank monthly avg (USD/t)",
+  al: "Aluminium, World Bank monthly avg (USD/t)",
+  usdEur: "EUR/USD, ECB reference rate",
 };
 
 /** Which prices move each should-cost model. */
@@ -53,7 +53,8 @@ export function driverMove(series: Snapshot[], driver: Driver, opts: { windowDay
   const minAgeMs = (opts.minAgeHours ?? 24) * 3_600_000;
   const pts = series
     .filter((s) => typeof s[driver] === "number" && Number.isFinite(s[driver] as number) && (s[driver] as number) > 0)
-    .map((s) => ({ t: Date.parse(s.takenAt), v: s[driver] as number, at: s.takenAt }))
+    // FX is stored as USD→EUR for arithmetic; moves are reported on EUR/USD as the ECB publishes it.
+    .map((s) => ({ t: Date.parse(s.takenAt), v: driver === "usdEur" ? 1 / (s[driver] as number) : (s[driver] as number), at: s.takenAt }))
     .filter((p) => Number.isFinite(p.t))
     .sort((a, b) => a.t - b.t);
   if (pts.length < 2) return null;

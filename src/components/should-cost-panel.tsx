@@ -7,25 +7,14 @@ import {
   type Assumption,
   type LivePrices,
 } from "@/lib/should-cost";
+import { shouldCostPrices } from "@/lib/engine";
+import type { LiveBundle } from "@/lib/feeds";
 
-type Tape = {
-  health?: Record<string, string>;
-  argus?: { ndprUsdKg: number; dyUsdKg: number } | null;
-  lme?: { copperUsdMt: number } | null;
-  fx?: { usdEur: number } | null;
-  fetchedAt?: string;
-} | null;
+type Tape = Partial<LiveBundle> | null;
 
-/** Live prices only: a feed that is not LIVE contributes nothing, so the model says "standby". */
+/** Licensed reference prices with their basis; a source that is down contributes nothing, so the model says "standby". */
 export function livePricesFromTape(t: Tape): LivePrices {
-  const up = (k: string) => t?.health?.[k] === "LIVE";
-  return {
-    ndprOxideUsdKg: up("argus") ? t?.argus?.ndprUsdKg : undefined,
-    dyOxideUsdKg: up("argus") ? t?.argus?.dyUsdKg : undefined,
-    copperUsdT: up("lme") ? t?.lme?.copperUsdMt : undefined,
-    usdEur: up("fx") ? t?.fx?.usdEur : undefined,
-    asOf: t?.fetchedAt,
-  };
+  return shouldCostPrices((t ?? undefined) as LiveBundle | undefined);
 }
 
 const fmt = (n: number, cur: string) =>
@@ -79,7 +68,7 @@ export function ShouldCostPanel({
           <div className="v">
             {fmt(sc.perKg.low, sc.currency)} – {fmt(sc.perKg.high, sc.currency)}
           </div>
-          <div className="s">mid {fmt(sc.perKg.mid, sc.currency)} · from live prices{sc.asOf ? ` at ${sc.asOf.slice(11, 16)} UTC` : ""}</div>
+          <div className="s">mid {fmt(sc.perKg.mid, sc.currency)}{sc.indicative ? " · indicative" : ""}</div>
         </div>
       </div>
 
@@ -155,7 +144,9 @@ export function ShouldCostPanel({
         ) : null}
       </details>
 
-      <p className="sc-note">{sc.caveat}</p>
+      <p className="sc-note">
+        Prices used: {sc.basis.map((b) => b.label).join(" · ")}. {sc.caveat}
+      </p>
     </div>
   );
 }

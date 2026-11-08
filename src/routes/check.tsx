@@ -6,6 +6,7 @@ import { checkCustomQuote } from "@/lib/live-api";
 import { sealQuoteCheck } from "@/lib/verityx/api";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import type { QuoteAssessment } from "@/lib/quote-check";
+import { modelFor } from "@/lib/should-cost";
 
 export const Route = createFileRoute("/check")({
   head: () => ({ meta: [{ title: "Check a quote · VerityX" }] }),
@@ -55,7 +56,18 @@ function CheckPage() {
     currency: "EUR",
     poNumber: "",
     otherPrices: "",
+    benchSource: "",
+    benchNdpr: "",
+    benchDy: "",
+    benchCu: "",
   });
+  const model = modelFor(form.commodity === "Other" ? form.other : form.commodity);
+  const needs = {
+    ndpr: model === "ndfeb" || model === "ndpr-alloy",
+    dy: model === "ndfeb" || model === "dy-metal",
+    cu: model === "copper-ctc",
+  };
+  const num = (v: string) => (v.trim() ? Number(v.replace(/[, ]/g, "")) : undefined);
   const [busy, setBusy] = useState<"" | "check" | "seal">("");
   const [err, setErr] = useState("");
   const [result, setResult] = useState<QuoteAssessment | null>(null);
@@ -73,6 +85,16 @@ function CheckPage() {
       .map((x) => x.replace(/[^0-9.]/g, ""))
       .filter(Boolean)
       .map(Number),
+    ...(form.benchSource.trim() || form.benchNdpr || form.benchDy || form.benchCu
+      ? {
+          benchmark: {
+            source: form.benchSource,
+            ...(needs.ndpr ? { ndprOxideUsdKg: num(form.benchNdpr) } : {}),
+            ...(needs.dy ? { dyOxideUsdKg: num(form.benchDy) } : {}),
+            ...(needs.cu ? { copperUsdT: num(form.benchCu) } : {}),
+          },
+        }
+      : {}),
   });
 
   async function run() {
@@ -163,6 +185,36 @@ function CheckPage() {
           <Field label="Other prices for the same order (optional)" hint="Competing quotes or market prints, same currency, one per line.">
             <textarea className={`${inputCls} h-24 py-2`} value={form.otherPrices} onChange={set("otherPrices")} />
           </Field>
+          {model ? (
+            <fieldset className="grid gap-4 rounded-[10px] border border-line p-4">
+              <legend className="px-1 text-sm text-paper">Your licensed benchmark (optional, recommended)</legend>
+              <p className="text-xs leading-relaxed text-mute">
+                Without it, {needs.cu ? "copper uses the World Bank monthly average" : "rare earths use the USGS annual average, which is context only"}.
+                Enter today’s price from your own Argus, Fastmarkets or SMM subscription, or your contract price — you hold
+                that licence; VerityX only does the arithmetic and records the source you name.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {needs.ndpr ? (
+                  <Field label="NdPr oxide (USD/kg)">
+                    <input className={inputCls} inputMode="decimal" value={form.benchNdpr} onChange={set("benchNdpr")} />
+                  </Field>
+                ) : null}
+                {needs.dy ? (
+                  <Field label="Dy oxide (USD/kg)">
+                    <input className={inputCls} inputMode="decimal" value={form.benchDy} onChange={set("benchDy")} />
+                  </Field>
+                ) : null}
+                {needs.cu ? (
+                  <Field label="Copper (USD/t)">
+                    <input className={inputCls} inputMode="decimal" value={form.benchCu} onChange={set("benchCu")} />
+                  </Field>
+                ) : null}
+              </div>
+              <Field label="Benchmark source" hint="e.g. “Fastmarkets NdPr oxide CIF, 7 Nov 2026” or “Contract price, Q4”">
+                <input className={inputCls} maxLength={120} value={form.benchSource} onChange={set("benchSource")} />
+              </Field>
+            </fieldset>
+          ) : null}
           <Field label="PO number (optional)">
             <input className={inputCls} maxLength={40} value={form.poNumber} onChange={set("poNumber")} />
           </Field>
@@ -212,7 +264,12 @@ function CheckPage() {
                     {sc.perKg.low}–{sc.perKg.high} {sc.currency}/kg × {result.input.quantityKg.toLocaleString("en-GB")} kg · your quote{" "}
                     {money(result.input.quoteTotal, result.input.currency)}
                   </p>
-                  <p className="text-xs text-mute">{sc.caveat}</p>
+                  <p className="text-xs text-mute">
+                    Prices used: {sc.basis.map((b) => b.label).join(" · ")}. {sc.caveat}{" "}
+                    <a className="underline underline-offset-2" href="/sources">
+                      Sources
+                    </a>
+                  </p>
                 </div>
               ) : null}
               <div className="panel grid gap-2 p-6 text-sm">

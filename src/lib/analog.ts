@@ -50,10 +50,11 @@ export function analogSummary(id: string, body: unknown): string[] {
       first.po ? `PO ${first.po}` : "media-risk heat from RSS",
     ].filter(Boolean);
   }
-  if (id === "argus") {
-    const tick = (o.argus || o) as Record<string, unknown>;
-    if (tick.ndprUsdKg == null) return [];
-    return [`NdPr ${tick.ndprUsdKg} USD/kg`, `Dy ${tick.dyUsdKg} USD/kg`];
+  if (id === "prices") {
+    const m = (o.metals || {}) as Record<string, unknown>;
+    const r = (o.rareEarths || {}) as Record<string, unknown>;
+    if (m.copperUsdMt == null) return [];
+    return [`Cu ${m.copperUsdMt} USD/t · ${m.periodLabel}`, `NdPr ${r.ndprUsdKg} USD/kg · ${r.periodLabel}`];
   }
   return [];
 }

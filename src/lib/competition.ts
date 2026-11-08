@@ -11,7 +11,7 @@ export type CompetitorClass = {
   contrast: string;
   analog?: string;
   analogPath?: string;
-  adapterId?: "sap" | "argus" | "screen" | "circulor" | "pbft" | "okta" | "ecovadis" | "prewave";
+  adapterId?: "sap" | "prices" | "screen" | "circulor" | "pbft" | "okta" | "ecovadis" | "prewave";
 };
 
 export type CapabilityRow = {
@@ -28,8 +28,8 @@ export const VERITYX_WEDGE =
 
 export const HONEST_GAPS = [
   "Siemens S/4HANA and Ariba tenants are not connected. The desk runs a live OData-shaped store with CSRF, ETag, BAPI_PO_CHANGE, IDoc ORDERS05, and Ariba sourcing v2 RFQs on this host.",
-  "Argus Metals is not subscribed. NdPr and Dy are an index scaled from MP Materials, with Westmetall LME cash.",
-  "EcoVadis and Prewave APIs are paid. The analogs on this host are a 21-criteria scorecard from GLEIF + news and a media-risk heat from RSS on the same PO. RapidRatings stays listed-tape FHR, with opacity when the name is unlisted.",
+  "Argus, Fastmarkets and LME data are not subscribed. Copper and aluminium are World Bank monthly averages (CC BY 4.0); NdPr and Dy are USGS annual averages (public domain); FX is the ECB reference rate. A buyer adds their own licensed benchmark on a check.",
+  "EcoVadis and Prewave APIs are paid. The analogs on this host are a 21-criteria scorecard from GLEIF + news and a media-risk heat from RSS on the same PO. Financial health is VerityX's own disclosure heuristic, not a credit rating.",
   "Circulor and Minespider vendor tenants are not subscribed. Lots and batch passports are hashed ledgers on this host (EU DPP + GS1 Digital Link shape).",
   "The 27-voter PBFT cluster is in-process (quorum 19, two Byzantine). It is not 27 separate machines.",
   "Okta Workforce is not provisioned. The desk issues its own OIDC RS256 JWTs with JWKS.",
@@ -60,7 +60,7 @@ export const FIELD: CompetitorClass[] = [
     they: "EcoVadis sells questionnaire scorecards and medals on an annual cadence, scored by analysts against 21 criteria in four themes. Strong, paid, and off the purchase order.",
     we: "Every supplier on the magnetics tape gets VerityX’s own 21-criteria ESG scorecard in the same verify pass as price consensus and mineral custody. NACE 27 weights, published medal cutoffs, GLEIF + news evidence.",
     contrast:
-      "We do not have their questionnaire network or analyst desk. This is the public methodology scored from GLEIF, UN/OpenSanctions, news RSS, and listing tape — not an EcoVadis tenant, and not a fake medal.",
+      "We do not have their questionnaire network or analyst desk. This is the public methodology scored from GLEIF, the UN list and news RSS — not an EcoVadis tenant, and not a fake medal.",
     analog: "EcoVadis scorecard analog",
     analogPath: "/ecovadis/api/v2/scorecards",
     adapterId: "ecovadis",
@@ -103,10 +103,10 @@ export const FIELD: CompetitorClass[] = [
     names: "RapidRatings, Dun & Bradstreet",
     category: "Financial health",
     they: "RapidRatings scores private-company FHR from financials. D&B is the identity and PAYDEX backbone most S2P suites already license.",
-    we: "Listed names get a financial-health score from public market data. Unlisted names raise an opacity flag instead of a fake score.",
+    we: "A disclosure heuristic: listed suppliers publish audited financials; unlisted suppliers in low-disclosure jurisdictions raise an opacity flag. It is not a credit rating.",
     contrast:
       "We will not invent a private-company rating. Opacity is the honest signal. D&B is not a tenant here.",
-    analog: "RapidRatings FHR analog",
+    analog: "Disclosure heuristic",
     analogPath: "/api/adapters",
     adapterId: "screen",
   },
@@ -121,15 +121,15 @@ export const FIELD: CompetitorClass[] = [
   },
   {
     id: "oracles",
-    names: "Argus Metals, Fastmarkets, LME / Westmetall",
+    names: "Argus, Fastmarkets, LME",
     category: "Price oracles",
-    they: "Paid assessments and exchange cash/3M prints that procurement treats as the market. Argus is the REE desk standard.",
-    we: "LME cash from Westmetall, ECB FX, listed REE tape, and an NdPr/Dy index (scaled from MP Materials) over SSE on the same verify pass. MAD-filter poisoned prints before consensus.",
+    they: "Paid daily assessments and exchange cash/3M prices that procurement treats as the market. Argus and Fastmarkets are the rare-earth standards.",
+    we: "Licensed public reference averages — World Bank monthly copper and aluminium, USGS annual NdPr and Dy, ECB daily FX — each shown with its period and attribution, plus the buyer's own licensed benchmark on any check. MAD-filter poisoned prints before consensus.",
     contrast:
-      "Argus is not subscribed. NdPr/Dy are derived, labelled, and never sold as an Argus print. Westmetall LME cash is live.",
-    analog: "REE desk socket",
-    analogPath: "/api/oracle/stream",
-    adapterId: "argus",
+      "We do not resell or display paid price assessments. Reference averages are context; a rare-earth verdict needs the buyer's own licensed benchmark, which they enter on the check.",
+    analog: "Reference prices",
+    analogPath: "/api/oracle",
+    adapterId: "prices",
   },
   {
     id: "consensus",
@@ -217,7 +217,7 @@ export function deskTabForProve(prove?: string): DeskTab {
   switch (adapter) {
     case "sap":
       return "sap";
-    case "argus":
+    case "prices":
       return "mkt";
     case "screen":
     case "ecovadis":

@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { issueDeskToken } from "@/lib/oidc";
 import { sapPatchPo, seatFromOidc } from "@/lib/desk-adapters";
 import type { LiveBundle } from "@/lib/feeds";
+import { scaleByReference } from "@/lib/feeds";
 import { VxMark } from "@/components/vx-mark";
 import { Spark } from "@/components/spark";
 import { SiteNav } from "@/components/site-nav";
@@ -64,9 +65,14 @@ type LiveSnap = LiveBundle & {
   };
 };
 
-/** A figure is shown only when its own feed reports LIVE; a fallback constant is never presented as a print. */
+/**
+ * A figure is shown only when its own source reports LIVE (same-day, e.g. ECB
+ * FX) or REFERENCE (a dated, licensed average shown with its period). A
+ * fallback constant is never presented as a print.
+ */
 function feedLive(snap: { health?: Record<string, string> } | null | undefined, k: string) {
-  return snap?.health?.[k] === "LIVE";
+  const h = snap?.health?.[k];
+  return h === "LIVE" || h === "REFERENCE";
 }
 
 function asOfUtc(iso?: string) {
@@ -147,23 +153,31 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           </div>
           <h1>One provable version of the purchase order.</h1>
           <p className="lede">
-            Siemens Gamesa magnetics. LME cash and ECB FX from public feeds, an SAP OData analog tenant, UN and OpenSanctions
+            Siemens Gamesa magnetics. Licensed reference prices (World Bank, USGS) and ECB FX, an SAP OData analog tenant, GLEIF and UN
             screens, a lot custody ledger — each packet sealed by a 27-voter PBFT round and an HMAC-signed Local Core
             ledger.
           </p>
           <div className="gate-tape" aria-label="Market tape">
-            {feedLive(tape, "lme") && tape?.lme ? (
+            {feedLive(tape, "metals") && tape?.metals ? (
               <>
-                <span className="tape-chip">LME Cu {tape.lme.copperUsdMt.toFixed(0)} USD/mt</span>
-                <span className="tape-chip">LME Al {tape.lme.aluminiumUsdMt.toFixed(0)} USD/mt</span>
+                <span className="tape-chip" title={tape.metals.source}>
+                  Cu {tape.metals.copperUsdMt.toFixed(0)} USD/t · World Bank {tape.metals.periodLabel}
+                </span>
+                <span className="tape-chip" title={tape.metals.source}>
+                  Al {tape.metals.aluminiumUsdMt.toFixed(0)} USD/t
+                </span>
               </>
             ) : null}
-            {feedLive(tape, "argus") && tape?.argus ? (
-              <span className="tape-chip" title="NdPr index scaled from MP Materials (NYSE: MP). Not a price-agency assessment.">
-                NdPr {tape.argus.ndprUsdKg.toFixed(1)} USD/kg · MP-indexed
+            {feedLive(tape, "rareEarths") && tape?.rareEarths ? (
+              <span className="tape-chip" title={tape.rareEarths.source}>
+                NdPr oxide {tape.rareEarths.ndprUsdKg.toFixed(0)} USD/kg · USGS {tape.rareEarths.periodLabel}
               </span>
             ) : null}
-            {feedLive(tape, "fx") && tape?.fx ? <span className="tape-chip">USD/EUR {tape.fx.usdEur.toFixed(4)} · ECB</span> : null}
+            {feedLive(tape, "fx") && tape?.fx ? (
+              <span className="tape-chip" title={`${tape.fx.source} Reference rate ${tape.fx.date}.`}>
+                EUR/USD {tape.fx.eurUsd.toFixed(4)} · ECB {tape.fx.date}
+              </span>
+            ) : null}
             {tape?.core ? (
               <span className="tape-chip">
                 Core {tape.core.ok ? "HMAC ok" : "break"} · {tape.core.leaf_count} leaves
@@ -171,18 +185,21 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
             ) : null}
             {(() => {
               const down = [
-                !feedLive(tape, "lme") && "LME",
-                !feedLive(tape, "argus") && "NdPr",
+                !feedLive(tape, "metals") && "Cu/Al",
+                !feedLive(tape, "rareEarths") && "NdPr",
                 !feedLive(tape, "fx") && "ECB",
               ].filter(Boolean);
               return down.length ? <span className="tape-chip tape-chip-standby">{down.join(" · ")} standby</span> : null;
             })()}
-            {tape && (feedLive(tape, "lme") || feedLive(tape, "fx")) ? (
-              <span className="tape-chip tape-chip-live">Live · {asOfUtc(tape.fetchedAt)}</span>
+            {tape?.health?.fx === "LIVE" ? (
+              <span className="tape-chip tape-chip-live">FX live · {asOfUtc(tape.fetchedAt)}</span>
             ) : null}
+            <a className="tape-chip" href="/sources">
+              Sources &amp; licences
+            </a>
           </div>
         </div>
-        <p className="hint">SAP OData · Ariba · LME · REE socket · OpenSanctions · Lot custody · PBFT 27 · Local Core HMAC · OIDC</p>
+        <p className="hint">SAP OData · Ariba · World Bank · USGS · ECB · GLEIF · UN · Lot custody · PBFT 27 · Local Core HMAC · OIDC</p>
       </section>
       <section className="gate-right">
         <div className="login-card">
@@ -250,7 +267,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           <li>
             <span className="n">01</span>
             <strong>Ingest</strong>
-            <span>The PO and its RFQ from SAP OData and Ariba, priced against LME cash, the NdPr index and ECB FX.</span>
+            <span>The PO and its RFQ from SAP OData and Ariba, priced against licensed reference averages (World Bank, USGS), ECB FX, and your own benchmark when you add it.</span>
           </li>
           <li>
             <span className="n">02</span>
@@ -260,7 +277,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           <li>
             <span className="n">03</span>
             <strong>Screen</strong>
-            <span>Supplier checked against GLEIF, the UN consolidated list and OpenSanctions; lots traced on the custody ledger.</span>
+            <span>Supplier checked against GLEIF and the UN Security Council consolidated list; lots traced on the custody ledger.</span>
           </li>
           <li>
             <span className="n">04</span>
@@ -333,20 +350,8 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
   const previews = useMemo(
     () =>
       SCENARIOS.map((s) => {
-        const scaled = live
-          ? s.observations.map((v) => {
-              const q = live.quotes[s.oracleSymbol];
-              if (!q || !s.baselinePx) return v;
-              return Math.round(v * (q.price / s.baselinePx));
-            })
-          : s.observations;
-        const proposed = live
-          ? (() => {
-              const q = live.quotes[s.oracleSymbol];
-              if (!q || !s.baselinePx) return s.proposed;
-              return Math.round(s.proposed * (q.price / s.baselinePx));
-            })()
-          : s.proposed;
+        const scaled = s.observations.map((v) => scaleByReference(v, s.refSeries, s.refBaseline));
+        const proposed = scaleByReference(s.proposed, s.refSeries, s.refBaseline);
         const c = consensusAgent(scaled);
         const anomaly = c.market ? ((proposed - c.market) / c.market) * 100 : 0;
         const sapStatus = sapMap[s.po];
@@ -405,7 +410,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
       return;
     }
     setRunning(true);
-    setNote("INGEST · SAP OData + Ariba + LME cash…");
+    setNote("INGEST · SAP OData + Ariba + reference prices…");
     try {
       const result = await clientBudget(runLiveVerify({ data: { id } }), 12000);
       setPacket(result);
@@ -490,8 +495,8 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
   const sap = view?.sap;
   const ariba = view?.ariba;
   const cluster = view?.seal.cluster;
-  const cuHist = live?.lme?.copperHistory?.map((p) => p.cash).slice(0, 18).reverse() || [];
-  const ndprHist = live?.argus?.spark || [];
+  const cuHist = live?.metals?.copperHistory?.map((p) => p.value).slice(-18) || [];
+  const ndprHist = live?.rareEarths?.spark || [];
 
   return (
     <div className="vx-shell">
@@ -535,43 +540,33 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
       </header>
 
       <div className="ticker" aria-label="Live tape" data-tour="tape">
-        {feedLive(live, "lme") && live?.lme ? (
-          <span>
-            LME Cu cash <b>{live.lme.copperUsdMt.toFixed(0)}</b> USD/mt {chg(live.lme.copperChangePct)}
+        {feedLive(live, "metals") && live?.metals ? (
+          <span title={live.metals.source}>
+            Cu <b>{live.metals.copperUsdMt.toFixed(0)}</b> USD/t {chg(live.metals.copperChangePct)} · World Bank {live.metals.periodLabel}
           </span>
         ) : (
-          <span>LME cash standby</span>
+          <span>Cu/Al reference standby</span>
         )}
-        {feedLive(live, "lme") && live?.lme ? (
-          <span>
-            LME Al cash <b>{live.lme.aluminiumUsdMt.toFixed(0)}</b> USD/mt {chg(live.lme.aluminiumChangePct)}
+        {feedLive(live, "metals") && live?.metals ? (
+          <span title={live.metals.source}>
+            Al <b>{live.metals.aluminiumUsdMt.toFixed(0)}</b> USD/t {chg(live.metals.aluminiumChangePct)}
           </span>
         ) : null}
-        {feedLive(live, "lme") && live?.lme?.copper3mUsdMt ? (
-          <span>
-            Cu 3M <b>{live.lme.copper3mUsdMt.toFixed(0)}</b>
-          </span>
-        ) : null}
-        {feedLive(live, "argus") && live?.argus ? (
-          <span title="NdPr index scaled from MP Materials (NYSE: MP). Not a price-agency assessment.">
-            NdPr idx <b>{live.argus.ndprUsdKg.toFixed(1)}</b> USD/kg {chg(live.argus.ndprChangePct)}
+        {feedLive(live, "rareEarths") && live?.rareEarths ? (
+          <span title={`${live.rareEarths.source} Context only — enter your licensed benchmark on a check for a verdict.`}>
+            NdPr oxide <b>{live.rareEarths.ndprUsdKg.toFixed(0)}</b> USD/kg · USGS {live.rareEarths.periodLabel}
           </span>
         ) : (
-          <span>NdPr index standby</span>
+          <span>NdPr reference standby</span>
         )}
-        {feedLive(live, "argus") && live?.argus ? (
-          <span title="Dy index scaled from MP Materials (NYSE: MP). Not a price-agency assessment.">
-            Dy idx <b>{live.argus.dyUsdKg.toFixed(0)}</b> USD/kg
+        {feedLive(live, "rareEarths") && live?.rareEarths ? (
+          <span title={live.rareEarths.source}>
+            Dy oxide <b>{live.rareEarths.dyUsdKg.toFixed(0)}</b> USD/kg · USGS {live.rareEarths.periodLabel}
           </span>
         ) : null}
-        {feedLive(live, "fx") && live?.fx ? (
-          <span>
-            USD/EUR <b>{live.fx.usdEur.toFixed(4)}</b>
-          </span>
-        ) : null}
-        {live?.quotes["SIE.DE"] ? (
-          <span>
-            SIE.DE <b>{live.quotes["SIE.DE"].price.toFixed(2)}</b>
+        {live?.health?.fx === "LIVE" && live?.fx ? (
+          <span title={`${live.fx.source} Reference rate ${live.fx.date}.`}>
+            EUR/USD <b>{live.fx.eurUsd.toFixed(4)}</b> · ECB {live.fx.date}
           </span>
         ) : null}
         {live?.core ? (
@@ -792,7 +787,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
               [
                 ["pipe", "Pipeline"],
                 ["sap", "SAP / Ariba"],
-                ["mkt", "LME / NdPr index"],
+                ["mkt", "Prices"],
                 ["cost", "Should-cost"],
                 ["screen", "Screens"],
                 ["prov", "Custody"],
@@ -811,7 +806,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
               {(
                 [
                   ["01", "INGEST", view ? view.ingest.po : current.s.po],
-                  ["02", "ORACLE", view?.oracle.lme ? "LME cash" : `${current.s.observations.length} prints`],
+                  ["02", "ORACLE", view?.oracle.metals ? "Reference + ECB" : `${current.s.observations.length} prints`],
                   ["03", "CONSENSUS", view ? view.consensus.verdict : current.c.verdict],
                   ["04", "RISK", view ? view.risk.action : current.hold ? "HOLD_PO" : "RELEASE_PO"],
                   ["05", "PROVENANCE", `${tiers.length}-tier DPP`],
@@ -897,15 +892,15 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
               <PriceHistoryPanel />
               <div className="mkt-hero">
                 <div className="score-card">
-                  <div className="k">LME Cu cash</div>
-                  <div className="v">{feedLive(live, "lme") && live?.lme ? live.lme.copperUsdMt.toFixed(0) : "standby"}</div>
-                  <div className="s">{live?.lme?.settlementDate || "Westmetall"} · USD/mt</div>
+                  <div className="k">Copper · World Bank</div>
+                  <div className="v">{feedLive(live, "metals") && live?.metals ? live.metals.copperUsdMt.toFixed(0) : "standby"}</div>
+                  <div className="s">USD/t · {live?.metals?.periodLabel || "monthly avg"}</div>
                   <Spark values={cuHist} />
                 </div>
                 <div className="score-card">
-                  <div className="k">NdPr index</div>
-                  <div className="v">{feedLive(live, "argus") && live?.argus ? live.argus.ndprUsdKg.toFixed(1) : "standby"}</div>
-                  <div className="s">USD/kg · listed REE tape</div>
+                  <div className="k">NdPr oxide · USGS</div>
+                  <div className="v">{feedLive(live, "rareEarths") && live?.rareEarths ? live.rareEarths.ndprUsdKg.toFixed(0) : "standby"}</div>
+                  <div className="s">USD/kg · {live?.rareEarths?.periodLabel || "annual avg"} · context only</div>
                   <Spark values={ndprHist} />
                 </div>
               </div>
@@ -915,36 +910,31 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                   <span>{money(p.value)}</span>
                 </div>
               ))}
-              {feedLive(live, "lme") && live?.lme ? (
+              {feedLive(live, "metals") && live?.metals ? (
                 <>
                   <div className="screen-row">
-                    <span>LME Al cash</span>
-                    <span className="mono">{live.lme.aluminiumUsdMt.toFixed(0)} USD/mt</span>
+                    <span>Aluminium · World Bank</span>
+                    <span className="mono">{live.metals.aluminiumUsdMt.toFixed(0)} USD/t · {live.metals.periodLabel}</span>
                   </div>
                   <div className="screen-row">
-                    <span>Cu 3-month</span>
-                    <span className="mono">{live.lme.copper3mUsdMt.toFixed(0)}</span>
+                    <span>Dy oxide · USGS</span>
+                    <span className="mono">
+                      {live.rareEarths.dyUsdKg.toFixed(0)} USD/kg · {live.rareEarths.periodLabel}
+                    </span>
                   </div>
-                  {live.lme.fredCopperUsdMt ? (
-                    <div className="screen-row">
-                      <span>FRED PCOPPUSDM</span>
-                      <span className="mono">{live.lme.fredCopperUsdMt.toFixed(0)}</span>
-                    </div>
-                  ) : null}
-                  {live.lme.comexHgLb ? (
-                    <div className="screen-row">
-                      <span>COMEX HG</span>
-                      <span className="mono">{live.lme.comexHgLb.toFixed(3)} USD/lb</span>
-                    </div>
-                  ) : null}
                 </>
               ) : null}
-              {feedLive(live, "fx") && live?.fx ? (
+              {live?.health?.fx === "LIVE" && live?.fx ? (
                 <div className="screen-row">
-                  <span>ECB FX</span>
-                  <span className="mono">USD/EUR {live.fx.usdEur.toFixed(4)}</span>
+                  <span>ECB reference rate</span>
+                  <span className="mono">EUR/USD {live.fx.eurUsd.toFixed(4)} · {live.fx.date}</span>
                 </div>
               ) : null}
+              <p className="mkt-attrib">
+                {live?.metals?.source} {live?.rareEarths?.source} {live?.fx?.source} Averages, not spot quotes. Rare-earth
+                averages are context only — enter your own licensed benchmark on a check for a verdict.{" "}
+                <a href="/sources">Sources &amp; licences</a>
+              </p>
               <div className="vx-label">Feed bus</div>
               {(live?.traces || []).slice(0, 8).map((t) => (
                 <div className="trace-row" key={t.ts + t.url}>
@@ -1191,10 +1181,10 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
 
       <footer className="vx-status">
         <span>
-          LME <strong>{live?.health.lme || "…"}</strong>
+          Cu/Al <strong>{live?.health.metals || "…"}</strong>
         </span>
         <span>
-          NdPr idx <strong>{live?.health.argus || "…"}</strong>
+          NdPr/Dy <strong>{live?.health.rareEarths || "…"}</strong>
         </span>
         <span>
           SAP <strong>{live?.health.sap || "LIVE"}</strong>
@@ -1207,9 +1197,6 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
         </span>
         <span>
           FX <strong>{live?.health.fx || "…"}</strong>
-        </span>
-        <span>
-          OpenSanctions <strong>{live?.health.opensanctions || "…"}</strong>
         </span>
         <span>
           PBFT <strong>27 / quorum 19</strong>
@@ -1240,7 +1227,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                   sap: view.sap?.ReleaseStatus,
                   ariba: view.ariba?.eventId,
                   dpp: view.provenance.dppId,
-                  lme: view.oracle.lme,
+                  prices: { metals: view.oracle.metals, rareEarths: view.oracle.rareEarths, fx: view.oracle.fx },
                   ecovadis: view.screen.ecovadis,
                   prewave: view.screen.prewave,
                   rapid: view.screen.rapid,

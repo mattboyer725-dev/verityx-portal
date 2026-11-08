@@ -1,4 +1,5 @@
-export type AdapterHealth = "LIVE" | "STALE" | "DOWN";
+/** REFERENCE = a dated, licensed reference average (shown with its period), not a live feed. */
+export type AdapterHealth = "LIVE" | "REFERENCE" | "STALE" | "DOWN";
 
 export type AdapterCard = {
   id: string;
@@ -12,7 +13,7 @@ export type AdapterCard = {
 export function buildAdapterCards(input: {
   sapCount: number;
   aribaCount?: number;
-  argus: AdapterHealth;
+  prices: AdapterHealth;
   gleif: AdapterHealth;
   sanctions: AdapterHealth;
   opensanctions?: AdapterHealth;
@@ -45,12 +46,12 @@ export function buildAdapterCards(input: {
       detail: `${input.sapCount} purchase orders · ${aribaCount} Ariba RFQs. CSRF, ETag, HOLD/RELEASE, sourcing events. Hosted here — not Siemens S/4HANA / Ariba.`,
     },
     {
-      id: "argus",
-      name: "REE desk socket",
-      status: input.argus,
-      protocol: "SSE tick · NdPr / Dy from listed REE tape",
-      path: "/api/oracle/stream",
-      detail: "NdPr/Dy index scaled from MP Materials, plus Westmetall LME. Not a price-agency assessment.",
+      id: "prices",
+      name: "Reference prices",
+      status: input.prices,
+      protocol: "World Bank Pink Sheet (monthly) · USGS MCS (annual) · ECB FX (daily)",
+      path: "/api/oracle",
+      detail: "Licensed public reference averages with their period and attribution — not spot quotes, not a price-agency assessment. Buyers add their own licensed benchmark on a check.",
     },
     {
       id: "ecovadis",
@@ -59,7 +60,7 @@ export function buildAdapterCards(input: {
       protocol: "21-criteria · 4 themes · NACE 27 weights",
       path: "/ecovadis/api/v2/scorecards",
       detail:
-        "Public methodology-shaped medals from GLEIF identity, UN/OpenSanctions, news RSS, and listing tape. EcoVadis is not a tenant.",
+        "Public methodology-shaped medals from GLEIF identity, the UN list and news RSS. EcoVadis is not a tenant.",
     },
     {
       id: "prewave",
@@ -73,9 +74,9 @@ export function buildAdapterCards(input: {
       id: "screen",
       name: "SCREEN stack",
       status: screen,
-      protocol: "GLEIF · OpenSanctions · UN · RapidRatings FHR",
+      protocol: "GLEIF · UN consolidated list · disclosure heuristic",
       path: "/api/adapters",
-      detail: "Identity, sanctions, and listed-tape FHR. RapidRatings stays honest opacity when the name is unlisted.",
+      detail: "Identity, sanctions, and a disclosure heuristic (listed vs opaque). Not a credit rating.",
     },
     {
       id: "circulor",
@@ -106,11 +107,11 @@ export function buildAdapterCards(input: {
   ];
 }
 
-/** Honest first paint: hosted analogs LIVE, market-dependent SCREEN/Argus STALE until feeds land. */
+/** Honest first paint: hosted analogs LIVE, market-dependent SCREEN STALE until feeds land. */
 export function seedAdapterCards(): AdapterCard[] {
   return buildAdapterCards({
     sapCount: 8,
-    argus: "STALE",
+    prices: "REFERENCE",
     gleif: "STALE",
     sanctions: "STALE",
     opensanctions: "STALE",

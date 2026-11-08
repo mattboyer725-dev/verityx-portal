@@ -3,37 +3,9 @@ import { Link } from "@tanstack/react-router";
 import type { AdapterCard } from "@/lib/adapters";
 import { analogSummary, sapEntityPath } from "@/lib/analog";
 
-function fetchSseTick(url: string): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const es = new EventSource(url);
-    const t = setTimeout(() => {
-      es.close();
-      reject(new Error("stream timeout"));
-    }, 4000);
-    es.addEventListener("tick", (ev) => {
-      clearTimeout(t);
-      es.close();
-      try {
-        resolve(JSON.parse((ev as MessageEvent).data));
-      } catch {
-        resolve((ev as MessageEvent).data);
-      }
-    });
-    es.onerror = () => {
-      clearTimeout(t);
-      es.close();
-      reject(new Error("stream closed"));
-    };
-  });
-}
-
 export async function loadAnalog(card: AdapterCard): Promise<{ status: number; path: string; body: unknown }> {
   let path = card.path;
   if (card.id === "sap") path = sapEntityPath(path);
-  if (card.id === "argus") {
-    const body = await fetchSseTick(path);
-    return { status: 200, path, body };
-  }
   const res = await fetch(path, { headers: { Accept: "application/json" } });
   const text = await res.text();
   let body: unknown = text;

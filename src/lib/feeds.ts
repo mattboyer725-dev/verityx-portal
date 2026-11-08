@@ -1,6 +1,7 @@
 import { nameCore, pickGleif, type GleifRec } from "./name-match.ts";
 import { scoreEcovadis, type EcoVadisScore } from "./ecovadis.ts";
 import { scorePrewave, type PrewaveRisk } from "./prewave.ts";
+import { ECB_ATTRIBUTION, history, latest, REFERENCE, type RefKey, type RefPoint } from "./reference-prices.ts";
 
 export type { EcoVadisScore } from "./ecovadis.ts";
 export type { PrewaveRisk } from "./prewave.ts";
@@ -63,40 +64,40 @@ export type FeedTrace = {
   ts: string;
 };
 
-export type LmePrint = {
-  date: string;
-  cash: number;
-  m3: number;
-};
+export type FeedHealth = "LIVE" | "REFERENCE" | "STALE" | "DOWN";
 
 export type LiveBundle = {
-  quotes: Record<string, LiveQuote>;
-  lme: {
+  /** Monthly reference averages (World Bank Pink Sheet, CC BY 4.0). Not spot prices. */
+  metals: {
     copperUsdMt: number;
     aluminiumUsdMt: number;
-    copper3mUsdMt: number;
-    aluminium3mUsdMt: number;
     copperChangePct: number;
     aluminiumChangePct: number;
-    copperHistory: LmePrint[];
-    aluminiumHistory: LmePrint[];
-    fredCopperUsdMt: number | null;
-    fredAluminiumUsdMt: number | null;
-    comexHgLb: number | null;
+    period: string;
+    periodLabel: string;
+    copperHistory: RefPoint[];
+    aluminiumHistory: RefPoint[];
     source: string;
-    venue: string;
+    license: string;
+    url: string;
     ts: string;
-    settlementDate: string;
   };
-  argus: {
+  /** Annual reference averages (USGS Mineral Commodity Summaries, public domain). Context only. */
+  rareEarths: {
     ndprUsdKg: number;
     dyUsdKg: number;
     ndprChangePct: number;
+    period: string;
+    periodLabel: string;
+    estimated: boolean;
     spark: number[];
     source: string;
+    license: string;
+    url: string;
     ts: string;
   };
-  fx: { usdEur: number; source: string; ts: string };
+  /** ECB euro reference rate as published (EUR 1 = eurUsd USD); usdEur is derived for arithmetic. */
+  fx: { eurUsd: number; usdEur: number; date: string; source: string; ts: string };
   gleif: Record<string, GleifHit | null>;
   sanctions: { source: string; ts: string; scanned: number; hits: SanctionHit[] };
   opensanctions: { source: string; ts: string; scanned: number; hits: SanctionHit[] };
@@ -107,13 +108,11 @@ export type LiveBundle = {
   rapid: Record<string, RapidRating>;
   traces: FeedTrace[];
   fetchedAt: string;
-  health: Record<string, "LIVE" | "STALE" | "DOWN">;
+  health: Record<string, FeedHealth>;
 };
 
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-
-const QUOTE_SYMBOLS = ["HG=F", "ALI=F", "MP", "IFX.DE", "TKA.DE", "SIE.DE"] as const;
 
 export const SUPPLIER_PO: Record<string, string> = {
   "Nanjing RareTech Ltd.": "4500187742",
@@ -158,14 +157,11 @@ const LISTED: Record<string, string> = {
 };
 
 type Cache<T> = { at: number; value: T };
-let quoteCache: Cache<Record<string, LiveQuote>> | null = null;
 let fxCache: Cache<LiveBundle["fx"]> | null = null;
 let gleifCache: Cache<Record<string, GleifHit | null>> | null = null;
 let sanctionCache: Cache<{ source: string; ts: string; scanned: number; blob: string }> | null = null;
 let tedCache: Cache<TedNotice[]> | null = null;
 let newsCache: Cache<NewsHit[]> | null = null;
-let fredCache: Cache<{ copper: number; aluminium: number | null; ts: string }> | null = null;
-let lmeCache: Cache<{ cu: LmePrint[]; al: LmePrint[] }> | null = null;
 let bundleCache: Cache<LiveBundle> | null = null;
 const TRACES: FeedTrace[] = [];
 
@@ -227,128 +223,26 @@ function parseNum(raw: string) {
   return Number.isFinite(n) ? n : NaN;
 }
 
-export async function yahooQuote(symbol: string): Promise<LiveQuote | null> {
+/**
+ * ECB euro foreign exchange reference rate, straight from the ECB.
+ * Reuse condition: credit "Source: ECB statistics." and do not modify the
+ * figure, so the published EUR/USD is kept as is; USD→EUR is derived only
+ * for arithmetic. No fallback number: on failure the last good rate is
+ * reused and marked STALE, or there is none.
+ */
+async function fetchFx(): Promise<LiveBundle["fx"] | null> {
+  if (age(fxCache, 30 * 60_000) && fxCache) return fxCache.value;
+  const url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1mo`;
-    const data = await getJson(url);
-    const result = data?.chart?.result?.[0];
-    const meta = result?.meta;
-    if (!meta?.regularMarketPrice) return null;
-    const closes: number[] = (result?.indicators?.quote?.[0]?.close || []).filter(
-      (n: unknown) => typeof n === "number" && Number.isFinite(n),
-    );
-    const price = Number(meta.regularMarketPrice);
-    const prev = Number(meta.chartPreviousClose || closes[closes.length - 2] || price);
-    const changePct = prev ? ((price - prev) / prev) * 100 : Number(meta.regularMarketChangePercent || 0);
-    const venue =
-      symbol === "HG=F" || symbol === "ALI=F" ? "COMEX" : String(meta.fullExchangeName || meta.exchangeName || "");
-    return {
-      symbol,
-      name: String(meta.shortName || symbol),
-      price,
-      currency: String(meta.currency || "USD"),
-      changePct,
-      ts: new Date((meta.regularMarketTime || Date.now() / 1000) * 1000).toISOString(),
-      source: venue === "COMEX" ? "COMEX live tape" : `${venue} live tape`,
-      venue,
-      unit: symbol === "HG=F" ? "USD/lb" : symbol === "ALI=F" ? "USD/mt" : String(meta.currency || "USD"),
-      spark: closes.slice(-22),
-    };
+    const xml = await getText(url, 3500);
+    const date = /time=['"](\d{4}-\d{2}-\d{2})['"]/.exec(xml)?.[1] ?? "";
+    const rate = Number(/currency=['"]USD['"]\s+rate=['"]([0-9.]+)['"]/.exec(xml)?.[1]);
+    if (!(rate > 0) || !date) throw new Error("ECB USD rate not found");
+    const fx = { eurUsd: rate, usdEur: 1 / rate, date, source: ECB_ATTRIBUTION, ts: new Date().toISOString() };
+    fxCache = { at: Date.now(), value: fx };
+    return fx;
   } catch {
-    return null;
-  }
-}
-
-async function fetchQuotes(): Promise<Record<string, LiveQuote>> {
-  if (age(quoteCache, 45_000) && quoteCache) return quoteCache.value;
-  const entries = await Promise.all(QUOTE_SYMBOLS.map(async (s) => [s, await yahooQuote(s)] as const));
-  const quotes: Record<string, LiveQuote> = {};
-  for (const [s, q] of entries) if (q) quotes[s] = q;
-  if (Object.keys(quotes).length) quoteCache = { at: Date.now(), value: quotes };
-  return quotes;
-}
-
-async function fetchFx(): Promise<LiveBundle["fx"]> {
-  if (age(fxCache, 120_000) && fxCache) return fxCache.value;
-  const endpoints = [
-    "https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR",
-    "https://api.frankfurter.app/latest?from=USD&to=EUR",
-    "https://open.er-api.com/v6/latest/USD",
-  ];
-  for (const url of endpoints) {
-    try {
-      const data = await getJson(url);
-      const usdEur = Number(data?.rates?.EUR);
-      if (!usdEur) continue;
-      const fx = {
-        usdEur,
-        source: url.includes("frankfurter") ? "ECB via Frankfurter" : "open.er-api.com",
-        ts: String(data.date || data.time_last_update_utc || new Date().toISOString()),
-      };
-      fxCache = { at: Date.now(), value: fx };
-      return fx;
-    } catch {
-      /* next */
-    }
-  }
-  return fxCache?.value || { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() };
-}
-
-async function fetchFred(): Promise<{ copper: number; aluminium: number | null; ts: string } | null> {
-  if (age(fredCache, 6 * 3600_000) && fredCache) return fredCache.value;
-  async function last(id: string) {
-    const csv = await getText(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`, 3500);
-    const lines = csv.trim().split("\n").filter((l) => l && !l.startsWith("observation"));
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const [date, val] = lines[i].split(",");
-      const n = Number(val);
-      if (Number.isFinite(n) && n > 0) return { n, date };
-    }
-    return null;
-  }
-  try {
-    const [cu, al] = await Promise.all([last("PCOPPUSDM"), last("PALUMUSDM")]);
-    if (!cu) return fredCache?.value || null;
-    const value = { copper: cu.n, aluminium: al?.n ?? null, ts: cu.date };
-    fredCache = { at: Date.now(), value };
-    return value;
-  } catch {
-    return fredCache?.value || null;
-  }
-}
-
-function parseWestmetall(html: string): LmePrint[] {
-  const rows: LmePrint[] = [];
-  const re = /<tr>\s*<td[^>]*>([^<]+)<\/td>\s*<td[^>]*>([0-9,.&nbsp;]+)<\/td>\s*<td[^>]*>([0-9,.&nbsp;]+)<\/td>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(html))) {
-    const cash = parseNum(m[2]);
-    const m3 = parseNum(m[3]);
-    if (Number.isFinite(cash) && cash > 100) {
-      rows.push({ date: m[1].replace(/&nbsp;/gi, " ").trim(), cash, m3 });
-    }
-  }
-  return rows;
-}
-
-async function fetchWestmetall(field: "LME_Cu_cash" | "LME_Al_cash"): Promise<LmePrint[]> {
-  const url = `https://www.westmetall.com/en/markdaten.php?action=table&field=${field}`;
-  const html = await getText(url, 4000);
-  const rows = parseWestmetall(html);
-  pushTrace("lme", url, 200, 0, `${field} ${rows[0]?.cash ?? "empty"}`);
-  return rows;
-}
-
-async function fetchLme(): Promise<{ cu: LmePrint[]; al: LmePrint[] } | null> {
-  if (age(lmeCache, 10 * 60_000) && lmeCache) return lmeCache.value;
-  try {
-    const [cu, al] = await Promise.all([fetchWestmetall("LME_Cu_cash"), fetchWestmetall("LME_Al_cash")]);
-    if (!cu.length) throw new Error("no cu");
-    const value = { cu, al };
-    lmeCache = { at: Date.now(), value };
-    return value;
-  } catch {
-    return lmeCache?.value || null;
+    return fxCache?.value ?? null;
   }
 }
 
@@ -527,37 +421,23 @@ async function fetchNews(): Promise<NewsHit[]> {
   }
 }
 
-function scoreRapid(supplier: string, quotes: Record<string, LiveQuote>): RapidRating {
-  const symbol = LISTED[supplier];
-  const q = symbol ? quotes[symbol] : undefined;
-  if (!q) {
-    return {
-      supplier,
-      fhr: /China|Nanjing|Baotou|Northern/i.test(supplier) ? 38 : 55,
-      outlook: /China|Nanjing|Baotou|Northern/i.test(supplier) ? "Opaque" : "Stable",
-      listed: false,
-      source: "RapidRatings FHR · unlisted opacity",
-    };
-  }
-  const vol = Math.abs(q.changePct);
-  let fhr = 72 - vol * 4;
-  if (q.changePct < -4) fhr -= 8;
-  if (q.changePct > 3) fhr += 4;
-  fhr = Math.max(20, Math.min(95, Math.round(fhr)));
-  const outlook: RapidRating["outlook"] = fhr >= 70 ? "Positive" : fhr >= 50 ? "Stable" : "Negative";
+function scoreRapid(supplier: string): RapidRating {
+  // VerityX's own opacity heuristic — not a credit rating and not RapidRatings.
+  // Listed companies publish audited financials; unlisted suppliers in
+  // jurisdictions with limited disclosure score as opaque.
+  const listed = !!LISTED[supplier];
+  const opaque = !listed && /China|Nanjing|Baotou|Northern/i.test(supplier);
+  const fhr = listed ? 62 : opaque ? 38 : 55;
   return {
     supplier,
     fhr,
-    outlook,
-    listed: true,
-    symbol,
-    source: `RapidRatings FHR · ${q.symbol} live`,
+    outlook: opaque ? "Opaque" : "Stable",
+    listed,
+    ...(listed ? { symbol: LISTED[supplier] } : {}),
+    source: listed
+      ? "VerityX disclosure heuristic · listed, audited filings public · not a credit rating"
+      : "VerityX disclosure heuristic · unlisted · not a credit rating",
   };
-}
-
-function pctFrom(history: LmePrint[]) {
-  if (history.length < 2 || !history[1].cash) return 0;
-  return ((history[0].cash - history[1].cash) / history[1].cash) * 100;
 }
 
 function emptyOpenSanctions(): LiveBundle["opensanctions"] {
@@ -569,29 +449,55 @@ function emptyOpenSanctions(): LiveBundle["opensanctions"] {
   };
 }
 
+const FX_NONE: LiveBundle["fx"] = { eurUsd: 0, usdEur: 0, date: "", source: ECB_ATTRIBUTION, ts: "" };
+
+function referenceBlocks(): Pick<LiveBundle, "metals" | "rareEarths"> {
+  const cu = latest("copper");
+  const al = latest("aluminium");
+  const nd = latest("ndprOxide");
+  const dy = latest("dyOxide");
+  const generated = REFERENCE.generatedAt;
+  return {
+    metals: {
+      copperUsdMt: cu?.value ?? 0,
+      aluminiumUsdMt: al?.value ?? 0,
+      copperChangePct: cu?.changePct ?? 0,
+      aluminiumChangePct: al?.changePct ?? 0,
+      period: cu?.period ?? "",
+      periodLabel: cu?.periodLabel ?? "",
+      copperHistory: history("copper"),
+      aluminiumHistory: history("aluminium"),
+      source: cu?.source.attribution ?? "",
+      license: cu?.source.license ?? "",
+      url: cu?.source.url ?? "",
+      ts: generated,
+    },
+    rareEarths: {
+      ndprUsdKg: nd?.value ?? 0,
+      dyUsdKg: dy?.value ?? 0,
+      ndprChangePct: nd?.changePct ?? 0,
+      period: nd?.period ?? "",
+      periodLabel: nd?.periodLabel ?? "",
+      estimated: !!nd?.estimated,
+      spark: history("ndprOxide").map((p) => p.value),
+      source: nd?.source.attribution ?? "",
+      license: nd?.source.license ?? "",
+      url: nd?.source.url ?? "",
+      ts: generated,
+    },
+  };
+}
+
 function assembleBundle(
-  quotes: Record<string, LiveQuote>,
-  fx: LiveBundle["fx"],
-  lme: { cu: LmePrint[]; al: LmePrint[] } | null,
+  fx: LiveBundle["fx"] | null,
+  fxFresh: boolean,
   gleif: Record<string, GleifHit | null>,
   sanctions: LiveBundle["sanctions"],
   ted: TedNotice[],
   news: NewsHit[],
-  fred: { copper: number; aluminium: number | null; ts: string } | null,
   opensanctions: LiveBundle["opensanctions"] = emptyOpenSanctions(),
 ): LiveBundle {
-  const hg = quotes["HG=F"];
-  const alq = quotes["ALI=F"];
-  const mp = quotes["MP"];
-  const cuHist = lme?.cu?.slice(0, 24) || [];
-  const alHist = lme?.al?.slice(0, 24) || [];
-  const copperUsdMt = cuHist[0]?.cash || (hg ? hg.price * 2204.62262 : 14359);
-  const aluminiumUsdMt = alHist[0]?.cash || (alq ? alq.price : 2625);
-  const copper3m = cuHist[0]?.m3 || copperUsdMt;
-  const aluminium3m = alHist[0]?.m3 || aluminiumUsdMt;
-  const ndprUsdKg = mp ? 58 * (mp.price / 54.53) : 58;
-  const dyUsdKg = mp ? 312 * (mp.price / 54.53) : 312;
-  const ndprSpark = (mp?.spark || []).map((p) => 58 * (p / 54.53));
+  const ref = referenceBlocks();
   const suppliers = Object.keys(SUPPLIER_GLEIF);
   const ecovadis: Record<string, EcoVadisScore> = {};
   const prewave: Record<string, PrewaveRisk> = {};
@@ -604,19 +510,17 @@ function assembleBundle(
       opensanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched);
     ecovadis[s] = scoreEcovadis({ supplier: s, gleif: g, sanctionsHit: hit, listed: !!LISTED[s], news });
     prewave[s] = scorePrewave({ supplier: s, news, sanctionsHit: hit });
-    rapid[s] = scoreRapid(s, quotes);
+    rapid[s] = scoreRapid(s);
   }
-  const lmeLive = cuHist.length > 0;
   const health: LiveBundle["health"] = {
-    lme: lmeLive ? "LIVE" : hg ? "STALE" : "STALE",
-    argus: mp ? "LIVE" : "STALE",
-    yahoo: Object.keys(quotes).length >= 3 ? "LIVE" : Object.keys(quotes).length ? "STALE" : "DOWN",
-    fx: fx.source.includes("stale") ? "STALE" : "LIVE",
+    // Bundled, dated reference averages: shown with their period, never called live.
+    metals: ref.metals.copperUsdMt > 0 ? "REFERENCE" : "DOWN",
+    rareEarths: ref.rareEarths.ndprUsdKg > 0 ? "REFERENCE" : "DOWN",
+    fx: fx ? (fxFresh ? "LIVE" : "STALE") : "DOWN",
     gleif: Object.values(gleif).some(Boolean) ? "LIVE" : "STALE",
     sanctions: sanctions.scanned > 1000 ? "LIVE" : "STALE",
     ted: ted.length ? "LIVE" : "STALE",
     news: news.length ? "LIVE" : "STALE",
-    fred: fred ? "LIVE" : "STALE",
     sap: "LIVE",
     ariba: "LIVE",
     pbft: "LIVE",
@@ -626,37 +530,8 @@ function assembleBundle(
     prewave: news.length ? "LIVE" : "STALE",
   };
   return {
-    quotes,
-    lme: {
-      copperUsdMt: Number(copperUsdMt.toFixed(2)),
-      aluminiumUsdMt: Number(aluminiumUsdMt.toFixed(2)),
-      copper3mUsdMt: Number(copper3m.toFixed(2)),
-      aluminium3mUsdMt: Number(aluminium3m.toFixed(2)),
-      copperChangePct: cuHist.length >= 2 ? pctFrom(cuHist) : hg?.changePct || 0,
-      aluminiumChangePct: alHist.length >= 2 ? pctFrom(alHist) : alq?.changePct || 0,
-      copperHistory: cuHist,
-      aluminiumHistory: alHist,
-      fredCopperUsdMt: fred?.copper ?? null,
-      fredAluminiumUsdMt: fred?.aluminium ?? null,
-      comexHgLb: hg?.price ?? null,
-      source: lmeLive
-        ? "LME cash settlement · Westmetall official prints"
-        : hg
-          ? "LME cash equivalent · COMEX HG=F / ALI=F"
-          : "LME last official print (feed timeout)",
-      venue: lmeLive ? "LME" : hg ? "COMEX" : "LME",
-      ts: new Date().toISOString(),
-      settlementDate: cuHist[0]?.date || "",
-    },
-    argus: {
-      ndprUsdKg: Number(ndprUsdKg.toFixed(2)),
-      dyUsdKg: Number(dyUsdKg.toFixed(2)),
-      ndprChangePct: mp?.changePct || 0,
-      spark: ndprSpark.slice(-22),
-      source: mp ? "Argus REE desk · NdPr / Dy oxide from listed REE tape (MP)" : "Argus REE last print (feed timeout)",
-      ts: mp?.ts || new Date().toISOString(),
-    },
-    fx,
+    ...ref,
+    fx: fx ?? FX_NONE,
     gleif,
     sanctions,
     opensanctions,
@@ -674,31 +549,21 @@ function assembleBundle(
 export function fallbackBundle(): LiveBundle {
   const emptyHits = SCREEN_NAMES.map((name) => ({ name, list: "UN", matched: false }));
   return assembleBundle(
-    {},
-    { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() },
-    null,
+    fxCache?.value ?? null,
+    false,
     {},
     { source: "UN Security Council Consolidated List", ts: new Date().toISOString(), scanned: 0, hits: emptyHits },
     [],
     [],
-    null,
   );
 }
 
 export async function fetchLiveBundle(force = false): Promise<LiveBundle> {
   if (!force && age(bundleCache, 40_000) && bundleCache) return bundleCache.value;
 
-  const [quotesSettled, fxSettled, lmeSettled] = await Promise.allSettled([
-    timed(fetchQuotes(), 4000),
-    timed(fetchFx(), 3000),
-    timed(fetchLme(), 4000),
-  ]);
-  const quotes = quotesSettled.status === "fulfilled" ? quotesSettled.value : quoteCache?.value || {};
-  const fx =
-    fxSettled.status === "fulfilled"
-      ? fxSettled.value
-      : fxCache?.value || { usdEur: 0.86, source: "stale fallback", ts: new Date().toISOString() };
-  const lme = lmeSettled.status === "fulfilled" ? lmeSettled.value : lmeCache?.value || null;
+  const fxSettled = await Promise.allSettled([timed(fetchFx(), 3500)]);
+  const fx = fxSettled[0].status === "fulfilled" ? fxSettled[0].value : (fxCache?.value ?? null);
+  const fxFresh = !!fx && !!fxCache && age(fxCache, 30 * 60_000) && fxSettled[0].status === "fulfilled";
 
   const emptyGleif: Record<string, GleifHit | null> = {};
   let gleif = emptyGleif;
@@ -710,43 +575,44 @@ export async function fetchLiveBundle(force = false): Promise<LiveBundle> {
   };
   let ted: TedNotice[] = [];
   let news: NewsHit[] = [];
-  let fred: { copper: number; aluminium: number | null; ts: string } | null = null;
 
-  const slow = Promise.allSettled([fetchGleif(), screenSanctions(), fetchTed(), fetchNews(), fetchFred()]);
+  const slow = Promise.allSettled([fetchGleif(), screenSanctions(), fetchTed(), fetchNews()]);
   const raced = await Promise.race([
     slow,
     new Promise<null>((resolve) => setTimeout(() => resolve(null), 1800)),
   ]);
   if (raced) {
-    const [g, s, t, n, f] = raced;
+    const [g, s, t, n] = raced;
     if (g.status === "fulfilled") gleif = g.value;
     if (s.status === "fulfilled") sanctions = s.value;
     if (t.status === "fulfilled") ted = t.value;
     if (n.status === "fulfilled") news = n.value;
-    if (f.status === "fulfilled") fred = f.value;
   } else {
     void slow.then((racedLater) => {
-      const [g, s, t, n, f] = racedLater;
+      const [g, s, t, n] = racedLater;
       if (!bundleCache) return;
       const next = { ...bundleCache.value };
       if (g.status === "fulfilled") next.gleif = g.value;
       if (s.status === "fulfilled") next.sanctions = s.value;
       if (t.status === "fulfilled") next.ted = t.value;
       if (n.status === "fulfilled") next.news = n.value;
-      if (f.status === "fulfilled" && f.value) {
-        next.lme = { ...next.lme, fredCopperUsdMt: f.value.copper, fredAluminiumUsdMt: f.value.aluminium };
-      }
       bundleCache = { at: Date.now(), value: next };
     });
   }
 
-  const bundle = assembleBundle(quotes, fx, lme, gleif, sanctions, ted, news, fred);
+  const bundle = assembleBundle(fx, fxFresh, gleif, sanctions, ted, news);
   bundleCache = { at: Date.now(), value: bundle };
   return bundle;
 }
 
-export function scaleByLive(base: number, symbol: string, baselinePx: number, quotes: Record<string, LiveQuote>) {
-  const q = quotes[symbol];
-  if (!q || !baselinePx) return Math.round(base);
-  return Math.round(base * (q.price / baselinePx));
+/**
+ * Scale a sample price by how far a reference series has moved since the
+ * sample was written. Only for series with a licensed reference; anything
+ * else is returned unchanged (and labelled a sample by the caller).
+ */
+export function scaleByReference(base: number, key: RefKey | undefined, baseline: number | undefined) {
+  if (!key || !baseline) return Math.round(base);
+  const now = latest(key)?.value;
+  if (!now) return Math.round(base);
+  return Math.round(base * (now / baseline));
 }

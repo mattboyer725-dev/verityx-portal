@@ -89,7 +89,7 @@ export function evidenceFromPacket(packet: DeskPacketSlice): EvidenceItem[] {
     item(
       "financial_signal",
       `Consensus ${packet.consensus.verdict} · anomaly ${packet.risk.anomalyPct.toFixed(1)}%`,
-      "LME / REE socket + MAD consensus",
+      "Reference prices (World Bank, USGS, ECB) + MAD consensus",
       `Market ${Math.round(packet.consensus.market)} vs proposed ${s.proposed} ${s.currency}. Risk action ${packet.risk.action}. ${packet.message}`,
       "medium",
       "/api/oracle",
@@ -110,11 +110,11 @@ export function evidenceFromPacket(packet: DeskPacketSlice): EvidenceItem[] {
       item(
         "sanctions_screening",
         `Screen hit · ${s.supplier}`,
-        packet.screen.sanctions.source || "OpenSanctions + UN",
+        packet.screen.sanctions.source || "UN Security Council Consolidated List",
         packet.screen.alerts.find((a) => a.type === "SANCTIONS")?.text ||
           "Named match on a published screening list. Advisory; BLOCK still needs human approval.",
         "high",
-        "https://www.opensanctions.org/",
+        "https://main.un.org/securitycouncil/en/content/un-sc-consolidated-list",
       ),
     );
   }

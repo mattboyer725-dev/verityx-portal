@@ -1324,3 +1324,14 @@
   border: 1px solid color-mix(in oklab, var(--color-amber) 50%, transparent);
   background: color-mix(in oklab, var(--color-amber) 10%, transparent);
 }
+
+.mkt-attrib {
+  margin-top: 0.9rem;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--vx-mute, #6b6660);
+}
+.mkt-attrib a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

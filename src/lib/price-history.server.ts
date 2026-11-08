@@ -3,26 +3,26 @@ import type { LiveBundle } from "@/lib/feeds";
 import { newId } from "@/lib/verityx/format";
 import { driftReport, snapshotDue, type OpenOrder, type Snapshot } from "@/lib/price-history";
 
-const live = (b: LiveBundle, k: string) => b.health?.[k] === "LIVE";
+const shown = (b: LiveBundle, k: string) => b.health?.[k] === "LIVE" || b.health?.[k] === "REFERENCE";
 
-/** Write one snapshot of LIVE prices if the last one is 15+ minutes old. Never throws. */
+/** Write one snapshot of licensed prices (reference averages + same-day ECB FX) if the last is 15+ minutes old. Never throws. */
 export async function recordSnapshotIfDue(b: LiveBundle): Promise<boolean> {
   try {
     const row = {
-      ndpr: live(b, "argus") ? b.argus?.ndprUsdKg ?? null : null,
-      dy: live(b, "argus") ? b.argus?.dyUsdKg ?? null : null,
-      cu: live(b, "lme") ? b.lme?.copperUsdMt ?? null : null,
-      al: live(b, "lme") ? b.lme?.aluminiumUsdMt ?? null : null,
-      usdEur: live(b, "fx") ? b.fx?.usdEur ?? null : null,
+      ndpr: shown(b, "rareEarths") ? b.rareEarths?.ndprUsdKg || null : null,
+      dy: shown(b, "rareEarths") ? b.rareEarths?.dyUsdKg || null : null,
+      cu: shown(b, "metals") ? b.metals?.copperUsdMt || null : null,
+      al: shown(b, "metals") ? b.metals?.aluminiumUsdMt || null : null,
+      usdEur: b.health?.fx === "LIVE" ? b.fx?.usdEur || null : null,
     };
     if (Object.values(row).every((v) => v == null)) return false; // nothing live: store nothing
     const sql = await getSql();
     const last = await sql<{ t: string | null }>`select max(taken_at)::text as t from price_snapshots`;
     if (!snapshotDue(last[0]?.t ? new Date(last[0].t).toISOString() : null, new Date())) return false;
     const sources = [
-      row.ndpr != null ? "NdPr/Dy index (MP-scaled)" : null,
-      row.cu != null ? b.lme?.source : null,
-      row.usdEur != null ? b.fx?.source : null,
+      row.ndpr != null ? `USGS MCS ${b.rareEarths.periodLabel}` : null,
+      row.cu != null ? `World Bank Pink Sheet ${b.metals.periodLabel}` : null,
+      row.usdEur != null ? `ECB ${b.fx.date}` : null,
     ]
       .filter(Boolean)
       .join(" · ")

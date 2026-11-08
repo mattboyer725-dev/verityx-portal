@@ -49,12 +49,16 @@ export function PriceHistoryPanel() {
     <div className="ph-panel">
       <div className="vx-label">Price history · 30 days</div>
       <p className="sc-note">
-        {report.snapshots} live snapshot{report.snapshots === 1 ? "" : "s"} from {day(report.historyFrom)} to {day(report.historyTo)}. Feeds on
-        standby leave gaps; nothing is filled in.
+        {report.snapshots} snapshot{report.snapshots === 1 ? "" : "s"} from {day(report.historyFrom)} to {day(report.historyTo)} of the prices in
+        use — reference averages and the ECB rate. Sources on standby leave gaps; nothing is filled in.
       </p>
       <div className="ph-grid">
         {drivers.map((d) => {
-          const vals = series.map((s) => s[d]).filter((v): v is number => typeof v === "number");
+          // FX is stored as USD→EUR for arithmetic but shown as the ECB publishes it: EUR/USD.
+          const vals = series
+            .map((s) => s[d])
+            .filter((v): v is number => typeof v === "number" && v > 0)
+            .map((v) => (d === "usdEur" ? 1 / v : v));
           const move = report.moves.find((m) => m.driver === d);
           return (
             <div className="score-card" key={d}>

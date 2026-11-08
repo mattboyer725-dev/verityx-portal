@@ -34,14 +34,14 @@ const TOOLS = [
     to: "/desk",
     kicker: "Should-cost",
     title: "What it should cost",
-    body: "Material × live price ÷ yield, plus conversion, loss and margin, shown as a low / mid / high band. Figures only when the feed is LIVE.",
+    body: "Material × price ÷ yield, plus conversion, loss and margin, as a low / mid / high band. Licensed reference prices, or your own benchmark.",
     cta: "Open should-cost",
   },
   {
     to: "/desk",
     kicker: "Price history",
     title: "Know when prices move",
-    body: "Daily snapshots over 30 days. Any move past 10% against the 24-hour baseline raises a drift alert above the PO list.",
+    body: "Dated snapshots of every price used. A move past 10% raises a drift alert above the PO list, with the source of each figure.",
     cta: "See price drift",
   },
 ] as const;
@@ -119,7 +119,7 @@ function Home() {
             <p className="text-[11px] uppercase tracking-[0.18em] text-mute">02 · Live desk</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Magnetics</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              One click as {BUYER.name}. SAP OData analog tenant, MAD consensus, lot custody, GLEIF / OpenSanctions / UN
+              One click as {BUYER.name}. SAP OData analog tenant, MAD consensus, lot custody, GLEIF / UN
               screens, a 27-voter PBFT round, exportable packet.
             </p>
           </div>
@@ -210,7 +210,7 @@ function Home() {
           <AdapterStrip adapters={adapters} />
         </div>
         <p className="mt-5 max-w-3xl text-xs leading-relaxed text-mute">
-          VerityX is independent and not affiliated with SAP, Argus, EcoVadis, Prewave, RapidRatings, Circulor,
+          VerityX is independent and not affiliated with SAP, Argus Media, Fastmarkets, the LME, EcoVadis, Prewave, RapidRatings, Circulor,
           Minespider or Okta, and subscribes to none of them. The adapters above are VerityX’s own implementations —
           OData with CSRF/ETag, sourcing RFQs, an SSE rare-earth index socket, a 21-criteria ESG scorecard, media-risk
           heat on the PO, public screening, hashed lot custody and batch passports, a 27-voter PBFT round, and an

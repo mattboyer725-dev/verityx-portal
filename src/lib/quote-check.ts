@@ -6,7 +6,7 @@
  * The verdict never blocks anything on its own; a person decides.
  */
 import { consensusAgent, type Consensus } from "./consensus.ts";
-import { checkQuote, shouldCost, type LivePrices, type QuoteCheck, type ShouldCost } from "./should-cost.ts";
+import { checkQuote, shouldCost, type LivePrices, type PriceKey, type QuoteCheck, type ShouldCost } from "./should-cost.ts";
 
 export type QuoteInput = {
   supplier: string;
@@ -17,6 +17,18 @@ export type QuoteInput = {
   poNumber?: string;
   /** Other quotes or market prints for the same quantity, same currency. */
   otherPrices?: number[];
+  /**
+   * The buyer's own licensed benchmark prices (their Argus / Fastmarkets /
+   * SMM subscription, or a contract price). USD. Used in place of the public
+   * reference averages; the buyer holds the licence, VerityX only computes.
+   */
+  benchmark?: {
+    ndprOxideUsdKg?: number;
+    dyOxideUsdKg?: number;
+    copperUsdT?: number;
+    /** Where the buyer's benchmark comes from, e.g. "Fastmarkets NdPr oxide, 2026-11-07". */
+    source: string;
+  };
 };
 
 export type SupplierScreen = {
@@ -72,6 +84,22 @@ export function parseQuoteInput(raw: unknown): QuoteInput {
     return v;
   });
   const po = str("poNumber", LIMITS.po, false);
+  let benchmark: QuoteInput["benchmark"];
+  const b = o.benchmark && typeof o.benchmark === "object" ? (o.benchmark as Record<string, unknown>) : null;
+  if (b) {
+    const out: NonNullable<QuoteInput["benchmark"]> = { source: "" };
+    for (const k of ["ndprOxideUsdKg", "dyOxideUsdKg", "copperUsdT"] as const) {
+      if (b[k] === undefined || b[k] === null || b[k] === "") continue;
+      const v = Number(b[k]);
+      if (!Number.isFinite(v) || v <= 0 || v > 1e7) throw new Error(`benchmark ${k} must be a positive number`);
+      out[k] = v;
+    }
+    const src = typeof b.source === "string" ? b.source.trim() : "";
+    if (src.length > 120 || [...src].some((ch) => ch.charCodeAt(0) < 0x20)) throw new Error("benchmark source must be 120 plain characters or fewer");
+    const any = out.ndprOxideUsdKg || out.dyOxideUsdKg || out.copperUsdT;
+    if (any && src.length < 2) throw new Error("say where the benchmark comes from (e.g. your Fastmarkets or contract price)");
+    if (any) benchmark = { ...out, source: src };
+  }
   return {
     supplier: str("supplier", LIMITS.name),
     commodity: str("commodity", LIMITS.commodity),
@@ -80,6 +108,7 @@ export function parseQuoteInput(raw: unknown): QuoteInput {
     currency,
     ...(po ? { poNumber: po } : {}),
     otherPrices,
+    ...(benchmark ? { benchmark } : {}),
   };
 }
 
@@ -93,11 +122,26 @@ function toFairCurrency(total: number, from: "EUR" | "USD", sc: ShouldCost, pric
 
 const pct = (n: number) => `${n > 0 ? "+" : ""}${n}%`;
 
-export function assessQuote(input: QuoteInput, prices: LivePrices, screen: SupplierScreen): QuoteAssessment {
+/** Overlay the buyer's own benchmark on the reference prices, marking its basis. */
+export function withBenchmark(prices: LivePrices, benchmark?: QuoteInput["benchmark"]): LivePrices {
+  if (!benchmark) return prices;
+  const next: LivePrices = { ...prices, basis: { ...(prices.basis ?? {}) } };
+  for (const k of ["ndprOxideUsdKg", "dyOxideUsdKg", "copperUsdT"] as PriceKey[]) {
+    const v = benchmark[k];
+    if (v && v > 0) {
+      next[k] = v;
+      next.basis![k] = { kind: "benchmark", label: `Your benchmark · ${benchmark.source}` };
+    }
+  }
+  return next;
+}
+
+export function assessQuote(input: QuoteInput, referencePrices: LivePrices, screen: SupplierScreen): QuoteAssessment {
   const reasons: string[] = [];
   let hold = false;
   let review = false;
 
+  const prices = withBenchmark(referencePrices, input.benchmark);
   const sc = shouldCost(input.commodity, prices);
   const quoteInFair = toFairCurrency(input.quoteTotal, input.currency, sc, prices);
   const vs = sc.ok && quoteInFair != null ? checkQuote(sc, input.quantityKg, quoteInFair) : null;
@@ -106,6 +150,14 @@ export function assessQuote(input: QuoteInput, prices: LivePrices, screen: Suppl
   } else if (!vs) {
     review = true;
     reasons.push(`The quote is in ${input.currency} and FX is on standby, so it was not compared with the should-cost.`);
+  } else if (sc.indicative) {
+    // An annual reference average is context, not a market price: it can sit far
+    // from today's rare-earth prices, so it never decides PROCEED or HOLD alone.
+    review = true;
+    const annual = sc.basis.filter((b) => b.kind === "reference-annual").map((b) => b.label).join("; ");
+    reasons.push(
+      `Indicative only: quote is ${pct(vs.vsMidPct)} against a should-cost built on an annual reference average (${annual}). Enter your own licensed benchmark for a verdict.`,
+    );
   } else if (vs.verdict === "ABOVE_RANGE") {
     hold = true;
     reasons.push(`Quote is ${pct(vs.vsMidPct)} against the mid should-cost and above the top of the fair range.`);
@@ -115,6 +167,7 @@ export function assessQuote(input: QuoteInput, prices: LivePrices, screen: Suppl
   } else {
     reasons.push(`Quote is inside the fair range (${pct(vs.vsMidPct)} against mid).`);
   }
+  if (sc.ok) reasons.push(`Prices used: ${sc.basis.map((b) => b.label).join("; ")}.`);
 
   let consensus: Consensus | null = null;
   let vsConsensusPct: number | null = null;
@@ -138,9 +191,10 @@ export function assessQuote(input: QuoteInput, prices: LivePrices, screen: Suppl
     reasons.push("Add at least two other prices for a consensus check.");
   }
 
-  if (!vs && vsConsensusPct == null) {
+  const priceChecked = (vs && sc.ok && !sc.indicative) || vsConsensusPct != null;
+  if (!priceChecked) {
     review = true;
-    reasons.push("The price itself was not checked: no live should-cost and fewer than two other prices. Add other prices or re-run when the feeds are live.");
+    reasons.push("The price itself was not verified: add your licensed benchmark or at least two other prices.");
   }
 
   if (screen.un === "possible-match") {
@@ -177,7 +231,9 @@ export function assessQuote(input: QuoteInput, prices: LivePrices, screen: Suppl
 
 /** One line for the ledger's decision entry (2,000 characters at most). */
 export function ledgerContext(a: QuoteAssessment): string {
-  const sc = a.shouldCost.ok ? `should-cost ${a.shouldCost.perKg.low}–${a.shouldCost.perKg.high} ${a.shouldCost.currency}/kg` : "no should-cost";
+  const sc = a.shouldCost.ok
+    ? `should-cost ${a.shouldCost.perKg.low}–${a.shouldCost.perKg.high} ${a.shouldCost.currency}/kg${a.shouldCost.indicative ? " (indicative)" : ""} on ${a.shouldCost.basis.map((b) => b.label).join("; ")}`
+    : "no should-cost";
   const parts = [
     `${a.input.supplier} · ${a.input.commodity} · ${a.input.quantityKg} kg · ${a.input.quoteTotal} ${a.input.currency}`,
     sc,

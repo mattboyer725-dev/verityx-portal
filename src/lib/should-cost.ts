@@ -11,8 +11,12 @@
  * Every number that is not a live price is an ASSUMPTION with a low / mid /
  * high value, shown to the buyer and editable. The low bound takes every
  * assumption at its cheapest end, the high bound at its dearest, so the range
- * is honest about what is not known. A model only runs when the live prices
- * it needs are LIVE: it never prices on a fallback constant.
+ * is honest about what is not known. A model only runs when every price it
+ * needs is present: it never prices on a fallback constant.
+ *
+ * Every price carries a BASIS: the buyer's own licensed benchmark, a monthly
+ * reference average, or an annual reference average. A result built on an
+ * annual average is INDICATIVE — context, not grounds for a verdict.
  *
  * Self-contained (no imports) so node --test can load it and the client can
  * recompute when the buyer edits an assumption.
@@ -21,13 +25,20 @@
 export type Band = { low: number; mid: number; high: number };
 export type Assumption = { key: string; label: string; unit: string; band: Band; note: string };
 
+export type PriceKey = "ndprOxideUsdKg" | "dyOxideUsdKg" | "copperUsdT";
+/** benchmark = the buyer's own licensed price; reference-* = licensed public averages. */
+export type PriceBasisKind = "benchmark" | "reference-monthly" | "reference-annual";
+export type PriceBasis = { kind: PriceBasisKind; label: string };
+
 export type LivePrices = {
-  /** NdPr oxide index, USD/kg (MP-scaled; not a price-agency assessment). */
+  /** NdPr oxide, USD/kg. */
   ndprOxideUsdKg?: number;
-  /** Dy oxide index, USD/kg (MP-scaled). */
+  /** Dy oxide, USD/kg. */
   dyOxideUsdKg?: number;
-  /** LME copper cash, USD per tonne. */
+  /** Copper, USD per tonne. */
   copperUsdT?: number;
+  /** Where each price came from. A price without a basis is treated as the caller's own benchmark. */
+  basis?: Partial<Record<PriceKey, PriceBasis>>;
   /** USD → EUR. */
   usdEur?: number;
   /** ISO time the prices were fetched. */
@@ -48,6 +59,10 @@ export type ShouldCost =
       breakdownMid: Line[];
       assumptions: Assumption[];
       prices: Record<string, number>;
+      /** One entry per price used, with where it came from. */
+      basis: { key: PriceKey; kind: PriceBasisKind; label: string }[];
+      /** True when any price is an annual reference average: context, not a verdict. */
+      indicative: boolean;
       asOf: string | null;
       caveat: string;
     }
@@ -112,7 +127,7 @@ export function modelFor(commodity: string): ModelId | null {
   return null;
 }
 
-const need: Record<ModelId, (keyof LivePrices)[]> = {
+const need: Record<ModelId, PriceKey[]> = {
   ndfeb: ["ndprOxideUsdKg", "dyOxideUsdKg"],
   "ndpr-alloy": ["ndprOxideUsdKg"],
   "dy-metal": ["dyOxideUsdKg"],
@@ -171,7 +186,7 @@ function perKgAt(model: ModelId, p: LivePrices, as: Assumption[], at: keyof Band
   return {
     total: before + margin,
     lines: [
-      { label: "Copper (LME cash)", usdPerKg: cu },
+      { label: "Copper", usdPerKg: cu },
       { label: "Drawing, transposition, insulation", usdPerKg: v("fabrication") },
       { label: "Supplier margin", usdPerKg: margin },
     ],
@@ -205,6 +220,11 @@ export function shouldCost(commodity: string, prices: LivePrices, overrides?: As
   const used: Record<string, number> = {};
   for (const key of need[model]) used[key] = prices[key] as number;
   if (fx) used.usdEur = fx;
+  const basis = need[model].map((key) => {
+    const b = prices.basis?.[key] ?? { kind: "benchmark" as const, label: "Your benchmark" };
+    return { key, kind: b.kind, label: b.label };
+  });
+  const indicative = basis.some((b) => b.kind === "reference-annual");
   return {
     ok: true,
     model,
@@ -214,9 +234,14 @@ export function shouldCost(commodity: string, prices: LivePrices, overrides?: As
     breakdownMid: mid.lines.map((l) => ({ label: l.label, usdPerKg: round(l.usdPerKg) })),
     assumptions,
     prices: used,
+    basis,
+    indicative,
     asOf: prices.asOf ?? null,
-    caveat:
-      "Built from an NdPr/Dy index scaled from MP Materials and LME copper cash — not a price-agency assessment. Edit the assumptions to match your contracts.",
+    caveat: indicative
+      ? "Indicative only: built on an annual reference average, which can sit far from today's market for rare earths. Enter your own licensed benchmark (Argus, Fastmarkets, SMM or your contract price) for a verdict."
+      : basis.every((b) => b.kind === "benchmark")
+        ? "Built on the benchmark you entered. Edit the assumptions to match your contracts."
+        : "Built on a monthly reference average, not a spot price. Enter your own licensed benchmark for today's market.",
   };
 }
 
