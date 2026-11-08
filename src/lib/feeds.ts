@@ -356,22 +356,33 @@ async function fetchTed(): Promise<TedNotice[]> {
         redirect: "follow",
         headers: { "Content-Type": "application/json", Accept: "application/json", "User-Agent": UA },
         body: JSON.stringify({
-          query: 'FT ~ "SIEMENS ENERGY"',
+          query: 'FT ~ ("permanent magnet" OR "rare earth" OR "electrical steel") SORT BY publication-number DESC',
           page: 1,
           limit: 3,
           scope: "ALL",
-          fields: ["ND", "TI-TEXT", "PD"],
+          fields: ["publication-number", "notice-title", "publication-date"],
         }),
       }),
-      3500,
+      4500,
     );
-    pushTrace("ted", "https://api.ted.europa.eu/v3/notices/search", res.status, Date.now() - t0, "TED Europa");
+    const body = await res.text();
+    pushTrace("ted", "https://api.ted.europa.eu/v3/notices/search", res.status, Date.now() - t0, res.ok ? "TED Europa" : body.slice(0, 80));
     if (!res.ok) throw new Error("TED " + res.status);
-    const data = await res.json();
-    const notices: TedNotice[] = (data?.notices || data?.results || []).slice(0, 3).map((n: Record<string, string>) => ({
-      publicationNo: String(n.ND || n.publicationNumber || n.id || "TED"),
-      title: String(n["TI-TEXT"] || n.title || n.TI || "Siemens Energy notice"),
-      date: String(n.PD || n.publicationDate || ""),
+    const data = JSON.parse(body) as { notices?: Record<string, unknown>[] };
+    // notice-title is multilingual: { eng: "…", deu: "…" } — prefer English.
+    const text = (v: unknown): string => {
+      if (typeof v === "string") return v;
+      if (Array.isArray(v)) return text(v[0]);
+      if (v && typeof v === "object") {
+        const o = v as Record<string, unknown>;
+        return text(o.eng ?? o.ENG ?? Object.values(o)[0]);
+      }
+      return "";
+    };
+    const notices: TedNotice[] = (data?.notices || []).slice(0, 3).map((n) => ({
+      publicationNo: text(n["publication-number"]) || "TED",
+      title: text(n["notice-title"]).slice(0, 200) || "EU tender notice",
+      date: text(n["publication-date"]).slice(0, 10),
     }));
     tedCache = { at: Date.now(), value: notices };
     return notices;
@@ -405,7 +416,10 @@ async function fetchNews(): Promise<NewsHit[]> {
       "https://api.gdeltproject.org/api/v2/doc/doc?mode=artlist&format=json&maxrecords=15&sort=datedesc&timespan=7d&query=" +
       encodeURIComponent(q);
     const t0 = Date.now();
-    const res = await timed(fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } }), 6000);
+    const res = await timed(fetch(url, { headers: { "User-Agent": UA, Accept: "application/json" } }), 8000).catch((e) => {
+      pushTrace("gdelt", url.split("?")[0], 0, Date.now() - t0, `no answer: ${e instanceof Error ? e.message : "error"}`);
+      throw e;
+    });
     const text = await res.text();
     pushTrace("gdelt", url.split("?")[0], res.status, Date.now() - t0, res.ok ? "GDELT" : text.slice(0, 80));
     if (!res.ok) throw new Error(`GDELT ${res.status}`);
@@ -570,8 +584,9 @@ export function fallbackBundle(): LiveBundle {
 
 /** Per-source status for operations (/api/readiness?sources=1): latest call per source, no secrets. */
 export async function feedDiagnostics() {
-  const b = await timed(fetchLiveBundle(true), 9000).catch(() => null);
-  await new Promise((r) => setTimeout(r, 2500)); // let the slow group (GLEIF, UN, TED, GDELT) report
+  await timed(fetchLiveBundle(true), 9000).catch(() => null);
+  await new Promise((r) => setTimeout(r, 8500)); // let the slow group (GLEIF, UN, TED, GDELT) report
+  const b = bundleCache?.value ?? null;
   const latestBy = new Map<string, FeedTrace>();
   for (const t of TRACES) {
     const key = t.id === "json" || t.id === "text" ? new URL(t.url).host : t.id;
@@ -619,12 +634,15 @@ export async function fetchLiveBundle(force = false): Promise<LiveBundle> {
   } else {
     void slow.then((racedLater) => {
       const [g, s, t, n] = racedLater;
-      if (!bundleCache) return;
-      const next = { ...bundleCache.value };
-      if (g.status === "fulfilled") next.gleif = g.value;
-      if (s.status === "fulfilled") next.sanctions = s.value;
-      if (t.status === "fulfilled") next.ted = t.value;
-      if (n.status === "fulfilled") next.news = n.value;
+      // Re-assemble, so health and the scores reflect sources that answered after the first reply.
+      const next = assembleBundle(
+        fx,
+        fxFresh,
+        g.status === "fulfilled" ? g.value : gleif,
+        s.status === "fulfilled" ? s.value : sanctions,
+        t.status === "fulfilled" ? t.value : ted,
+        n.status === "fulfilled" ? n.value : news,
+      );
       bundleCache = { at: Date.now(), value: next };
     });
   }
