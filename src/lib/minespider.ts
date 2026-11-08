@@ -20,7 +20,7 @@ export type MinespiderBatch = {
   massKg: number;
   events: MinespiderEvent[];
   certificate: {
-    issuer: "Minespider analog · VerityX host";
+    issuer: "VerityX batch passport";
     algorithm: "SHA-256";
     hash: string;
     issuedAt: string;
@@ -106,7 +106,7 @@ export async function recordMinespiderBatch(input: {
     massKg: input.massKg,
     events,
     certificate: {
-      issuer: "Minespider analog · VerityX host",
+      issuer: "VerityX batch passport",
       algorithm: "SHA-256",
       hash: certHash,
       issuedAt,

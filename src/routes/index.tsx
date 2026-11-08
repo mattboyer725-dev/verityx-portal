@@ -65,8 +65,8 @@ function Home() {
             <p className="text-[11px] uppercase tracking-[0.18em] text-mute">02 · Live desk</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Magnetics</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              One click as {BUYER.name}. SAP OData tenant, MAD consensus, Circulor lots, GLEIF / OpenSanctions / UN
-              screens, 27-host PBFT, exportable packet.
+              One click as {BUYER.name}. SAP OData analog tenant, MAD consensus, lot custody, GLEIF / OpenSanctions / UN
+              screens, a 27-voter PBFT round, exportable packet.
             </p>
           </div>
           <p className="mt-8 flex items-center gap-2 text-sm text-paper">
@@ -156,10 +156,11 @@ function Home() {
           <AdapterStrip adapters={adapters} />
         </div>
         <p className="mt-5 max-w-3xl text-xs leading-relaxed text-mute">
-          Siemens S/4HANA, Argus Metals, EcoVadis, Prewave, RapidRatings, Circulor, and Okta Workforce are not
-          subscribed. The adapters above are live protocol implementations — OData with CSRF/ETag, Ariba sourcing
-          RFQs, an SSE REE socket, EcoVadis 21-criteria scorecards, Prewave media-risk heat on the PO, public
-          screening, hashed Circulor lots and Minespider batch passports, a 27-voter PBFT network, and an RS256 IdP.
+          VerityX is independent and not affiliated with SAP, Argus, EcoVadis, Prewave, RapidRatings, Circulor,
+          Minespider or Okta, and subscribes to none of them. The adapters above are VerityX’s own implementations —
+          OData with CSRF/ETag, sourcing RFQs, an SSE rare-earth index socket, a 21-criteria ESG scorecard, media-risk
+          heat on the PO, public screening, hashed lot custody and batch passports, a 27-voter PBFT round, and an
+          RS256 IdP.
         </p>
       </section>
 

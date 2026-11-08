@@ -1,4 +1,4 @@
-/** EcoVadis analog — 21-criteria / 4-theme shape from public sources. Not an EcoVadis tenant. */
+/** VerityX ESG scorecard — 21 criteria / 4 themes from public sources. Independent of EcoVadis. */
 
 export type EcoVadisMedal = "Platinum" | "Gold" | "Silver" | "Bronze" | "None";
 
@@ -28,7 +28,7 @@ export type EcoVadisScore = {
   validUntil: string;
   industry: string;
   source: string;
-  issuer: "EcoVadis analog · VerityX host";
+  issuer: "VerityX ESG scorecard";
 };
 
 /** NACE 27 — Manufacture of electrical equipment (magnetics / generators). Public EcoVadis weight table. */
@@ -211,14 +211,14 @@ export function scoreEcovadis(input: {
     validUntil: valid.toISOString(),
     industry: "NACE 27 · Manufacture of electrical equipment",
     source: "EcoVadis 21-criteria analog · GLEIF + UN/OpenSanctions + news RSS + listing tape",
-    issuer: "EcoVadis analog · VerityX host",
+    issuer: "VerityX ESG scorecard",
   };
 }
 
 export function ecovadisMethodology() {
   return {
     protocol: "EcoVadis scorecard analog",
-    issuer: "EcoVadis analog · VerityX host",
+    issuer: "VerityX ESG scorecard",
     vendor: {
       subscribed: false,
       note: "EcoVadis is not a tenant here. This is the public 21-criteria / 4-theme methodology scored from GLEIF, UN/OpenSanctions, news RSS, and listing tape.",

@@ -28,11 +28,11 @@ export const VERITYX_WEDGE =
 
 export const HONEST_GAPS = [
   "Siemens S/4HANA and Ariba tenants are not connected. The desk runs a live OData-shaped store with CSRF, ETag, BAPI_PO_CHANGE, IDoc ORDERS05, and Ariba sourcing v2 RFQs on this host.",
-  "Argus Metals is not subscribed. NdPr and Dy prints are Argus-shaped ticks from MP Materials and Westmetall LME cash.",
+  "Argus Metals is not subscribed. NdPr and Dy are an index scaled from MP Materials, with Westmetall LME cash.",
   "EcoVadis and Prewave APIs are paid. The analogs on this host are a 21-criteria scorecard from GLEIF + news and a media-risk heat from RSS on the same PO. RapidRatings stays listed-tape FHR, with opacity when the name is unlisted.",
   "Circulor and Minespider vendor tenants are not subscribed. Lots and batch passports are hashed ledgers on this host (EU DPP + GS1 Digital Link shape).",
   "The 27-voter PBFT cluster is in-process (quorum 19, two Byzantine). It is not 27 separate machines.",
-  "Okta Workforce is not provisioned. The desk issues Okta-shaped RS256 JWTs with JWKS.",
+  "Okta Workforce is not provisioned. The desk issues its own OIDC RS256 JWTs with JWKS.",
   "Local Core HMAC + Merkle is real and bit-identical to verityx-local-core v" +
     CORE_VERSION +
     " (" +
@@ -58,7 +58,7 @@ export const FIELD: CompetitorClass[] = [
     names: "EcoVadis",
     category: "ESG scorecard",
     they: "EcoVadis sells questionnaire scorecards and medals on an annual cadence, scored by analysts against 21 criteria in four themes. Strong, paid, and off the purchase order.",
-    we: "Every supplier on the magnetics tape gets a 21-criteria EcoVadis-shaped scorecard in the same verify pass as price consensus and mineral custody. NACE 27 weights, published medal cutoffs, GLEIF + news evidence.",
+    we: "Every supplier on the magnetics tape gets VerityX’s own 21-criteria ESG scorecard in the same verify pass as price consensus and mineral custody. NACE 27 weights, published medal cutoffs, GLEIF + news evidence.",
     contrast:
       "We do not have their questionnaire network or analyst desk. This is the public methodology scored from GLEIF, UN/OpenSanctions, news RSS, and listing tape — not an EcoVadis tenant, and not a fake medal.",
     analog: "EcoVadis scorecard analog",
@@ -70,7 +70,7 @@ export const FIELD: CompetitorClass[] = [
     names: "Prewave",
     category: "Media and disruption risk",
     they: "Prewave watches media and disruption events across the supplier graph and sells a heat score off the PO. Strong, paid, and built for a control-tower, not a single line item.",
-    we: "The same PO that carries the EcoVadis analog also carries a Prewave-shaped media-risk heat: RSS incidents classified as disruption, ESG, labor, compliance, or quality, sealed into the packet.",
+    we: "The same PO that carries the ESG scorecard also carries a media-risk heat: RSS incidents classified as disruption, ESG, labor, compliance, or quality, sealed into the packet.",
     contrast:
       "We do not ingest their firehose or analyst coverage. Heat here is live news RSS on the magnetics suppliers Elena is buying — named on the field, not hidden behind SCREEN.",
     analog: "Prewave media-risk analog",
@@ -91,7 +91,7 @@ export const FIELD: CompetitorClass[] = [
     names: "Circulor, Minespider, Everledger",
     category: "Mineral passport and custody",
     they: "Circulor runs mass-balance lots and battery passports. Minespider issues due-diligence batch certificates. Everledger proved luxury and diamond provenance on a chain.",
-    we: "A Circulor-shaped hashed lot and a Minespider SHA-256 batch passport are written for every seeded PO, with EU DPP and GS1 Digital Link identifiers in the packet.",
+    we: "A hashed mass-balance lot and a SHA-256 batch passport are written for every seeded PO, with EU DPP and GS1 Digital Link identifiers in the packet.",
     contrast:
       "Vendor tenants are not subscribed. The ledgers are protocol-complete on this host — chain, events, certificate hash — not their production networks.",
     analog: "Circulor lots + Minespider batches",
@@ -103,7 +103,7 @@ export const FIELD: CompetitorClass[] = [
     names: "RapidRatings, Dun & Bradstreet",
     category: "Financial health",
     they: "RapidRatings scores private-company FHR from financials. D&B is the identity and PAYDEX backbone most S2P suites already license.",
-    we: "Listed names get a RapidRatings-shaped FHR from public tape. Unlisted names raise an opacity flag instead of a fake score.",
+    we: "Listed names get a financial-health score from public market data. Unlisted names raise an opacity flag instead of a fake score.",
     contrast:
       "We will not invent a private-company rating. Opacity is the honest signal. D&B is not a tenant here.",
     analog: "RapidRatings FHR analog",
@@ -124,7 +124,7 @@ export const FIELD: CompetitorClass[] = [
     names: "Argus Metals, Fastmarkets, LME / Westmetall",
     category: "Price oracles",
     they: "Paid assessments and exchange cash/3M prints that procurement treats as the market. Argus is the REE desk standard.",
-    we: "LME cash from Westmetall, ECB FX, listed REE tape, and an Argus-shaped NdPr/Dy SSE socket on the same verify pass. MAD-filter poisoned prints before consensus.",
+    we: "LME cash from Westmetall, ECB FX, listed REE tape, and an NdPr/Dy index (scaled from MP Materials) over SSE on the same verify pass. MAD-filter poisoned prints before consensus.",
     contrast:
       "Argus is not subscribed. NdPr/Dy are derived, labelled, and never sold as an Argus print. Westmetall LME cash is live.",
     analog: "REE desk socket",
@@ -148,7 +148,7 @@ export const FIELD: CompetitorClass[] = [
     names: "Okta Workforce Identity",
     category: "Workforce identity",
     they: "The enterprise IdP. Password, SSO, MFA, lifecycle. What Siemens already runs.",
-    we: "Desk seats issue Okta-shaped OIDC RS256 tokens, with discovery and JWKS, so the analog SAP path sees a workforce bearer.",
+    we: "Desk seats issue standard OIDC RS256 tokens, with discovery and JWKS, so the analog SAP path sees a workforce bearer.",
     contrast:
       "Okta Workforce is not provisioned. Google/X sign-in is for the OS and owner command, not a substitute Okta tenant.",
     analog: "OIDC workforce IdP",

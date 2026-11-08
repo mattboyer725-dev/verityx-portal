@@ -431,7 +431,7 @@ function PilotDetail() {
             {[
               ["PO", pilot.deskPacket.po],
               ["Scenario", pilot.deskPacket.scenarioId],
-              ["Circulor lot", pilot.deskPacket.circulorLot],
+              ["Custody lot", pilot.deskPacket.circulorLot],
               ["PBFT", `${pilot.deskPacket.pbft}/27`],
             ].map(([k, v]) => (
               <div key={k} className="min-w-0">

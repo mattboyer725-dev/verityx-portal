@@ -24,7 +24,7 @@ describe("EcoVadis analog", () => {
       news: [],
       now: "2026-09-06T00:00:00.000Z",
     });
-    assert.equal(ifx.issuer, "EcoVadis analog · VerityX host");
+    assert.equal(ifx.issuer, "VerityX ESG scorecard");
     assert.ok(ifx.score >= 56, String(ifx.score));
     assert.ok(["Silver", "Gold", "Platinum"].includes(ifx.medal));
     assert.match(ifx.source, /GLEIF/);
@@ -40,7 +40,7 @@ describe("EcoVadis analog", () => {
     });
     assert.ok(nj.score < ifx.score);
     assert.ok(nj.themes.environment < ifx.themes.environment);
-    assert.equal(nj.issuer, "EcoVadis analog · VerityX host");
+    assert.equal(nj.issuer, "VerityX ESG scorecard");
   });
 
   it("crushes ethics on a sanctions hit and serves scorecards over HTTP", async () => {

@@ -146,7 +146,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           <h1>One provable version of the purchase order.</h1>
           <p className="lede">
             Siemens Gamesa magnetics. LME cash and ECB FX from public feeds, an SAP OData analog tenant, UN and OpenSanctions
-            screens, a Circulor-shaped lot ledger — each packet sealed by a 27-voter PBFT round and an HMAC-signed Local Core
+            screens, a lot custody ledger — each packet sealed by a 27-voter PBFT round and an HMAC-signed Local Core
             ledger.
           </p>
           <div className="gate-tape" aria-label="Market tape">
@@ -157,7 +157,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
               </>
             ) : null}
             {feedLive(tape, "argus") && tape?.argus ? (
-              <span className="tape-chip" title="NdPr index scaled from MP Materials (NYSE: MP). Not an Argus assessment.">
+              <span className="tape-chip" title="NdPr index scaled from MP Materials (NYSE: MP). Not a price-agency assessment.">
                 NdPr {tape.argus.ndprUsdKg.toFixed(1)} USD/kg · MP-indexed
               </span>
             ) : null}
@@ -180,7 +180,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
             ) : null}
           </div>
         </div>
-        <p className="hint">SAP OData · Ariba · LME · REE socket · OpenSanctions · Circulor lots · PBFT 27 · Local Core HMAC · OIDC</p>
+        <p className="hint">SAP OData · Ariba · LME · REE socket · OpenSanctions · Lot custody · PBFT 27 · Local Core HMAC · OIDC</p>
       </section>
       <section className="gate-right">
         <div className="login-card">
@@ -258,7 +258,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
           <li>
             <span className="n">03</span>
             <strong>Screen</strong>
-            <span>Supplier checked against GLEIF, the UN consolidated list and OpenSanctions; lots traced on the Circulor ledger.</span>
+            <span>Supplier checked against GLEIF, the UN consolidated list and OpenSanctions; lots traced on the custody ledger.</span>
           </li>
           <li>
             <span className="n">04</span>
@@ -492,7 +492,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
         <div className={frozen ? "vx-live vx-live-hold" : "vx-live"}>{frozen ? "DESK FROZEN" : "LIVE · PBFT 27"}</div>
         {announce ? <div className="vx-banner">{announce}</div> : null}
         <div className="vx-user">
-          <span className="idp-chip">Okta RS256</span>
+          <span className="idp-chip">OIDC RS256</span>
           <div className="vx-avatar">EH</div>
           <div>
             {BUYER.name}
@@ -538,14 +538,14 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           </span>
         ) : null}
         {feedLive(live, "argus") && live?.argus ? (
-          <span title="NdPr index scaled from MP Materials (NYSE: MP). Not an Argus assessment.">
+          <span title="NdPr index scaled from MP Materials (NYSE: MP). Not a price-agency assessment.">
             NdPr idx <b>{live.argus.ndprUsdKg.toFixed(1)}</b> USD/kg {chg(live.argus.ndprChangePct)}
           </span>
         ) : (
           <span>NdPr index standby</span>
         )}
         {feedLive(live, "argus") && live?.argus ? (
-          <span title="Dy index scaled from MP Materials (NYSE: MP). Not an Argus assessment.">
+          <span title="Dy index scaled from MP Materials (NYSE: MP). Not a price-agency assessment.">
             Dy idx <b>{live.argus.dyUsdKg.toFixed(0)}</b> USD/kg
           </span>
         ) : null}
@@ -776,9 +776,9 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
               [
                 ["pipe", "Pipeline"],
                 ["sap", "SAP / Ariba"],
-                ["mkt", "LME / Argus"],
+                ["mkt", "LME / NdPr index"],
                 ["screen", "Screens"],
-                ["prov", "Circulor"],
+                ["prov", "Custody"],
                 ["seal", "PBFT 27"],
                 ["core", "Local Core"],
               ] as const
@@ -803,7 +803,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                   ["08", "SEAL", view ? `${view.seal.pbft.commitOk}/27` : "awaiting"],
                   ["09", "LEDGER", view ? `HMAC ${view.ledger.depth}` : live?.core ? `HMAC ${live.core.leaf_count}` : "GENESIS"],
                   ["10", "EVIDENCE", view ? "ready" : "awaiting"],
-                  ["11", "AUTH", "Okta RS256"],
+                  ["11", "AUTH", "OIDC RS256"],
                   ["12", "OS", view?.advisory ? view.advisory.proposedAction : "advisory"],
                 ] as const
               ).map(([n, t, d]) => (
@@ -876,7 +876,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                   <Spark values={cuHist} />
                 </div>
                 <div className="score-card">
-                  <div className="k">Argus NdPr</div>
+                  <div className="k">NdPr index</div>
                   <div className="v">{live?.argus ? live.argus.ndprUsdKg.toFixed(1) : "—"}</div>
                   <div className="s">USD/kg · listed REE tape</div>
                   <Spark values={ndprHist} />
@@ -932,26 +932,26 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           {tab === "screen" ? (
             <div>
               <div className="screen-row">
-                <span>EcoVadis analog</span>
+                <span>ESG scorecard</span>
                 <span className="mono">/ecovadis/api/v2/scorecards</span>
               </div>
               <div className="screen-row">
-                <span>Prewave analog</span>
+                <span>Media risk</span>
                 <span className="mono">/prewave/api/v1/risks</span>
               </div>
               <div className="score-grid">
                 <div className="score-card">
-                  <div className="k">EcoVadis</div>
+                  <div className="k">ESG</div>
                   <div className="v">{eco ? `${eco.score}` : "—"}</div>
                   <div className="s">{eco ? `${eco.medal} medal · NACE 27` : "Verify to score"}</div>
                 </div>
                 <div className="score-card">
-                  <div className="k">Prewave</div>
+                  <div className="k">Media</div>
                   <div className="v">{pre ? pre.heat ?? pre.risk : "—"}</div>
                   <div className="s">{pre ? `${pre.level} heat on the PO` : "live news RSS"}</div>
                 </div>
                 <div className="score-card">
-                  <div className="k">RapidRatings</div>
+                  <div className="k">Fin. health</div>
                   <div className="v">{rapid ? rapid.fhr : "—"}</div>
                   <div className="s">{rapid ? `${rapid.outlook} FHR` : "listed tape"}</div>
                 </div>
@@ -1022,8 +1022,8 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
                     {view.provenance.dppId}
                   </div>
                   <div className="hash">GS1 {view.provenance.gs1}</div>
-                  <div className="hash">Circulor {view.provenance.circulorLot}</div>
-                  <div className="hash">Minespider {view.provenance.minespiderBatch}</div>
+                  <div className="hash">Lot {view.provenance.circulorLot}</div>
+                  <div className="hash">Batch passport {view.provenance.minespiderBatch}</div>
                 </div>
               ) : null}
               <div className="tier-map">
@@ -1167,7 +1167,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           LME <strong>{live?.health.lme || "…"}</strong>
         </span>
         <span>
-          Argus <strong>{live?.health.argus || "…"}</strong>
+          NdPr idx <strong>{live?.health.argus || "…"}</strong>
         </span>
         <span>
           SAP <strong>{live?.health.sap || "LIVE"}</strong>

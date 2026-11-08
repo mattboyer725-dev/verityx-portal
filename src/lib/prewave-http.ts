@@ -25,7 +25,7 @@ export function prewaveListBody(live: LiveBundle) {
     protocol: "Prewave media-risk analog",
     vendor: {
       subscribed: false,
-      note: "Prewave is not a tenant. Heat is live news RSS on the same PO the EcoVadis analog scores.",
+      note: "Media-risk heat from live news RSS on the same PO the ESG scorecard scores. Independent of Prewave.",
     },
     count: risks.length,
     risks,
@@ -78,5 +78,5 @@ export async function handlePrewaveHttp(request: Request, live?: LiveBundle): Pr
     return json(rec);
   }
 
-  return json({ error: "Not found on Prewave analog tenant" }, 404);
+  return json({ error: "Media-risk record not found" }, 404);
 }

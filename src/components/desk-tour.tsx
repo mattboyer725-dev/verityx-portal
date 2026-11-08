@@ -45,7 +45,7 @@ export const DESK_TOUR: TourStep[] = [
   {
     target: "evidence",
     heading: "The evidence behind it",
-    body: "Each tab is one source of the packet: SAP and Ariba, LME and the NdPr index, sanctions screens, Circulor lots, the 27-node PBFT seal, and the Local Core proof. Export hands over the whole packet.",
+    body: "Each tab is one source of the packet: SAP and Ariba, LME and the NdPr index, sanctions screens, lot custody, the 27-node PBFT seal, and the Local Core proof. Export hands over the whole packet.",
   },
 ];
 

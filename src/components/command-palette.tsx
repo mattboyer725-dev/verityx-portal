@@ -103,7 +103,7 @@ export function CommandPalette() {
                 </Command.Item>
               ))}
             </Command.Group>
-            <Command.Empty>Nothing matches. Try desk, field, EcoVadis, or pilots.</Command.Empty>
+            <Command.Empty>Nothing matches. Try desk, field, ESG, or pilots.</Command.Empty>
           </Command.List>
         </Command>
       </div>

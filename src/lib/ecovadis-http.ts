@@ -72,5 +72,5 @@ export async function handleEcovadisHttp(request: Request, live?: LiveBundle): P
     return json(rec);
   }
 
-  return json({ error: "Not found on EcoVadis analog tenant" }, 404);
+  return json({ error: "ESG scorecard not found" }, 404);
 }

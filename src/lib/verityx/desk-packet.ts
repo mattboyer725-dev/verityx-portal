@@ -99,7 +99,7 @@ export function evidenceFromPacket(packet: DeskPacketSlice): EvidenceItem[] {
     item(
       "corroboration",
       `Circulor lot ${packet.provenance.circulorLot}`,
-      "Circulor-shaped mass-balance ledger",
+      "Mass-balance lot custody ledger",
       `DPP ${packet.provenance.dppId}. GS1 ${packet.provenance.gs1}. Hashed custody on this host, not Circulor SaaS.`,
       "high",
       "/api/circulor/lots",
@@ -124,7 +124,7 @@ export function evidenceFromPacket(packet: DeskPacketSlice): EvidenceItem[] {
       item(
         "media_report",
         a.text,
-        a.type === "ESG" ? "EcoVadis-shaped scorecard (GLEIF + UN)" : "Prewave-shaped news RSS",
+        a.type === "ESG" ? "ESG scorecard (GLEIF + UN)" : "Media-risk heat (news RSS)",
         a.text,
         "medium",
       ),
@@ -155,7 +155,7 @@ export function evidenceFromPacket(packet: DeskPacketSlice): EvidenceItem[] {
     item(
       "operational_event",
       `Seat ${packet.auth.seat.email}`,
-      "Okta-shaped OIDC RS256",
+      "OIDC RS256",
       `Issuer ${packet.auth.issuer}. Password-grant JWT on this host, not Okta Workforce.`,
       "high",
       "/oauth2/default/.well-known/openid-configuration",

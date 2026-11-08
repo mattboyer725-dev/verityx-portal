@@ -1,4 +1,4 @@
-/** Prewave analog — media-risk heat from RSS on the same PO. Not a Prewave tenant. */
+/** VerityX media-risk heat from RSS on the same PO. Independent of Prewave. */
 
 export type PrewaveLevel = "LOW" | "MED" | "HIGH" | "CRITICAL";
 
@@ -25,7 +25,7 @@ export type PrewaveRisk = {
   headlines: string[];
   incidents: PrewaveIncident[];
   source: string;
-  issuer: "Prewave analog · VerityX host";
+  issuer: "VerityX media-risk heat";
 };
 
 export const PREWAVE_BANDS: { level: PrewaveLevel; min: number }[] = [
@@ -130,17 +130,17 @@ export function scorePrewave(input: {
     headlines: top.slice(0, 3).map((i) => i.title),
     incidents: top,
     source: "Prewave media-risk analog · live news RSS on the PO",
-    issuer: "Prewave analog · VerityX host",
+    issuer: "VerityX media-risk heat",
   };
 }
 
 export function prewaveTaxonomy() {
   return {
     protocol: "Prewave media-risk analog",
-    issuer: "Prewave analog · VerityX host",
+    issuer: "VerityX media-risk heat",
     vendor: {
       subscribed: false,
-      note: "Prewave is not a tenant here. Heat is scored from live news RSS incidents on the same purchase order the EcoVadis analog scores.",
+      note: "Heat is scored from live news RSS incidents on the same purchase order the ESG scorecard scores. Independent of Prewave.",
     },
     categories: ["DISRUPTION", "ESG", "LABOR", "COMPLIANCE", "QUALITY"],
     bands: PREWAVE_BANDS,

@@ -24,7 +24,7 @@ describe("Prewave analog", () => {
     assert.equal(nj.heat, nj.risk);
     assert.ok(nj.heat >= 28);
     assert.ok(nj.incidents.some((i) => i.category === "DISRUPTION"));
-    assert.equal(nj.issuer, "Prewave analog · VerityX host");
+    assert.equal(nj.issuer, "VerityX media-risk heat");
     assert.ok(nj.headlines.length >= 1);
   });
 

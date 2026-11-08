@@ -31,7 +31,7 @@ export async function handleMinespiderHttp(request: Request): Promise<Response |
   if (path === "/minespider/api/v1/batches" && method === "GET") {
     const batches = listMinespiderBatches();
     return json({
-      protocol: "Minespider-shaped SHA-256 batch passport",
+      protocol: "SHA-256 batch passport",
       count: batches.length,
       batches,
     });
@@ -61,5 +61,5 @@ export async function handleMinespiderHttp(request: Request): Promise<Response |
     });
   }
 
-  return json({ error: "Not found on Minespider analog tenant" }, 404);
+  return json({ error: "Batch passport not found" }, 404);
 }
