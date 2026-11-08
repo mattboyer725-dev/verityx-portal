@@ -1,0 +1,394 @@
+{
+  "generatedAt": "2026-11-08T19:45:41+00:00",
+  "note": "Reference prices from licensed public sources. Monthly and annual averages, not spot quotes.",
+  "series": {
+    "aluminium": {
+      "frequency": "monthly",
+      "label": "Aluminium",
+      "points": [
+        {
+          "period": "2023-11",
+          "value": 2202.0
+        },
+        {
+          "period": "2023-12",
+          "value": 2182.0
+        },
+        {
+          "period": "2024-01",
+          "value": 2193.0
+        },
+        {
+          "period": "2024-02",
+          "value": 2179.0
+        },
+        {
+          "period": "2024-03",
+          "value": 2226.0
+        },
+        {
+          "period": "2024-04",
+          "value": 2506.0
+        },
+        {
+          "period": "2024-05",
+          "value": 2565.0
+        },
+        {
+          "period": "2024-06",
+          "value": 2498.0
+        },
+        {
+          "period": "2024-07",
+          "value": 2349.0
+        },
+        {
+          "period": "2024-08",
+          "value": 2344.0
+        },
+        {
+          "period": "2024-09",
+          "value": 2450.0
+        },
+        {
+          "period": "2024-10",
+          "value": 2596.0
+        },
+        {
+          "period": "2024-11",
+          "value": 2582.0
+        },
+        {
+          "period": "2024-12",
+          "value": 2541.0
+        },
+        {
+          "period": "2025-01",
+          "value": 2573.0
+        },
+        {
+          "period": "2025-02",
+          "value": 2658.0
+        },
+        {
+          "period": "2025-03",
+          "value": 2658.0
+        },
+        {
+          "period": "2025-04",
+          "value": 2372.0
+        },
+        {
+          "period": "2025-05",
+          "value": 2449.0
+        },
+        {
+          "period": "2025-06",
+          "value": 2526.0
+        },
+        {
+          "period": "2025-07",
+          "value": 2606.0
+        },
+        {
+          "period": "2025-08",
+          "value": 2597.0
+        },
+        {
+          "period": "2025-09",
+          "value": 2653.0
+        },
+        {
+          "period": "2025-10",
+          "value": 2793.0
+        },
+        {
+          "period": "2025-11",
+          "value": 2819.0
+        },
+        {
+          "period": "2025-12",
+          "value": 2876.0
+        },
+        {
+          "period": "2026-01",
+          "value": 3142.0
+        },
+        {
+          "period": "2026-02",
+          "value": 3065.0
+        },
+        {
+          "period": "2026-03",
+          "value": 3373.0
+        },
+        {
+          "period": "2026-04",
+          "value": 3600.0
+        },
+        {
+          "period": "2026-05",
+          "value": 3666.0
+        },
+        {
+          "period": "2026-06",
+          "value": 3439.0
+        },
+        {
+          "period": "2026-07",
+          "value": 3161.0
+        },
+        {
+          "period": "2026-08",
+          "value": 3251.0
+        },
+        {
+          "period": "2026-09",
+          "value": 3283.0
+        },
+        {
+          "period": "2026-10",
+          "value": 3061.0
+        }
+      ],
+      "source": {
+        "attribution": "Source: World Bank Commodity Price Data (The Pink Sheet), CC BY 4.0. Monthly averages, nominal USD.",
+        "dataUrl": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "name": "World Bank Commodity Price Data (The Pink Sheet)",
+        "url": "https://www.worldbank.org/en/research/commodity-markets"
+      },
+      "unit": "USD/t"
+    },
+    "copper": {
+      "frequency": "monthly",
+      "label": "Copper",
+      "points": [
+        {
+          "period": "2023-11",
+          "value": 8190.0
+        },
+        {
+          "period": "2023-12",
+          "value": 8400.0
+        },
+        {
+          "period": "2024-01",
+          "value": 8339.0
+        },
+        {
+          "period": "2024-02",
+          "value": 8305.0
+        },
+        {
+          "period": "2024-03",
+          "value": 8689.0
+        },
+        {
+          "period": "2024-04",
+          "value": 9464.0
+        },
+        {
+          "period": "2024-05",
+          "value": 10139.0
+        },
+        {
+          "period": "2024-06",
+          "value": 9648.0
+        },
+        {
+          "period": "2024-07",
+          "value": 9385.0
+        },
+        {
+          "period": "2024-08",
+          "value": 8972.0
+        },
+        {
+          "period": "2024-09",
+          "value": 9237.0
+        },
+        {
+          "period": "2024-10",
+          "value": 9534.0
+        },
+        {
+          "period": "2024-11",
+          "value": 9076.0
+        },
+        {
+          "period": "2024-12",
+          "value": 8916.0
+        },
+        {
+          "period": "2025-01",
+          "value": 8991.0
+        },
+        {
+          "period": "2025-02",
+          "value": 9331.0
+        },
+        {
+          "period": "2025-03",
+          "value": 9740.0
+        },
+        {
+          "period": "2025-04",
+          "value": 9177.0
+        },
+        {
+          "period": "2025-05",
+          "value": 9533.0
+        },
+        {
+          "period": "2025-06",
+          "value": 9835.0
+        },
+        {
+          "period": "2025-07",
+          "value": 9771.0
+        },
+        {
+          "period": "2025-08",
+          "value": 9670.0
+        },
+        {
+          "period": "2025-09",
+          "value": 9984.0
+        },
+        {
+          "period": "2025-10",
+          "value": 10740.0
+        },
+        {
+          "period": "2025-11",
+          "value": 10812.0
+        },
+        {
+          "period": "2025-12",
+          "value": 11785.0
+        },
+        {
+          "period": "2026-01",
+          "value": 13012.0
+        },
+        {
+          "period": "2026-02",
+          "value": 12951.0
+        },
+        {
+          "period": "2026-03",
+          "value": 12529.0
+        },
+        {
+          "period": "2026-04",
+          "value": 12951.0
+        },
+        {
+          "period": "2026-05",
+          "value": 13543.0
+        },
+        {
+          "period": "2026-06",
+          "value": 13552.0
+        },
+        {
+          "period": "2026-07",
+          "value": 13543.0
+        },
+        {
+          "period": "2026-08",
+          "value": 14326.0
+        },
+        {
+          "period": "2026-09",
+          "value": 14474.0
+        },
+        {
+          "period": "2026-10",
+          "value": 14508.0
+        }
+      ],
+      "source": {
+        "attribution": "Source: World Bank Commodity Price Data (The Pink Sheet), CC BY 4.0. Monthly averages, nominal USD.",
+        "dataUrl": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx",
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "name": "World Bank Commodity Price Data (The Pink Sheet)",
+        "url": "https://www.worldbank.org/en/research/commodity-markets"
+      },
+      "unit": "USD/t"
+    },
+    "dyOxide": {
+      "frequency": "annual",
+      "label": "Dysprosium oxide, 99.5% min",
+      "points": [
+        {
+          "period": "2021",
+          "value": 410.0
+        },
+        {
+          "period": "2022",
+          "value": 382.0
+        },
+        {
+          "period": "2023",
+          "value": 330.0
+        },
+        {
+          "period": "2024",
+          "value": 257.0
+        },
+        {
+          "estimated": true,
+          "period": "2025",
+          "value": 239.0
+        }
+      ],
+      "source": {
+        "attribution": "Source: U.S. Geological Survey, Mineral Commodity Summaries 2026. Annual average; latest year is a USGS estimate.",
+        "license": "Public domain (U.S. Government work)",
+        "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "name": "U.S. Geological Survey, Mineral Commodity Summaries 2026",
+        "url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-rare-earths-heavy.pdf"
+      },
+      "unit": "USD/kg"
+    },
+    "ndprOxide": {
+      "frequency": "annual",
+      "label": "NdPr oxide, 99% min",
+      "points": [
+        {
+          "period": "2021",
+          "value": 92.0
+        },
+        {
+          "period": "2022",
+          "value": 124.0
+        },
+        {
+          "period": "2023",
+          "value": 75.0
+        },
+        {
+          "period": "2024",
+          "value": 55.0
+        },
+        {
+          "estimated": true,
+          "period": "2025",
+          "value": 69.0
+        }
+      ],
+      "source": {
+        "attribution": "Source: U.S. Geological Survey, Mineral Commodity Summaries 2026. Annual average; latest year is a USGS estimate.",
+        "license": "Public domain (U.S. Government work)",
+        "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "name": "U.S. Geological Survey, Mineral Commodity Summaries 2026",
+        "url": "https://pubs.usgs.gov/periodicals/mcs2026/mcs2026-rare-earths.pdf"
+      },
+      "unit": "USD/kg"
+    }
+  }
+}
