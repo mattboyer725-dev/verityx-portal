@@ -30,11 +30,12 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm i --no-save --ignore-scripts vite-node@3
       - run: node scripts/migrate.mjs
       - name: Six concurrent writers
         run: |
           export LOCAL_CORE_SECRET=$(openssl rand -hex 32)
           echo "LOCAL_CORE_SECRET=$LOCAL_CORE_SECRET" >> "$GITHUB_ENV"
-          for i in 1 2 3 4 5 6; do npx --yes vite-node --root . scripts/ledger-race/writer.ts $i & done; wait
+          pids=""; for i in 1 2 3 4 5 6; do npx vite-node --config scripts/ledger-race/vite.config.mjs scripts/ledger-race/writer.ts $i & pids="$pids $!"; done; for p in $pids; do wait $p; done
       - name: One chain, every write, valid
-        run: npx --yes vite-node --root . scripts/ledger-race/check.ts 64
+        run: npx vite-node --config scripts/ledger-race/vite.config.mjs scripts/ledger-race/check.ts 64
