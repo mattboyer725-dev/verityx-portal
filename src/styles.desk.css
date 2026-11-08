@@ -1313,3 +1313,14 @@
 .sc-assume-row small { display: block; color: var(--color-faint); font-size: 0.68rem; }
 .sc-assume-row .vx-input { min-height: 32px; padding: 0 0.4rem; font-family: var(--font-mono); font-size: 0.76rem; width: 100%; }
 .sc-assume .vx-btn { margin-top: 0.6rem; }
+
+/* Price history + drift */
+.ph-panel { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.2rem; }
+.ph-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.6rem; }
+.ph-grid .score-card .v { font-size: clamp(1.05rem, 1vw + 0.5rem, 1.35rem); }
+.drift-banner {
+  display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 0.9rem; padding: 0.75rem 0.95rem;
+  border-radius: var(--radius-md, 10px); font-size: 0.82rem; line-height: 1.45;
+  border: 1px solid color-mix(in oklab, var(--color-amber) 50%, transparent);
+  background: color-mix(in oklab, var(--color-amber) 10%, transparent);
+}

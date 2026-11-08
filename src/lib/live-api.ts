@@ -120,6 +120,8 @@ export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async (
   await hydrateAdaptersIfAny();
   await seedAll();
   const live = await withBudget(fetchLiveBundle(), 4000, fallbackBundle());
+  // Dated history: record LIVE prices at most every 15 minutes (never blocks the tape).
+  void import("@/lib/price-history.server").then((m) => m.recordSnapshotIfDue(live)).catch(() => undefined);
   const core = await withBudget(coreSlice(), 3200, undefined);
   const last = lastPbftRound();
   const adapters = buildAdapterCards({

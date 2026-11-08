@@ -23,6 +23,7 @@ import { Route as ApiAdaptersRouteImport } from './routes/api.adapters'
 import { Route as ApiCompetitionRouteImport } from './routes/api.competition'
 import { Route as ApiOracleRouteImport } from './routes/api.oracle'
 import { Route as ApiPbftRouteImport } from './routes/api.pbft'
+import { Route as ApiPricesRouteImport } from './routes/api.prices'
 import { Route as ApiSealKeyRouteImport } from './routes/api.seal-key'
 import { Route as AribaSplatRouteImport } from './routes/ariba.$'
 import { Route as EcovadisSplatRouteImport } from './routes/ecovadis.$'
@@ -120,6 +121,11 @@ const ApiOracleRoute = ApiOracleRouteImport.update({
 const ApiPbftRoute = ApiPbftRouteImport.update({
   id: '/api/pbft',
   path: '/api/pbft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPricesRoute = ApiPricesRouteImport.update({
+  id: '/api/prices',
+  path: '/api/prices',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSealKeyRoute = ApiSealKeyRouteImport.update({
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/api/competition': typeof ApiCompetitionRoute
   '/api/oracle': typeof ApiOracleRouteWithChildren
   '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/api/prices': typeof ApiPricesRoute
   '/api/seal-key': typeof ApiSealKeyRoute
   '/ariba/$': typeof AribaSplatRoute
   '/ecovadis/$': typeof EcovadisSplatRoute
@@ -321,6 +328,7 @@ export interface FileRoutesByTo {
   '/api/competition': typeof ApiCompetitionRoute
   '/api/oracle': typeof ApiOracleRouteWithChildren
   '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/api/prices': typeof ApiPricesRoute
   '/api/seal-key': typeof ApiSealKeyRoute
   '/ariba/$': typeof AribaSplatRoute
   '/ecovadis/$': typeof EcovadisSplatRoute
@@ -366,6 +374,7 @@ export interface FileRoutesById {
   '/api/competition': typeof ApiCompetitionRoute
   '/api/oracle': typeof ApiOracleRouteWithChildren
   '/api/pbft': typeof ApiPbftRouteWithChildren
+  '/api/prices': typeof ApiPricesRoute
   '/api/seal-key': typeof ApiSealKeyRoute
   '/ariba/$': typeof AribaSplatRoute
   '/ecovadis/$': typeof EcovadisSplatRoute
@@ -412,6 +421,7 @@ export interface FileRouteTypes {
     | '/api/competition'
     | '/api/oracle'
     | '/api/pbft'
+    | '/api/prices'
     | '/api/seal-key'
     | '/ariba/$'
     | '/ecovadis/$'
@@ -455,6 +465,7 @@ export interface FileRouteTypes {
     | '/api/competition'
     | '/api/oracle'
     | '/api/pbft'
+    | '/api/prices'
     | '/api/seal-key'
     | '/ariba/$'
     | '/ecovadis/$'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/api/competition'
     | '/api/oracle'
     | '/api/pbft'
+    | '/api/prices'
     | '/api/seal-key'
     | '/ariba/$'
     | '/ecovadis/$'
@@ -544,6 +556,7 @@ export interface RootRouteChildren {
   ApiCompetitionRoute: typeof ApiCompetitionRoute
   ApiOracleRoute: typeof ApiOracleRouteWithChildren
   ApiPbftRoute: typeof ApiPbftRouteWithChildren
+  ApiPricesRoute: typeof ApiPricesRoute
   ApiSealKeyRoute: typeof ApiSealKeyRoute
   AribaSplatRoute: typeof AribaSplatRoute
   EcovadisSplatRoute: typeof EcovadisSplatRoute
@@ -658,6 +671,13 @@ declare module '@tanstack/react-router' {
       path: '/api/pbft'
       fullPath: '/api/pbft'
       preLoaderRoute: typeof ApiPbftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/prices': {
+      id: '/api/prices'
+      path: '/api/prices'
+      fullPath: '/api/prices'
+      preLoaderRoute: typeof ApiPricesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/seal-key': {
@@ -929,6 +949,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCompetitionRoute: ApiCompetitionRoute,
   ApiOracleRoute: ApiOracleRouteWithChildren,
   ApiPbftRoute: ApiPbftRouteWithChildren,
+  ApiPricesRoute: ApiPricesRoute,
   ApiSealKeyRoute: ApiSealKeyRoute,
   AribaSplatRoute: AribaSplatRoute,
   EcovadisSplatRoute: EcovadisSplatRoute,

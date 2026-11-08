@@ -89,5 +89,11 @@
       "destination": "https://verityx-portal.vercel.app/:path*",
       "permanent": false
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/prices?record=1",
+      "schedule": "7 12 * * *"
+    }
   ]
 }

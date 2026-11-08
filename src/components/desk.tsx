@@ -13,6 +13,7 @@ import { getDeskControls, recordDeskEvent } from "@/lib/desk-ops";
 import { CORE_SHA, CORE_VERSION } from "@/lib/core-meta";
 import { DeskTour, tourSeen } from "@/components/desk-tour";
 import { ShouldCostPanel } from "@/components/should-cost-panel";
+import { DriftBanner, PriceHistoryPanel } from "@/components/price-history-panel";
 import { postSapWriteback, runLiveVerify } from "@/lib/live-api";
 import { deskKeys, useDeskTape } from "@/lib/desk-live";
 import { useQueryClient } from "@tanstack/react-query";
@@ -631,6 +632,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
         </nav>
 
         <section className="desk-list">
+          <DriftBanner />
           <div className="vx-kpis" style={{ marginBottom: "0.9rem" }} data-tour="kpis">
             <div className="vx-kpi">
               <div className="k">POs</div>
@@ -884,6 +886,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           ) : null}
           {tab === "mkt" ? (
             <div>
+              <PriceHistoryPanel />
               <div className="mkt-hero">
                 <div className="score-card">
                   <div className="k">LME Cu cash</div>
