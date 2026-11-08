@@ -1,0 +1,55 @@
+name: Database backup
+
+# Nightly encrypted pg_dump of the production database, kept 30 days as a
+# workflow artifact. This repository is PUBLIC, so the dump is encrypted
+# (AES-256, gpg) before upload; without the passphrase it is unreadable.
+#
+# Turn on by adding two repository secrets (Settings → Secrets → Actions):
+#   BACKUP_DATABASE_URL   the same connection string as Vercel's DATABASE_URL
+#   BACKUP_PASSPHRASE     a long random passphrase kept in your password manager
+# Restore: download the artifact, then
+#   gpg -d verityx-YYYY-MM-DD.dump.gpg > verityx.dump
+#   pg_restore --no-owner -d "<target database url>" verityx.dump
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check configuration
+        id: cfg
+        env:
+          URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$PASS" ]; then
+            echo "::notice::Backups are off: add BACKUP_DATABASE_URL and BACKUP_PASSPHRASE repository secrets."
+            echo "on=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "on=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Dump and encrypt
+        if: steps.cfg.outputs.on == 'true'
+        env:
+          URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          day=$(date -u +%F)
+          docker run --rm -e URL postgres:17 sh -c 'pg_dump --format=custom --no-owner --no-privileges "$URL"' > verityx.dump
+          test -s verityx.dump
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 \
+            -o "verityx-$day.dump.gpg" verityx.dump
+          shred -u verityx.dump
+          ls -l "verityx-$day.dump.gpg"
+          echo "DAY=$day" >> "$GITHUB_ENV"
+      - uses: actions/upload-artifact@v4
+        if: steps.cfg.outputs.on == 'true'
+        with:
+          name: verityx-db-${{ env.DAY }}
+          path: verityx-*.dump.gpg
+          retention-days: 30
+          if-no-files-found: error

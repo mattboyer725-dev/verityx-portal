@@ -71,11 +71,11 @@ const SCREENING: Row[] = [
   },
   {
     what: "Media-risk headlines",
-    source: "Google News RSS search",
-    url: "https://news.google.com",
-    license: "Headlines and links only; publishers keep their rights",
-    cadence: "Queried live",
-    note: "Under review: being replaced with a source licensed for commercial use. No article text is stored.",
+    source: "The GDELT Project, DOC 2.0 API",
+    url: "https://www.gdeltproject.org/about.html#termsofuse",
+    license: "Free for commercial use with citation and a link to gdeltproject.org; publishers keep rights in their headlines",
+    cadence: "Queried live, cached 15 minutes",
+    note: "Only headline, outlet and link are shown; article text is never fetched or stored. A headline is a prompt for review, not a finding.",
   },
 ];
 

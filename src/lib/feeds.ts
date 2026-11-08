@@ -390,32 +390,36 @@ function decodeXml(s: string) {
     .replace(/&#39;/g, "'");
 }
 
+/**
+ * Media-risk headlines from the GDELT Project's DOC 2.0 API: free for
+ * commercial use with a citation and link to gdeltproject.org. Only the
+ * headline, outlet domain and link are kept; article text is never fetched.
+ */
+export const GDELT_ATTRIBUTION = "Headlines via the GDELT Project (gdeltproject.org)";
 async function fetchNews(): Promise<NewsHit[]> {
   if (age(newsCache, 15 * 60_000) && newsCache) return newsCache.value;
-  const queries = ["rare earth export China", "NdFeB magnet Siemens", "copper LME", "Infineon IGBT"];
+  const queries = ['"rare earth" export China', 'NdFeB magnet', 'copper smelter supply', 'Infineon IGBT'];
   try {
     const packs = await Promise.all(
       queries.map(async (q) => {
         const url =
-          "https://news.google.com/rss/search?q=" + encodeURIComponent(q) + "&hl=en-US&gl=US&ceid=US:en";
-        const xml = await getText(url, 3500);
-        const hits: NewsHit[] = [];
-        const re = /<item>[\s\S]*?<title>([\s\S]*?)<\/title>[\s\S]*?<link>([\s\S]*?)<\/link>/g;
-        let m: RegExpExecArray | null;
-        while ((m = re.exec(xml)) && hits.length < 3) {
-          hits.push({
-            title: decodeXml(m[1]).slice(0, 180),
-            source: "Google News",
-            url: decodeXml(m[2]).trim(),
+          "https://api.gdeltproject.org/api/v2/doc/doc?mode=artlist&format=json&maxrecords=5&sort=datedesc&timespan=7d&query=" +
+          encodeURIComponent(`${q} sourcelang:english`);
+        const data = (await getJson(url)) as { articles?: { title?: string; url?: string; domain?: string }[] };
+        return (data.articles ?? [])
+          .filter((a) => a.title && a.url && /^https?:\/\//.test(a.url))
+          .slice(0, 3)
+          .map((a) => ({
+            title: decodeXml(String(a.title)).slice(0, 180),
+            source: `${a.domain ?? "news"} · via GDELT`,
+            url: String(a.url),
             query: q,
-          });
-        }
-        return hits;
+          }));
       }),
     );
     const news = packs.flat().slice(0, 10);
-    newsCache = { at: Date.now(), value: news };
-    return news;
+    if (news.length) newsCache = { at: Date.now(), value: news };
+    return news.length ? news : newsCache?.value || [];
   } catch {
     return newsCache?.value || [];
   }

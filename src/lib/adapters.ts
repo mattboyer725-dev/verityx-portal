@@ -60,15 +60,15 @@ export function buildAdapterCards(input: {
       protocol: "21-criteria · 4 themes · NACE 27 weights",
       path: "/ecovadis/api/v2/scorecards",
       detail:
-        "Public methodology-shaped medals from GLEIF identity, the UN list and news RSS. EcoVadis is not a tenant.",
+        "Public methodology-shaped medals from GLEIF identity, the UN list and GDELT news headlines. EcoVadis is not a tenant.",
     },
     {
       id: "prewave",
       name: "Media-risk heat",
       status: prewave,
-      protocol: "RSS incidents · heat on the PO",
+      protocol: "GDELT headline incidents · heat on the PO",
       path: "/prewave/api/v1/risks",
-      detail: "Media-risk heat and alerts from live news RSS on the same purchase order. Prewave is not a tenant.",
+      detail: "Media-risk heat and alerts from live GDELT headlines on the same purchase order. Prewave is not a tenant.",
     },
     {
       id: "screen",

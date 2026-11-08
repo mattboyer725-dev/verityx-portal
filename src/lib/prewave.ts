@@ -1,4 +1,4 @@
-/** VerityX media-risk heat from RSS on the same PO. Independent of Prewave. */
+/** VerityX media-risk heat from GDELT headlines on the same PO. Independent of Prewave. */
 
 export type PrewaveLevel = "LOW" | "MED" | "HIGH" | "CRITICAL";
 
@@ -129,7 +129,7 @@ export function scorePrewave(input: {
     level: prewaveLevel(heat),
     headlines: top.slice(0, 3).map((i) => i.title),
     incidents: top,
-    source: "Prewave media-risk analog · live news RSS on the PO",
+    source: "Prewave media-risk analog · live GDELT headlines on the PO",
     issuer: "VerityX media-risk heat",
   };
 }
@@ -140,7 +140,7 @@ export function prewaveTaxonomy() {
     issuer: "VerityX media-risk heat",
     vendor: {
       subscribed: false,
-      note: "Heat is scored from live news RSS incidents on the same purchase order the ESG scorecard scores. Independent of Prewave.",
+      note: "Heat is scored from live GDELT headlines incidents on the same purchase order the ESG scorecard scores. Independent of Prewave.",
     },
     categories: ["DISRUPTION", "ESG", "LABOR", "COMPLIANCE", "QUALITY"],
     bands: PREWAVE_BANDS,

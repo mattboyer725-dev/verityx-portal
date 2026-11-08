@@ -23,7 +23,7 @@ export function ecovadisListBody(live: LiveBundle) {
   const scorecards = Object.values(live.ecovadis).map(bindEcovadisPo);
   return {
     protocol: "EcoVadis scorecard analog",
-    methodology: "21-criteria · 4 themes · GLEIF + UN list + news RSS",
+    methodology: "21-criteria · 4 themes · GLEIF + UN list + GDELT news headlines",
     industry: "NACE 27 · Manufacture of electrical equipment",
     vendor: {
       subscribed: false,

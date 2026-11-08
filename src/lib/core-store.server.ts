@@ -60,7 +60,22 @@ async function lockedWrite<T>(fn: () => Promise<T>): Promise<T> {
     await q("begin");
     try {
       await q("select pg_advisory_xact_lock($1)", [LEDGER_LOCK]);
-      const rows = await q(SELECT_CHAIN);
+      let rows = await q(SELECT_CHAIN);
+      // A new LEDGER_EPOCH (set with a rotated signing secret): archive the old chain once, start fresh.
+      const epoch = (process.env.LEDGER_EPOCH ?? "").trim();
+      if (epoch) {
+        const seen = await q("select 1 from ledger_epochs where epoch = $1", [epoch]);
+        if (!seen.length) {
+          await q(
+            `insert into core_events_fork_archive (event_id, event_type, payload, actor, timestamp, prev_hash, signature, hash, reason)
+             select event_id, event_type, payload, actor, timestamp, prev_hash, signature, hash, $1 from core_events order by seq`,
+            [`ledger epoch ${epoch}: signing secret rotated; previous chain archived intact`],
+          );
+          await q("delete from core_events");
+          await q("insert into ledger_epochs (epoch, archived) values ($1, $2)", [epoch, rows.length]);
+          rows = [];
+        }
+      }
       replaceLog(rows.map(rowToEvent));
       const known = new Set(rows.map((r) => String(r.event_id)));
       await ensureGenesis();
@@ -105,7 +120,9 @@ export function refreshLedger(): Promise<void> {
       return;
     }
     const sql = await getSql();
-    const rows = await sql.query<Record<string, unknown>>(SELECT_CHAIN);
+    const epoch = (process.env.LEDGER_EPOCH ?? "").trim();
+    const epochPending = epoch ? !(await sql.query("select 1 from ledger_epochs where epoch = $1", [epoch])).length : false;
+    const rows = epochPending ? [] : await sql.query<Record<string, unknown>>(SELECT_CHAIN);
     if (rows.length) replaceLog(rows.map(rowToEvent));
     else await lockedWrite(async () => undefined);
   });

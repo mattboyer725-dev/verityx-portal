@@ -179,8 +179,8 @@ export function scoreEcovadis(input: {
   for (const n of envNews.slice(0, 2)) envEv.push(`News · ${n.title.slice(0, 72)}`);
   for (const n of labNews.slice(0, 2)) labEv.push(`News · ${n.title.slice(0, 72)}`);
   for (const n of ethNews.slice(0, 2)) ethEv.push(`News · ${n.title.slice(0, 72)}`);
-  if (!envNews.length) envEv.push("No environment headlines on the RSS pass");
-  if (!labNews.length) labEv.push("No labor headlines on the RSS pass");
+  if (!envNews.length) envEv.push("No environment headlines in the GDELT headlines");
+  if (!labNews.length) labEv.push("No labor headlines in the GDELT headlines");
   if (!ethNews.length && !input.sanctionsHit) ethEv.push("No ethics headlines or list hits");
 
   environment = clamp(environment);
@@ -210,7 +210,7 @@ export function scoreEcovadis(input: {
     publishedAt: now,
     validUntil: valid.toISOString(),
     industry: "NACE 27 · Manufacture of electrical equipment",
-    source: "EcoVadis 21-criteria analog · GLEIF + UN list + news RSS",
+    source: "EcoVadis 21-criteria analog · GLEIF + UN list + GDELT news headlines",
     issuer: "VerityX ESG scorecard",
   };
 }
@@ -221,7 +221,7 @@ export function ecovadisMethodology() {
     issuer: "VerityX ESG scorecard",
     vendor: {
       subscribed: false,
-      note: "EcoVadis is not a tenant here. This is the public 21-criteria / 4-theme methodology scored from GLEIF, the UN list, and news RSS.",
+      note: "EcoVadis is not a tenant here. This is the public 21-criteria / 4-theme methodology scored from GLEIF, the UN list, and GDELT news headlines.",
     },
     industry: "NACE 27 · Manufacture of electrical equipment",
     weights: ECOVADIS_WEIGHTS,

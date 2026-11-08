@@ -25,7 +25,7 @@ export function prewaveListBody(live: LiveBundle) {
     protocol: "Prewave media-risk analog",
     vendor: {
       subscribed: false,
-      note: "Media-risk heat from live news RSS on the same PO the ESG scorecard scores. Independent of Prewave.",
+      note: "Media-risk heat from live GDELT headlines on the same PO the ESG scorecard scores. Independent of Prewave.",
     },
     count: risks.length,
     risks,

@@ -124,7 +124,7 @@ export function evidenceFromPacket(packet: DeskPacketSlice): EvidenceItem[] {
       item(
         "media_report",
         a.text,
-        a.type === "ESG" ? "ESG scorecard (GLEIF + UN)" : "Media-risk heat (news RSS)",
+        a.type === "ESG" ? "ESG scorecard (GLEIF + UN)" : "Media-risk heat (GDELT headlines)",
         a.text,
         "medium",
       ),

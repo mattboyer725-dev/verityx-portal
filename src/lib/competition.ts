@@ -29,7 +29,7 @@ export const VERITYX_WEDGE =
 export const HONEST_GAPS = [
   "Siemens S/4HANA and Ariba tenants are not connected. The desk runs a live OData-shaped store with CSRF, ETag, BAPI_PO_CHANGE, IDoc ORDERS05, and Ariba sourcing v2 RFQs on this host.",
   "Argus, Fastmarkets and LME data are not subscribed. Copper and aluminium are World Bank monthly averages (CC BY 4.0); NdPr and Dy are USGS annual averages (public domain); FX is the ECB reference rate. A buyer adds their own licensed benchmark on a check.",
-  "EcoVadis and Prewave APIs are paid. The analogs on this host are a 21-criteria scorecard from GLEIF + news and a media-risk heat from RSS on the same PO. Financial health is VerityX's own disclosure heuristic, not a credit rating.",
+  "EcoVadis and Prewave APIs are paid. The analogs on this host are a 21-criteria scorecard from GLEIF + news and a media-risk heat from GDELT headlines on the same PO. Financial health is VerityX's own disclosure heuristic, not a credit rating.",
   "Circulor and Minespider vendor tenants are not subscribed. Lots and batch passports are hashed ledgers on this host (EU DPP + GS1 Digital Link shape).",
   "The 27-voter PBFT cluster is in-process (quorum 19, two Byzantine). It is not 27 separate machines.",
   "Okta Workforce is not provisioned. The desk issues its own OIDC RS256 JWTs with JWKS.",
@@ -60,7 +60,7 @@ export const FIELD: CompetitorClass[] = [
     they: "EcoVadis sells questionnaire scorecards and medals on an annual cadence, scored by analysts against 21 criteria in four themes. Strong, paid, and off the purchase order.",
     we: "Every supplier on the magnetics tape gets VerityX’s own 21-criteria ESG scorecard in the same verify pass as price consensus and mineral custody. NACE 27 weights, published medal cutoffs, GLEIF + news evidence.",
     contrast:
-      "We do not have their questionnaire network or analyst desk. This is the public methodology scored from GLEIF, the UN list and news RSS — not an EcoVadis tenant, and not a fake medal.",
+      "We do not have their questionnaire network or analyst desk. This is the public methodology scored from GLEIF, the UN list and GDELT news headlines — not an EcoVadis tenant, and not a fake medal.",
     analog: "EcoVadis scorecard analog",
     analogPath: "/ecovadis/api/v2/scorecards",
     adapterId: "ecovadis",
@@ -70,9 +70,9 @@ export const FIELD: CompetitorClass[] = [
     names: "Prewave",
     category: "Media and disruption risk",
     they: "Prewave watches media and disruption events across the supplier graph and sells a heat score off the PO. Strong, paid, and built for a control-tower, not a single line item.",
-    we: "The same PO that carries the ESG scorecard also carries a media-risk heat: RSS incidents classified as disruption, ESG, labor, compliance, or quality, sealed into the packet.",
+    we: "The same PO that carries the ESG scorecard also carries a media-risk heat: GDELT headline incidents classified as disruption, ESG, labor, compliance, or quality, sealed into the packet.",
     contrast:
-      "We do not ingest their firehose or analyst coverage. Heat here is live news RSS on the magnetics suppliers Elena is buying — named on the field, not hidden behind SCREEN.",
+      "We do not ingest their firehose or analyst coverage. Heat here is live GDELT headlines on the magnetics suppliers Elena is buying — named on the field, not hidden behind SCREEN.",
     analog: "Prewave media-risk analog",
     analogPath: "/prewave/api/v1/risks",
     adapterId: "prewave",

@@ -47,7 +47,7 @@ export function analogSummary(id: string, body: unknown): string[] {
     return [
       `${risks.length} supplier heats`,
       first.supplier ? `${first.supplier} · ${first.level} ${first.heat}` : "",
-      first.po ? `PO ${first.po}` : "media-risk heat from RSS",
+      first.po ? `PO ${first.po}` : "media-risk heat from GDELT headlines",
     ].filter(Boolean);
   }
   if (id === "prices") {

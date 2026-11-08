@@ -1,0 +1,52 @@
+name: Uptime
+
+# Every 15 minutes: the site, the buyer pages and the database must answer.
+# On failure an "outage" issue is opened (GitHub emails the repo owner); it is
+# closed automatically when the site recovers. Note: GitHub pauses scheduled
+# workflows in a repo with no commits for 60 days — any push re-enables them.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe
+        id: probe
+        run: |
+          SITE=https://verityx-portal.vercel.app
+          fail=""
+          for p in / /pilot /check /verify /terms; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$SITE$p")
+            [ "$code" = "200" ] || fail="$fail $p=$code"
+          done
+          r=$(curl -s --max-time 20 "$SITE/api/readiness" || echo '{}')
+          echo "$r" | jq -e '.checks.database.ok == true' >/dev/null || fail="$fail database"
+          echo "$r" | jq -e '.checks.sealSigning.ok == true' >/dev/null || fail="$fail seal-signing"
+          echo "failed=${fail# }" >> "$GITHUB_OUTPUT"
+          echo "Readiness: $(echo "$r" | jq -c '{ready, stripeMode, commit}')"
+          [ -z "$fail" ] || echo "::warning::Failing:$fail"
+      - name: Open or close the outage issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FAILED: ${{ steps.probe.outputs.failed }}
+        run: |
+          open=$(gh issue list -R "$GITHUB_REPOSITORY" --label outage --state open --json number -q '.[0].number')
+          if [ -n "$FAILED" ]; then
+            if [ -z "$open" ]; then
+              gh label create outage -R "$GITHUB_REPOSITORY" --color B60205 2>/dev/null || true
+              gh issue create -R "$GITHUB_REPOSITORY" --label outage \
+                --title "Production check failing: $FAILED" \
+                --body "Uptime run ${{ github.run_id }} at $(date -u +%FT%TZ) found: $FAILED. Readiness: https://verityx-portal.vercel.app/api/readiness"
+            else
+              gh issue comment "$open" -R "$GITHUB_REPOSITORY" --body "Still failing at $(date -u +%FT%TZ): $FAILED"
+            fi
+            exit 1
+          elif [ -n "$open" ]; then
+            gh issue close "$open" -R "$GITHUB_REPOSITORY" --comment "Recovered at $(date -u +%FT%TZ)."
+          fi
