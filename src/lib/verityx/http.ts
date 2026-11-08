@@ -20,6 +20,14 @@ function authUrlHost(): string | null {
 }
 
 function isTrustedHost(host: string): boolean {
+  // Production trusts exactly its own sign-in host (BETTER_AUTH_URL) unless
+  // FRONTEND_ORIGINS names more. The wildcards below exist for previews and
+  // local work: anyone can create a "verityx-*.vercel.app" project or a
+  // "*.grok.me" app, so they must never get credentialed access to production.
+  if (process.env.VERCEL_ENV === "production") {
+    const own = authUrlHost();
+    return !!own && host === own;
+  }
   if (LOCAL_HOSTS.has(host)) return true;
   if (host.endsWith(".grok-sandbox.com") || host.endsWith(".grok.me")) return true;
   const configuredHost = authUrlHost();

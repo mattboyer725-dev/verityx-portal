@@ -55,3 +55,21 @@ describe("matchPath", () => {
     assert.equal(matchPath("/api/other/abc", "/api/pilots/:id"), null);
   });
 });
+
+describe("allowedOrigin in production", () => {
+  it("trusts only the site's own host; look-alike Vercel and Grok hosts are refused", () => {
+    const saved = { env: process.env.VERCEL_ENV, url: process.env.BETTER_AUTH_URL };
+    process.env.VERCEL_ENV = "production";
+    process.env.BETTER_AUTH_URL = "https://verityx-portal.vercel.app";
+    try {
+      assert.equal(allowedOrigin("https://verityx-portal.vercel.app", ""), true);
+      assert.equal(allowedOrigin("https://verityx-evil.vercel.app", ""), false);
+      assert.equal(allowedOrigin("https://anything.grok.me", ""), false);
+      assert.equal(allowedOrigin("http://localhost:8080", ""), false);
+      assert.equal(allowedOrigin("https://app.example", "https://app.example"), true, "explicit allowlist still wins");
+    } finally {
+      if (saved.env === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = saved.env;
+      if (saved.url === undefined) delete process.env.BETTER_AUTH_URL; else process.env.BETTER_AUTH_URL = saved.url;
+    }
+  });
+});
