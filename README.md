@@ -11,7 +11,7 @@ Three planes plus a signed continuity core. One product.
 | Magnetics desk | Elena Hartmann, Siemens Gamesa | `/desk` |
 | Competitor field | Public | `/field` |
 | Customer Zero OS | Founder / analyst workspace | `/work` |
-| Local Core | HMAC + Merkle doctor (v1.6.0 `319af22`) | `/core` |
+| Local Core | HMAC + Merkle doctor (v1.7.0 `0188c84`) | `/core` |
 | Owner command | mattboyer725@gmail.com | `/admin` |
 
 Source: [mattboyer725-dev/verityx-portal](https://github.com/mattboyer725-dev/verityx-portal) · Release [v1.0-soft-prod](https://github.com/mattboyer725-dev/verityx-portal/releases/tag/v1.0-soft-prod)
@@ -20,7 +20,7 @@ Source: [mattboyer725-dev/verityx-portal](https://github.com/mattboyer725-dev/ve
 
 - 11-agent PO pipeline: INGEST → ORACLE → CONSENSUS → RISK → PROVENANCE → SCREEN → COMPLIANCE → SEAL → LEDGER → EVIDENCE → AUTH
 - Customer Zero OS advisory rules (`rules-v1.0-soft-prod`). BLOCK never auto-applies.
-- HMAC-SHA256 + domain-separated Merkle from [verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) v1.6.0 (`319af22`), persisted to Postgres (Neon / Cloud SQL / PGLite preview).
+- HMAC-SHA256 + domain-separated Merkle from [verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) v1.7.0 (`0188c84`), persisted to Postgres (Neon / Cloud SQL / PGLite preview).
 - $2,500 / 72-hour pilot loop: prospect → payment → **live magnetics desk packet** → human-approved decision → analog SAP HOLD → PDF.
 - Tenant isolation on every OS query. Stripe checkout + signed webhook + manual admin path.
 - Sign-in returns to the platform hub. Workspace is one click from there.

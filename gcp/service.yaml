@@ -65,6 +65,14 @@ spec:
                 secretKeyRef:
                   name: verityx-better-auth-secret
                   key: latest
+            - name: LOCAL_CORE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: verityx-local-core-secret
+                  key: latest
+            # Verify-only: lets v1.0 history (signed with the published key) still verify. Public by design.
+            - name: LOCAL_CORE_SECRET_PREVIOUS
+              value: verityx-desk-local-core-hmac-v1.6.0-siemens-gamesa-magnetics
             - name: BETTER_AUTH_URL
               valueFrom:
                 secretKeyRef:

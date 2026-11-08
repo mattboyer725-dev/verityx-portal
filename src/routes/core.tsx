@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Check, Shield } from "lucide-react";
 import { getCoreStatus } from "@/lib/live-api";
-import { CORE_SHA, CORE_VERSION, LOCAL_CORE } from "@/lib/core-ledger";
+import { CORE_SHA, CORE_VERSION, LOCAL_CORE } from "@/lib/core-meta";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { useLiveAdapters } from "@/lib/desk-live";

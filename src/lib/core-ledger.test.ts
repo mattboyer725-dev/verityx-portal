@@ -20,7 +20,7 @@ test("merkle empty root is 64 zeros (python merkle.py)", async () => {
   assert.equal(await merkleRootOf([]), "0".repeat(64));
 });
 
-test("merkle leaf/pair/root match python fixtures from v1.6.0", async () => {
+test("merkle leaf/pair/root match python fixtures (unchanged v1.6.0 → v1.7.0)", async () => {
   assert.equal(await leafHash(AA), "e0bb82791bae3c50bd9c20fa4ccdcb8064a56e5c12bc69b07e6712ac9b4429e6");
   assert.equal(
     await hashPair(
@@ -65,7 +65,10 @@ test("schema rejects unknown type and incomplete decision", async () => {
   await assert.rejects(() => appendCoreEvent("decision.record", { title: "x", choice: "y" }));
   await appendCoreEvent("decision.record", { title: "PO", choice: "HOLD_PO", context: "NdFeB" });
   const d = await doctor();
-  assert.equal(d.overall, "ok");
-  assert.equal(d.version, "1.6.0");
+  // No LOCAL_CORE_SECRET in the test env: the public dev key signs, and doctor says so.
+  assert.equal(d.overall, "warn");
+  assert.equal(d.checks.secret.status, "warn");
+  assert.equal(d.checks.chain.status, "ok");
+  assert.equal(d.version, "1.7.0");
   __resetForTests();
 });

@@ -1,7 +1,7 @@
 import type { LiveBundle, LiveQuote } from "@/lib/feeds";
 import { scaleByLive, SUPPLIER_GLEIF } from "@/lib/feeds";
 import {
-  appendCoreEvent,
+  appendCoreEvents,
   ensureGenesis,
   eventHashes,
   inclusionProof,
@@ -568,7 +568,7 @@ export async function ledgerAgent() {
   const snap = await merkleSnapshot();
   return {
     agent: "LEDGER" as const,
-    pattern: "verityx-local-core v1.6.0 · HMAC-SHA256 append-only + Merkle inclusion",
+    pattern: `verityx-local-core v${LOCAL_CORE.version} · HMAC-SHA256 append-only + Merkle inclusion`,
     repo: LOCAL_CORE.repo,
     version: LOCAL_CORE.version,
     depth: chain.depth,
@@ -771,25 +771,28 @@ export async function runPipeline(scenarioId: string, live?: LiveBundle): Promis
   const dual = dualSourceAgent(scenario, consensus);
   const seal = await sealAgent(scenario, consensus);
   const advisory = advisoryFromScreen(scenario, screen, live);
-  const artifact = await appendCoreEvent(
-    "artifact.record",
+  // One unit: the seal artifact and its decision land together or not at all.
+  const [artifact] = await appendCoreEvents([
     {
-      title: `${scenario.id} ${scenario.po}`,
-      location: seal.hash,
-      kind: "po-seal",
-      notes: `${risk.action} ${consensus.verdict}`,
+      type: "artifact.record",
+      payload: {
+        title: `${scenario.id} ${scenario.po}`,
+        location: seal.hash,
+        kind: "po-seal",
+        notes: `${risk.action} ${consensus.verdict}`,
+      },
+      actor: BUYER.email,
     },
-    BUYER.email,
-  );
-  await appendCoreEvent(
-    "decision.record",
     {
-      title: scenario.po,
-      choice: risk.action,
-      context: `${scenario.title} · ${scenario.supplier}`,
+      type: "decision.record",
+      payload: {
+        title: scenario.po,
+        choice: risk.action,
+        context: `${scenario.title} · ${scenario.supplier}`,
+      },
+      actor: BUYER.email,
     },
-    BUYER.email,
-  );
+  ]);
   const ledger = await ledgerAgent();
   const merkle = await merkleAgent(artifact.hash);
   const auth = authStamp();

@@ -6,11 +6,11 @@ import {
   SCENARIOS,
   consensusAgent,
   money,
-  runPipeline,
   type PipelineResult,
   type Scenario,
 } from "@/lib/engine";
 import { getDeskControls, recordDeskEvent } from "@/lib/desk-ops";
+import { CORE_SHA, CORE_VERSION } from "@/lib/core-meta";
 import { postSapWriteback, runLiveVerify } from "@/lib/live-api";
 import { deskKeys, useDeskTape } from "@/lib/desk-live";
 import { useQueryClient } from "@tanstack/react-query";
@@ -325,9 +325,10 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
         data: { kind: "desk.verify", target: id, detail: result.message.slice(0, 280) },
       }).catch(() => undefined);
     } catch {
-      const result = await runPipeline(id, live || undefined);
-      setPacket(result);
-      setNote(result.message);
+      // No client-side fallback: the seal is signed by the server key only.
+      setRunning(false);
+      setNote("VERIFY · the server did not answer in 12s — nothing was sealed. Retry.");
+      return;
     }
     setRunning(false);
     setTab("pipe");
@@ -1021,11 +1022,11 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
               </div>
               <div className="screen-row">
                 <span>Version</span>
-                <span className="mono">{view?.ledger.version || live?.core?.version || "1.6.0"}</span>
+                <span className="mono">{view?.ledger.version || live?.core?.version || CORE_VERSION}</span>
               </div>
               <div className="screen-row">
                 <span>Git SHA</span>
-                <span className="mono">{(live?.core?.sha || "319af22").slice(0, 7)}</span>
+                <span className="mono">{(live?.core?.sha || CORE_SHA).slice(0, 7)}</span>
               </div>
               <div className="screen-row">
                 <span>Doctor</span>
@@ -1101,7 +1102,7 @@ export function Desk({ onLeave, prove }: { onLeave: () => void; prove?: string }
           PBFT <strong>27 / quorum 19</strong>
         </span>
         <span>
-          Core <strong>{live?.core?.ok ? "HMAC 1.6.0" : "…"}</strong>
+          Core <strong>{live?.core?.ok ? `HMAC ${CORE_VERSION}` : "…"}</strong>
         </span>
         <span>
           OIDC <strong>RS256</strong>

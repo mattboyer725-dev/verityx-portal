@@ -148,6 +148,8 @@ ensure_secret() {
 }
 
 ensure_secret verityx-better-auth-secret "$(openssl rand -hex 32)"
+# Local Core HMAC signing key (server-only; never rotated by a re-run).
+ensure_secret verityx-local-core-secret "$(openssl rand -hex 32)"
 ensure_secret verityx-better-auth-url "https://${SERVICE}-PLACEHOLDER.run.app"
 ensure_secret verityx-grok-auth-client-id "replace-me"
 ensure_secret verityx-grok-auth-client-secret "replace-me"
@@ -155,6 +157,7 @@ ensure_secret verityx-grok-auth-client-secret "replace-me"
 for SECRET in \
   verityx-database-url \
   verityx-better-auth-secret \
+  verityx-local-core-secret \
   verityx-better-auth-url \
   verityx-grok-auth-client-id \
   verityx-grok-auth-client-secret; do

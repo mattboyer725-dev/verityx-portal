@@ -4,6 +4,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
 import { money } from "@/lib/verityx/format";
 import { BUYER } from "@/lib/engine";
+import { CORE_SHA, CORE_VERSION } from "@/lib/core-meta";
 import { OWNER_EMAIL } from "@/lib/admin";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -32,7 +33,7 @@ function Home() {
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute">
           Siemens Gamesa procurement on the PO line. Customer Zero operating system for the $2,500 / 72-hour audit.
-          HMAC + Merkle continuity from local-core v1.6.0. Advisory decisions — never an automatic fraud finding.
+          HMAC + Merkle continuity from local-core v{CORE_VERSION}. Advisory decisions — never an automatic fraud finding.
         </p>
         <SurfaceLoop className="mt-8" />
       </section>
@@ -121,7 +122,7 @@ function Home() {
             <p className="text-[11px] uppercase tracking-[0.18em] text-mute">04 · Local Core</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Proof</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              Live doctor against v1.6.0 SHA 319af22. HMAC chain, Merkle inclusion. In-memory on the edge, durable when
+              Live doctor against v{CORE_VERSION} SHA {CORE_SHA.slice(0, 7)}. HMAC chain, Merkle inclusion. In-memory on the edge, durable when
               Postgres is up. Not a mesh peer.
             </p>
           </div>

@@ -1,24 +1,93 @@
 /**
- * Faithful port of mattboyer725-dev/verityx-local-core v1.6.0
- * SHA 319af22fc87271665ec0e453a73b9946a4473104
+ * Faithful port of mattboyer725-dev/verityx-local-core v1.7.0
+ * SHA 0188c849fc4482a5a15cf2a9e624b3a8550978d6
  *
- * Crypto matches event_store.py + merkle.py:
- *   canonical = JSON(body without signature/hash, sort_keys, separators=(",", ":"))
+ * Crypto matches event_store.py + merkle.py byte for byte (cross-verified
+ * against the Python EventStore):
+ *   canonical = json.dumps(body without signature/hash, sort_keys=True,
+ *               separators=(",", ":"), allow_nan=False)   # ensure_ascii=True
  *   signature = HMAC-SHA256(secret, canonical)
  *   hash      = SHA256(canonical || signature)
  *   leaf      = SHA256(0x00 || hash_bytes)
  *   pair      = SHA256(0x01 || left || right)
  *
+ * Key: LOCAL_CORE_SECRET from the server environment only (config.py policy).
  * In-memory (Vercel has no durable local FS). Not a mesh peer.
  */
 
-export const CORE_VERSION = "1.6.0";
-export const CORE_SHA = "319af22fc87271665ec0e453a73b9946a4473104";
-export const CORE_REPO = "mattboyer725-dev/verityx-local-core";
+import { CORE_REPO, CORE_SHA, CORE_VERSION, LOCAL_CORE } from "./core-meta.ts";
 
-const CORE_SECRET = new TextEncoder().encode(
-  "verityx-desk-local-core-hmac-v1.6.0-siemens-gamesa-magnetics",
-);
+export { CORE_REPO, CORE_SHA, CORE_VERSION, LOCAL_CORE };
+
+/* ------------------------------------------------------------------------- *
+ * Secret policy — mirrors local-core v1.7.0 config.py.
+ *
+ * LOCAL_CORE_SECRET signs. LOCAL_CORE_SECRET_PREVIOUS verifies only (rotation)
+ * and may be a public key so a log signed with one can be rotated away from;
+ * it never signs. Known public values never sign. A missing secret falls back
+ * to the public dev key only outside production, or with an explicit
+ * LOCAL_CORE_ALLOW_DEV_SECRET=1 — and doctor reports that key as not
+ * authentic either way.
+ * ------------------------------------------------------------------------- */
+export const MIN_SECRET_BYTES = 32;
+const DEV_FALLBACK_SECRET = "verityx-local-core-dev-secret-change-me";
+/** Signed every portal event through v1.0; committed to a public repo and shipped in a client chunk. */
+const LEGACY_PORTAL_SECRET = "verityx-desk-local-core-hmac-v1.6.0-siemens-gamesa-magnetics";
+export const KNOWN_PUBLIC_SECRETS: ReadonlySet<string> = new Set([
+  DEV_FALLBACK_SECRET,
+  "replace-with-a-real-random-secret-do-not-use-this-value",
+  LEGACY_PORTAL_SECRET,
+]);
+
+type KeySource = "env" | "dev" | "none";
+type KeyState = {
+  signing: Uint8Array | null;
+  source: KeySource;
+  error: string | null;
+  previous: Uint8Array | null;
+  previousPublic: boolean;
+};
+
+function env(name: string) {
+  return typeof process !== "undefined" ? (process.env?.[name] ?? "") : "";
+}
+
+const enc = new TextEncoder();
+
+export function loadKeys(): KeyState {
+  if (typeof window !== "undefined") {
+    // A browser cannot hold a server key; anything it "signed" would be a public-key imitation.
+    return { signing: null, source: "none", error: "signing is server-only", previous: null, previousPublic: false };
+  }
+  const raw = env("LOCAL_CORE_SECRET");
+  const prevRaw = env("LOCAL_CORE_SECRET_PREVIOUS");
+  const previous = prevRaw ? enc.encode(prevRaw) : null;
+  const previousPublic = Boolean(prevRaw && KNOWN_PUBLIC_SECRETS.has(prevRaw));
+  const base = { previous, previousPublic };
+  if (!raw) {
+    const allowDev = env("LOCAL_CORE_ALLOW_DEV_SECRET") === "1" || env("NODE_ENV") !== "production";
+    if (allowDev) return { ...base, signing: enc.encode(DEV_FALLBACK_SECRET), source: "dev", error: null };
+    return {
+      ...base,
+      signing: null,
+      source: "none",
+      error: "LOCAL_CORE_SECRET is required in production. Generate one: openssl rand -hex 32",
+    };
+  }
+  if (KNOWN_PUBLIC_SECRETS.has(raw)) {
+    return {
+      ...base,
+      signing: null,
+      source: "none",
+      error: "LOCAL_CORE_SECRET is a publicly known value. Generate a real one: openssl rand -hex 32",
+    };
+  }
+  const signing = enc.encode(raw);
+  if (signing.byteLength < MIN_SECRET_BYTES) {
+    return { ...base, signing: null, source: "none", error: `LOCAL_CORE_SECRET must be at least ${MIN_SECRET_BYTES} bytes.` };
+  }
+  return { ...base, signing, source: "env", error: null };
+}
 
 export type CoreEventType =
   | "system.ping"
@@ -80,12 +149,15 @@ async function sha256(data: Uint8Array) {
   return hex(await crypto.subtle.digest("SHA-256", data as unknown as BufferSource));
 }
 
-async function hmacSha256(message: string) {
-  const key = await crypto.subtle.importKey("raw", CORE_SECRET, { name: "HMAC", hash: "SHA-256" }, false, [
-    "sign",
-    "verify",
-  ]);
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+async function hmacSha256(secret: Uint8Array, message: string) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    secret as unknown as BufferSource,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
   return hex(sig);
 }
 
@@ -96,18 +168,52 @@ function macEqual(a: string, b: string) {
   return x === 0;
 }
 
-function sorted(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map(sorted);
-  if (v && typeof v === "object") {
-    const o = v as Record<string, unknown>;
-    return Object.fromEntries(Object.keys(o).sort().map((k) => [k, sorted(o[k])]));
-  }
-  return v;
+/** Python json.dumps default ensure_ascii=True: every code unit above 0x7F becomes \uXXXX (lowercase). */
+function pyString(s: string) {
+  return JSON.stringify(s).replace(/[\u0080-￿]/g, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 }
 
-/** Python json.dumps(..., sort_keys=True, separators=(",", ":"), allow_nan=False) */
+/** Python float repr pads a one-digit exponent ("1e-07"); JS does not ("1e-7"). */
+function pyNumber(n: number) {
+  if (!Number.isFinite(n)) throw new Error("canonical JSON refuses NaN/Infinity (allow_nan=False)");
+  return String(n).replace(/e([+-])(\d)$/, "e$10$2");
+}
+
+function pyJson(v: unknown): string {
+  if (v === null) return "null";
+  switch (typeof v) {
+    case "boolean":
+      return v ? "true" : "false";
+    case "number":
+      return pyNumber(v);
+    case "string":
+      return pyString(v);
+    case "object": {
+      if (Array.isArray(v)) return "[" + v.map(pyJson).join(",") + "]";
+      const o = v as Record<string, unknown>;
+      return (
+        "{" +
+        Object.keys(o)
+          .sort()
+          .map((k) => {
+            if (o[k] === undefined) throw new Error(`canonical JSON refuses undefined at key ${k}`);
+            return pyString(k) + ":" + pyJson(o[k]);
+          })
+          .join(",") +
+        "}"
+      );
+    }
+    default:
+      throw new Error(`canonical JSON refuses ${typeof v}`);
+  }
+}
+
+/**
+ * Byte-identical to Python json.dumps(obj, sort_keys=True, separators=(",", ":"),
+ * allow_nan=False) — the local-core event_store._canonical contract.
+ */
 export function canonicalJson(obj: Record<string, unknown>) {
-  return JSON.stringify(sorted(obj));
+  return pyJson(obj);
 }
 
 function envelopeBody(e: Omit<CoreEvent, "signature" | "hash"> | CoreEvent) {
@@ -184,7 +290,8 @@ function validatePayload(type: CoreEventType, payload: Record<string, unknown>) 
     case "memory.set": {
       if (Object.keys(payload).sort().join() !== "key,ns,value") throw new Error("memory.set requires exactly: ns, key, value");
       if (!isName(payload.ns, 120) || !isName(payload.key, 120)) throw new Error("invalid ns/key");
-      JSON.stringify(payload.value);
+      // v1.7.0: reject values that cannot be canonically signed before anything is appended.
+      pyJson(payload.value);
       return;
     }
     case "memory.delete": {
@@ -261,12 +368,112 @@ export async function verifyInclusion(eventHash: string, index: number, path: Me
   return idx === 0 && macEqual(running, root);
 }
 
-async function signAndHash(draft: Omit<CoreEvent, "signature" | "hash">) {
+/**
+ * The portal's v1.0 serializer: JSON.stringify over sorted keys. It did not
+ * escape non-ASCII the way Python does, so any event with "·", "—", "€" …
+ * failed local-core verification. Kept for verification of pre-rotation
+ * history under LOCAL_CORE_SECRET_PREVIOUS only; it never signs.
+ */
+function legacyCanonical(obj: Record<string, unknown>) {
+  const sortDeep = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(sortDeep)
+      : v && typeof v === "object"
+        ? Object.fromEntries(Object.keys(v as object).sort().map((k) => [k, sortDeep((v as Record<string, unknown>)[k])]))
+        : v;
+  return JSON.stringify(sortDeep(obj));
+}
+
+type SignedBy = { by: "current" | "previous"; body: string } | null;
+
+/** Which configured key produced this event's signature (event_store.verify_event with previous_secret). */
+async function signedBy(e: CoreEvent, keys: KeyState): Promise<SignedBy> {
+  const body = canonicalJson(envelopeBody(e));
+  if (keys.signing && macEqual(await hmacSha256(keys.signing, body), e.signature)) return { by: "current", body };
+  if (keys.previous) {
+    if (macEqual(await hmacSha256(keys.previous, body), e.signature)) return { by: "previous", body };
+    const legacy = legacyCanonical(envelopeBody(e));
+    if (legacy !== body && macEqual(await hmacSha256(keys.previous, legacy), e.signature)) {
+      return { by: "previous", body: legacy };
+    }
+  }
+  return null;
+}
+
+/**
+ * Content-verified tip cache (v1.7.0 append() tip cache). The tip is trusted
+ * only while the stored event still hashes to the value it was verified at;
+ * any edit to it — same length or not — forces a full re-verification.
+ */
+let verifiedTip: { index: number; hash: string; digest: string } | null = null;
+
+async function tipDigest(e: CoreEvent) {
+  return sha256(enc.encode(canonicalJson(envelopeBody(e)) + "|" + e.signature + "|" + e.hash));
+}
+
+async function assertTipIntact() {
+  if (!LOG.length) return;
+  const i = LOG.length - 1;
+  const last = LOG[i];
+  if (verifiedTip && verifiedTip.index === i && verifiedTip.hash === last.hash && verifiedTip.digest === (await tipDigest(last))) {
+    return;
+  }
+  const chain = await verifyChain();
+  if (!chain.ok) throw new Error("append refused: damaged existing chain");
+  verifiedTip = { index: i, hash: last.hash, digest: await tipDigest(last) };
+}
+
+async function signDraft(draft: Omit<CoreEvent, "signature" | "hash">, signing: Uint8Array): Promise<CoreEvent> {
   const body = canonicalJson(envelopeBody(draft));
-  const signature = await hmacSha256(body);
-  const joined = new TextEncoder().encode(body + signature);
-  const hash = await sha256(joined);
-  return { signature, hash };
+  const signature = await hmacSha256(signing, body);
+  const hash = await sha256(enc.encode(body + signature));
+  return { ...draft, signature, hash };
+}
+
+export type CoreDraft = { type: CoreEventType; payload: Record<string, unknown>; actor?: string };
+
+let writer: Promise<unknown> = Promise.resolve();
+
+/**
+ * Append several events as one unit (v1.7.0 ritual.py fix): every payload is
+ * validated and canonicalised before the first append, so a bad second event
+ * can never leave a half-written pair in an append-only log. Appends are
+ * serialised so concurrent requests cannot fork the chain.
+ */
+export function appendCoreEvents(drafts: CoreDraft[]): Promise<CoreEvent[]> {
+  const run = async () => {
+    if (!drafts.length) return [];
+    for (const d of drafts) {
+      validatePayload(d.type, d.payload);
+      canonicalJson({ payload: d.payload, actor: d.actor ?? "elena.hartmann" });
+    }
+    const keys = loadKeys();
+    if (!keys.signing) throw new Error(`signing refused: ${keys.error}`);
+    await assertTipIntact();
+    const out: CoreEvent[] = [];
+    for (const d of drafts) {
+      const prev_hash = LOG.length ? LOG[LOG.length - 1].hash : "0".repeat(64);
+      const event = await signDraft(
+        {
+          event_id: crypto.randomUUID(),
+          event_type: d.type,
+          payload: d.payload,
+          actor: d.actor ?? "elena.hartmann",
+          timestamp: Date.now() / 1000,
+          prev_hash,
+        },
+        keys.signing,
+      );
+      LOG.push(event);
+      out.push(event);
+    }
+    const last = LOG[LOG.length - 1];
+    verifiedTip = { index: LOG.length - 1, hash: last.hash, digest: await tipDigest(last) };
+    return out;
+  };
+  const next = writer.then(run, run);
+  writer = next.catch(() => undefined);
+  return next;
 }
 
 export async function appendCoreEvent(
@@ -274,60 +481,39 @@ export async function appendCoreEvent(
   payload: Record<string, unknown>,
   actor = "elena.hartmann",
 ) {
-  validatePayload(type, payload);
-  if (LOG.length) {
-    const last = LOG[LOG.length - 1];
-    const expect = await signAndHash({
-      event_id: last.event_id,
-      event_type: last.event_type,
-      payload: last.payload,
-      actor: last.actor,
-      timestamp: last.timestamp,
-      prev_hash: last.prev_hash,
-    });
-    if (expect.hash !== last.hash || expect.signature !== last.signature) {
-      throw new Error("append refused: damaged existing chain");
-    }
-  }
-  const prev_hash = LOG.length ? LOG[LOG.length - 1].hash : "0".repeat(64);
-  const draft: Omit<CoreEvent, "signature" | "hash"> = {
-    event_id: crypto.randomUUID(),
-    event_type: type,
-    payload,
-    actor,
-    timestamp: Date.now() / 1000,
-    prev_hash,
-  };
-  const { signature, hash } = await signAndHash(draft);
-  const event: CoreEvent = { ...draft, signature, hash };
-  LOG.push(event);
+  const [event] = await appendCoreEvents([{ type, payload, actor }]);
   return event;
 }
 
 export async function verifyChain() {
+  const keys = loadKeys();
   const errors: string[] = [];
+  let previousSigned = 0;
   let prev = "0".repeat(64);
   for (let i = 0; i < LOG.length; i++) {
     const e = LOG[i];
     if (e.prev_hash !== prev) errors.push(`link ${i}: prev_hash mismatch`);
     try {
       validatePayload(e.event_type, e.payload);
+      const signed = await signedBy(e, keys);
+      // event_store._event_hash: sha256(canonical || signature), over the bytes that were signed.
+      const body = signed?.body ?? canonicalJson(envelopeBody(e));
+      if (!signed) errors.push(`link ${i}: hmac mismatch`);
+      else if (signed.by === "previous") previousSigned++;
+      if (!macEqual(await sha256(enc.encode(body + e.signature)), e.hash)) errors.push(`link ${i}: hash mismatch`);
     } catch (err) {
       errors.push(`link ${i}: ${(err as Error).message}`);
     }
-    const { signature, hash } = await signAndHash({
-      event_id: e.event_id,
-      event_type: e.event_type,
-      payload: e.payload,
-      actor: e.actor,
-      timestamp: e.timestamp,
-      prev_hash: e.prev_hash,
-    });
-    if (!macEqual(signature, e.signature)) errors.push(`link ${i}: hmac mismatch`);
-    if (!macEqual(hash, e.hash)) errors.push(`link ${i}: hash mismatch`);
     prev = e.hash;
   }
-  return { ok: errors.length === 0, bad: errors.length, errors, depth: LOG.length };
+  return {
+    ok: errors.length === 0,
+    bad: errors.length,
+    errors,
+    depth: LOG.length,
+    previous_signed: previousSigned,
+    previous_public: keys.previousPublic,
+  };
 }
 
 export function eventHashes() {
@@ -380,10 +566,22 @@ export async function merkleProofAt(index: number) {
 }
 
 export async function doctor() {
+  const keys = loadKeys();
   const chain = await verifyChain();
   const snap = await merkleSnapshot();
-  const secretOk = CORE_SECRET.byteLength >= 32;
-  const overall = chain.ok && secretOk ? "ok" : "fail";
+  // fail: nothing authentic can be signed. warn: signing works but some or all
+  // of the chain rests on a key that is public (dev fallback, or a public
+  // previous key still carrying pre-rotation history).
+  const secret =
+    keys.source === "env"
+      ? chain.previous_signed && chain.previous_public
+        ? { status: "warn" as const, bytes: keys.signing!.byteLength, note: `${chain.previous_signed} pre-rotation event(s) verify only under a public key` }
+        : { status: "ok" as const, bytes: keys.signing!.byteLength, note: chain.previous_signed ? `${chain.previous_signed} event(s) verified by LOCAL_CORE_SECRET_PREVIOUS` : "server-only key" }
+      : keys.source === "dev"
+        ? { status: "warn" as const, bytes: keys.signing!.byteLength, note: "public dev key — signatures are not authentic" }
+        : { status: "fail" as const, bytes: 0, note: keys.error ?? "no signing key" };
+  const statuses = [secret.status, chain.ok ? "ok" : "fail"];
+  const overall = statuses.includes("fail") ? "fail" : statuses.includes("warn") ? "warn" : "ok";
   return {
     overall,
     version: CORE_VERSION,
@@ -391,8 +589,14 @@ export async function doctor() {
     repo: CORE_REPO,
     mesh_peer: false,
     checks: {
-      secret: { status: secretOk ? "ok" : "fail", bytes: CORE_SECRET.byteLength },
-      chain: { status: chain.ok ? "ok" : "fail", depth: chain.depth, bad: chain.bad, errors: chain.errors },
+      secret,
+      chain: {
+        status: chain.ok ? "ok" : "fail",
+        depth: chain.depth,
+        bad: chain.bad,
+        errors: chain.errors,
+        previous_signed: chain.previous_signed,
+      },
       merkle: { status: snap.leaf_count >= 0 ? "ok" : "fail", root: snap.merkle_root, leaves: snap.leaf_count },
       mesh: { status: "ok" as const, peer: false, note: "local-only continuity plane" },
     },
@@ -402,19 +606,22 @@ export async function doctor() {
 let seeded = false;
 export async function ensureGenesis() {
   if (seeded || LOG.length) return;
+  if (!loadKeys().signing) return; // fail closed: doctor reports why; reads stay up
   seeded = true;
-  await appendCoreEvent("system.ping", { ok: true, detail: "local-core genesis" }, "local-core");
-  await appendCoreEvent("session.mark", { label: "desk-open", ns: "siemens-gamesa" }, "elena.hartmann");
-  await appendCoreEvent("memory.set", { ns: "siemens-gamesa", key: "desk", value: "magnetics" }, "mattboyer725");
-  await appendCoreEvent(
-    "artifact.record",
+  await appendCoreEvents([
+    { type: "system.ping", payload: { ok: true, detail: "local-core genesis" }, actor: "local-core" },
+    { type: "session.mark", payload: { label: "desk-open", ns: "siemens-gamesa" }, actor: "elena.hartmann" },
+    { type: "memory.set", payload: { ns: "siemens-gamesa", key: "desk", value: "magnetics" }, actor: "mattboyer725" },
     {
-      title: "verityx-local-core v1.6.0",
-      location: "https://github.com/mattboyer725-dev/verityx-local-core",
-      kind: "repo",
+      type: "artifact.record",
+      payload: {
+        title: `verityx-local-core v${CORE_VERSION}`,
+        location: `https://github.com/${CORE_REPO}`,
+        kind: "repo",
+      },
+      actor: "mattboyer725",
     },
-    "mattboyer725",
-  );
+  ]);
 }
 
 export function dumpLog(): CoreEvent[] {
@@ -424,16 +631,12 @@ export function dumpLog(): CoreEvent[] {
 export function loadLog(events: CoreEvent[]) {
   if (LOG.length || !events.length) return;
   LOG.push(...events);
+  verifiedTip = null; // loaded history is re-verified before the next append
   seeded = true;
 }
 
 export function __resetForTests() {
   LOG.length = 0;
   seeded = false;
+  verifiedTip = null;
 }
-
-export const LOCAL_CORE = {
-  version: CORE_VERSION,
-  repo: CORE_REPO,
-  sha: CORE_SHA,
-};
