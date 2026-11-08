@@ -32,7 +32,7 @@ export const LOOP: { n: string; label: string; to: SurfaceTo; hint: string }[] =
 export const OS_LINKS: { to: string; label: string; hint: string; keywords: string; exact?: boolean }[] = [
   { to: "/work", label: "Workspace", hint: "File of record", keywords: "dashboard command", exact: true },
   { to: "/work/prospects", label: "Prospects", hint: "VerityX book", keywords: "company outreach book" },
-  { to: "/work/pilots", label: "Pilots", hint: "$2,500 / 72-hour loop", keywords: "payment stripe desk packet" },
+  { to: "/work/pilots", label: "Pilots", hint: "$5,000 / 72-hour loop", keywords: "payment stripe desk packet" },
   { to: "/work/decisions", label: "Decisions", hint: "Human-approved BLOCK", keywords: "advisory hold monitor" },
   { to: "/work/reports", label: "Reports", hint: "Sealed PDF", keywords: "evidence packet pdf" },
   { to: "/work/learning", label: "Learning", hint: "Closed-loop outcomes", keywords: "outcome follow-up" },

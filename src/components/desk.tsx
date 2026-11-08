@@ -252,7 +252,7 @@ export function LoginGate({ onEnter, prove }: { onEnter: () => void; prove?: str
         <div className="gate-pilot">
           <div className="vx-label">Pilot</div>
           <h2 id="pilot-h">
-            $2,500 · 72 hours
+            $5,000 · 72 hours
             <span>one live PO file</span>
           </h2>
           <p>

@@ -1,24 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
 import { LEGAL, contactLine } from "@/lib/legal";
-import { PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
+import { PILOT_CREDIT_DAYS, PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({ meta: [{ title: "Pilot terms · VerityX" }] }),
-  component: () => <LegalPage title="Pilot terms" sections={SECTIONS} />,
+  head: () => ({ meta: [{ title: "Terms · VerityX" }] }),
+  component: () => <LegalPage title="Terms" sections={SECTIONS} />,
 });
 
 const usd = `$${PILOT_PRICE_USD.toLocaleString("en-US")}`;
 
 const SECTIONS: LegalSection[] = [
-  ["Who we are", [`${LEGAL.product} is provided by ${LEGAL.entity}, ${LEGAL.entityPlace} (“we”, “us”). These terms apply to a ${LEGAL.product} pilot and to use of this website. By paying for a pilot, or by using the site, you (“you”, the customer) agree to them. If a signed order form or agreement between us says something different, that document wins.`]],
+  ["Who we are", [`${LEGAL.product} is provided by ${LEGAL.entity}, ${LEGAL.entityPlace} (“we”, “us”). These terms apply to a ${LEGAL.product} pilot, to annual plans, and to use of this website. By paying for a pilot, or by using the site, you (“you”, the customer) agree to them. If a signed order form or agreement between us says something different, that document wins.`]],
   ["The pilot", [
     `A pilot covers one purchase order you choose, in one of: permanent magnets, rare-earth oxides or metals, copper conductor, or electrical steel. We deliver an evidence packet and an advisory decision (proceed, review or hold) within ${PILOT_SLA_HOURS} hours of the later of (a) receiving your purchase order and supporting quotes and (b) receiving payment.`,
     "Scope is confirmed in writing before payment. Extra orders, commodities or meetings are outside the pilot unless we agree otherwise in writing.",
   ]],
   ["Fees and payment", [
     `The fee is ${usd} (US dollars), payable in advance through our payment processor, Stripe, by card or bank transfer. Prices exclude taxes; you pay any sales, use, VAT or similar tax that applies, other than taxes on our income.`,
+    `Pilot credit: if you sign an annual plan within ${PILOT_CREDIT_DAYS} days of your pilot's delivery, the pilot fee you paid is deducted from your first year's plan fee. The credit applies once per customer and has no cash value.`,
     `Refunds: if we have not started work, you may cancel within ${LEGAL.refundDays} business days of payment for a full refund. If we miss the ${PILOT_SLA_HOURS}-hour delivery time for reasons within our control, you may choose a full refund or delivery as late as it comes. Otherwise fees are non-refundable.`,
+  ]],
+  ["Annual plans", [
+    "Annual plans listed at /pricing are sold under a written order form that sets the plan, the number of purchase orders and sites, the term and the fee. Plan fees are invoiced yearly in advance. Unused purchase orders do not carry over to the next year. Where an order form differs from these terms, the order form wins; otherwise these terms apply to each order taken through a plan as they do to a pilot.",
   ]],
   ["Advisory only", [
     "Every output is advisory. It is not legal, tax, investment, audit or compliance advice, not a finding of fraud or sanctions violation, and not a regulator determination. A person on your side makes every purchasing decision; nothing we do changes your systems.",
@@ -39,7 +43,7 @@ const SECTIONS: LegalSection[] = [
     "We will perform the pilot with reasonable skill and care. Except for that, the service and all outputs are provided “as is”, without other warranties, express or implied, including merchantability, fitness for a particular purpose and accuracy of third-party data, to the extent the law allows.",
   ]],
   ["Liability", [
-    `Neither of us is liable for indirect, incidental, special, consequential or punitive damages, or lost profits or revenue. Each party’s total liability arising from a pilot is limited to the fees paid for that pilot (${usd} for a standard pilot). These limits do not apply to a party’s breach of confidentiality, your payment obligations, or liability that cannot be limited by law.`,
+    `Neither of us is liable for indirect, incidental, special, consequential or punitive damages, or lost profits or revenue. Each party’s total liability arising from a pilot is limited to the fees paid for that pilot (${usd} for a standard pilot), or for an annual plan, to the plan fees paid in the 12 months before the claim. These limits do not apply to a party’s breach of confidentiality, your payment obligations, or liability that cannot be limited by law.`,
   ]],
   ["Using the site", ["Do not attempt to break, overload, scrape at scale or misuse the site, its public tools or its ledger, or submit content you have no right to submit. We may suspend access that does."]],
   ["General", [

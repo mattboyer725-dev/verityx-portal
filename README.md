@@ -21,7 +21,7 @@ Source: [mattboyer725-dev/verityx-portal](https://github.com/mattboyer725-dev/ve
 - 11-agent PO pipeline: INGEST → ORACLE → CONSENSUS → RISK → PROVENANCE → SCREEN → COMPLIANCE → SEAL → LEDGER → EVIDENCE → AUTH
 - Customer Zero OS advisory rules (`rules-v1.0-soft-prod`). BLOCK never auto-applies.
 - HMAC-SHA256 + domain-separated Merkle from [verityx-local-core](https://github.com/mattboyer725-dev/verityx-local-core) v1.7.0 (`0188c84`), persisted to Postgres (Neon / Cloud SQL / PGLite preview).
-- $2,500 / 72-hour pilot loop: prospect → payment → **live magnetics desk packet** → human-approved decision → analog SAP HOLD → PDF.
+- $5,000 / 72-hour pilot loop (credited to an annual plan; plans at /pricing): prospect → payment → **live magnetics desk packet** → human-approved decision → analog SAP HOLD → PDF.
 - Tenant isolation on every OS query. Stripe checkout + signed webhook + manual admin path.
 - Sign-in returns to the platform hub. Workspace is one click from there.
 - One platform menu (`⌘K`) on every surface. Numbered loop 01 Field → 05 Command. Competitor field at `/field` — compare and contrast, with in-product analog proof and a desk deep-link to the matching tab.

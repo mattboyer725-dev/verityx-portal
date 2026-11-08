@@ -80,7 +80,7 @@ function ProspectsPage() {
       <PageHeader
         kicker="CRM"
         title="Prospects"
-        description="Your own book. Finish each file, contact them, then convert to a $2,500 pilot."
+        description="Your own book. Finish each file, contact them, then convert to a $5,000 pilot."
         actions={
           <>
             <Button onClick={openBook} disabled={busy}>

@@ -208,7 +208,7 @@ I run VerityX. We file a 72-hour, evidence-backed magnetics and supply-chain pro
 
 It is advisory. It is not a regulator finding, a fraud accusation, or live intelligence beyond the sources you provide.
 
-Price is $2,500. Clock starts when the required inputs land.
+Price is $5,000, credited in full if you move to an annual plan (from $14,400 a year) within 60 days. Clock starts when the required inputs land.
 
 If ${company} wants one lot taken through the desk this month, reply with a working email and the scope (which lots, which corridor). I will open the file and send the intake.
 

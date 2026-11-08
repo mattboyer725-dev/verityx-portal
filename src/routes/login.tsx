@@ -90,7 +90,7 @@ function Login() {
             One paying pilot. A decision you can defend.
           </h1>
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-mute">
-            $2,500 · 72-hour target · advisory only. Evidence in, human approval for BLOCK, no fabricated
+            $5,000 pilot, credited to a plan · 72-hour target · advisory only. Evidence in, human approval for BLOCK, no fabricated
             intelligence.
           </p>
         </div>

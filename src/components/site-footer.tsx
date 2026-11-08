@@ -16,6 +16,7 @@ export function SiteFooter() {
           </Link>
         ))}
         <a href="/pilot">Start a pilot</a>
+        <a href="/pricing">Pricing</a>
         <a href="/terms">Terms</a>
         <a href="/privacy">Privacy</a>
         <a href="/sources">Sources &amp; licences</a>

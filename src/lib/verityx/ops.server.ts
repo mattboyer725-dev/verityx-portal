@@ -1117,7 +1117,7 @@ export async function loadSampleWalkthrough(userId: string) {
         ${prospectId}, ${actor.organizationId}, ${actor.userId},
         ${"Harborline Parts Co. (sample)"}, ${"Priya Shah"}, ${"priya@harborline.example"},
         ${"Industrial fasteners"}, ${"EU / Taiwan"}, ${"discovery"},
-        ${"SAMPLE WALKTHROUGH — not live intelligence. Use this file to exercise the $2,500 / 72-hour loop. Do not treat any contents as a real-world finding."},
+        ${"SAMPLE WALKTHROUGH — not live intelligence. Use this file to exercise the $5,000 / 72-hour loop. Do not treat any contents as a real-world finding."},
         ${true}
       )
     `;

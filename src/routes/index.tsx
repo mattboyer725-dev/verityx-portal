@@ -63,7 +63,7 @@ function Home() {
           One product. A live magnetics desk, a paying-pilot OS, and a signed continuity core.
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute">
-          Siemens Gamesa procurement on the PO line. Customer Zero operating system for the $2,500 / 72-hour audit.
+          Siemens Gamesa procurement on the PO line. Customer Zero operating system for the {money(PILOT_PRICE_USD)} / {PILOT_SLA_HOURS}-hour audit.
           HMAC + Merkle continuity from local-core v{CORE_VERSION}. Advisory decisions — never an automatic fraud finding.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">

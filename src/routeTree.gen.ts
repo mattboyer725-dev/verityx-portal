@@ -18,6 +18,7 @@ import { Route as FieldRouteImport } from './routes/field'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PaidRouteImport } from './routes/paid'
 import { Route as PilotRouteImport } from './routes/pilot'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -102,6 +103,11 @@ const PaidRoute = PaidRouteImport.update({
 const PilotRoute = PilotRouteImport.update({
   id: '/pilot',
   path: '/pilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/paid': typeof PaidRoute
   '/pilot': typeof PilotRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/sources': typeof SourcesRoute
   '/terms': typeof TermsRoute
@@ -366,6 +373,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/paid': typeof PaidRoute
   '/pilot': typeof PilotRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/sources': typeof SourcesRoute
   '/terms': typeof TermsRoute
@@ -417,6 +425,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/paid': typeof PaidRoute
   '/pilot': typeof PilotRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/sources': typeof SourcesRoute
   '/terms': typeof TermsRoute
@@ -470,6 +479,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paid'
     | '/pilot'
+    | '/pricing'
     | '/privacy'
     | '/sources'
     | '/terms'
@@ -521,6 +531,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paid'
     | '/pilot'
+    | '/pricing'
     | '/privacy'
     | '/sources'
     | '/terms'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/paid'
     | '/pilot'
+    | '/pricing'
     | '/privacy'
     | '/sources'
     | '/terms'
@@ -623,6 +635,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PaidRoute: typeof PaidRoute
   PilotRoute: typeof PilotRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   SourcesRoute: typeof SourcesRoute
   TermsRoute: typeof TermsRoute
@@ -714,6 +727,13 @@ declare module '@tanstack/react-router' {
       path: '/pilot'
       fullPath: '/pilot'
       preLoaderRoute: typeof PilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -1064,6 +1084,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PaidRoute: PaidRoute,
   PilotRoute: PilotRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   SourcesRoute: SourcesRoute,
   TermsRoute: TermsRoute,

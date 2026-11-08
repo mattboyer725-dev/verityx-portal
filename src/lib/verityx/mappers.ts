@@ -1,3 +1,4 @@
+import { PILOT_PRICE_USD } from "./constants";
 import { asBoolean, iso, isoOrNull, parseJson } from "./format";
 import type {
   AuditLog,
@@ -47,7 +48,7 @@ export function mapPilot(r: Row): Pilot {
     scope: String(r.scope ?? ""),
     status: r.status as Pilot["status"],
     slaHours: Number(r.sla_hours ?? 72),
-    priceUsd: Number(r.price_usd ?? 2500),
+    priceUsd: Number(r.price_usd ?? PILOT_PRICE_USD),
     paymentStatus: r.payment_status as Pilot["paymentStatus"],
     stripeCheckoutSessionId: r.stripe_checkout_session_id
       ? String(r.stripe_checkout_session_id)

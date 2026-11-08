@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { requestPilot } from "@/lib/pilot-api";
 import { COMMODITIES, PO_BANDS } from "@/lib/pilot-request";
-import { PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
+import { PILOT_CREDIT_DAYS, PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
 import { money } from "@/lib/verityx/format";
 
 export const Route = createFileRoute("/pilot")({
@@ -74,7 +74,8 @@ function PilotPage() {
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-mute">
           {money(PILOT_PRICE_USD)} flat, paid by card or bank transfer after we confirm scope. You get a sealed evidence packet and an
-          advisory decision on one live order.
+          advisory decision on one live order. The fee is credited in full if you move to an{" "}
+          <Link to="/pricing" className="underline">annual plan</Link> within {PILOT_CREDIT_DAYS} days.
         </p>
         {canceled ? (
           <p className="mt-5 max-w-2xl rounded-[10px] border border-warn/50 bg-warn/10 p-4 text-sm text-warn">

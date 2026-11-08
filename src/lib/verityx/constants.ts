@@ -1,5 +1,7 @@
 export const APP_NAME = "Verityx";
-export const PILOT_PRICE_USD = 2500;
+/** One-PO pilot. Credited in full against a first annual plan signed within PILOT_CREDIT_DAYS. */
+export const PILOT_PRICE_USD = 5000;
+export const PILOT_CREDIT_DAYS = 60;
 export const PILOT_SLA_HOURS = 72;
 export const RULE_VERSION = "rules-v1.0-soft-prod";
 export const MIN_PASSWORD_LENGTH = 10;

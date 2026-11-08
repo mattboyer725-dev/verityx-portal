@@ -1,5 +1,5 @@
 /**
- * PILOT REQUEST — a buyer asking for a $2,500 / 72-hour pilot from the public
+ * PILOT REQUEST — a buyer asking for a $5,000 / 72-hour pilot from the public
  * site. Pure validation, shared by the form and the server.
  *
  * Abuse controls: a honeypot field real people never see (filled = a bot,

@@ -164,7 +164,7 @@ function ProspectDetail() {
             ? "Labeled sample walkthrough — not live intelligence."
             : prospect.bookKey
               ? "VerityX own book. Finish the file, contact them, then open a paid pilot."
-              : "Finish the file, contact them, then convert to a $2,500 pilot."
+              : "Finish the file, contact them, then convert to a $5,000 pilot."
         }
         actions={
           <>
@@ -248,7 +248,7 @@ function ProspectDetail() {
           <div>
             <h2 className="font-display text-2xl">Contact them</h2>
             <p className="mt-1 text-sm text-mute">
-              Logs the outreach on this file and opens mail with the $2,500 / 72-hour pilot note. Last contact:{" "}
+              Logs the outreach on this file and opens mail with the $5,000 / 72-hour pilot note. Last contact:{" "}
               {formatWhenPrecise(prospect.lastContactedAt)}
               {prospect.outreachCount ? ` · ${prospect.outreachCount} logged` : ""}.
             </p>

@@ -27,7 +27,7 @@ describe("outreachCopy", () => {
       contactName: "Automotive & energy sales",
     });
     assert.match(copy.subject, /VACUUMSCHMELZE/);
-    assert.match(copy.body, /\$2,500/);
+    assert.match(copy.body, /\$5,000, credited in full/);
     assert.match(copy.body, /advisory/i);
     assert.doesNotMatch(copy.body, /you are sanctioned/i);
   });
