@@ -47,7 +47,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "VerityX Sovereign — Siemens Gamesa magnetics desk, Customer Zero OS for $5,000 pilots and annual plans, and owner command. Advisory, evidence-backed, HMAC + Merkle.",
+          "VerityX — sealed mine-to-magnet lot passports, buyer portfolios and evidence packs, and purchase-order price checks. Advisory, evidence-backed, independently verifiable.",
       },
     ],
     links: [

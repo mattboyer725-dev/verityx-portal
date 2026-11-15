@@ -31,6 +31,7 @@ import { Route as HealthReadyRouteImport } from './routes/health.ready'
 import { Route as PassportCodeRouteImport } from './routes/passport.$code'
 import { Route as WorkIndexRouteImport } from './routes/work/index'
 import { Route as WorkAuditRouteImport } from './routes/work/audit'
+import { Route as WorkBillingRouteImport } from './routes/work/billing'
 import { Route as WorkLearningRouteImport } from './routes/work/learning'
 import { Route as WorkPortfolioRouteImport } from './routes/work/portfolio'
 import { Route as WorkSettingsRouteImport } from './routes/work/settings'
@@ -158,6 +159,11 @@ const WorkAuditRoute = WorkAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => WorkRoute,
 } as any)
+const WorkBillingRoute = WorkBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => WorkRoute,
+} as any)
 const WorkLearningRoute = WorkLearningRouteImport.update({
   id: '/learning',
   path: '/learning',
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/health/ready': typeof HealthReadyRoute
   '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
+  '/work/billing': typeof WorkBillingRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/portfolio': typeof WorkPortfolioRoute
   '/work/settings': typeof WorkSettingsRoute
@@ -300,6 +307,7 @@ export interface FileRoutesByTo {
   '/health/ready': typeof HealthReadyRoute
   '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
+  '/work/billing': typeof WorkBillingRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/portfolio': typeof WorkPortfolioRoute
   '/work/settings': typeof WorkSettingsRoute
@@ -341,6 +349,7 @@ export interface FileRoutesById {
   '/health/ready': typeof HealthReadyRoute
   '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
+  '/work/billing': typeof WorkBillingRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/portfolio': typeof WorkPortfolioRoute
   '/work/settings': typeof WorkSettingsRoute
@@ -383,6 +392,7 @@ export interface FileRouteTypes {
     | '/health/ready'
     | '/passport/$code'
     | '/work/audit'
+    | '/work/billing'
     | '/work/learning'
     | '/work/portfolio'
     | '/work/settings'
@@ -422,6 +432,7 @@ export interface FileRouteTypes {
     | '/health/ready'
     | '/passport/$code'
     | '/work/audit'
+    | '/work/billing'
     | '/work/learning'
     | '/work/portfolio'
     | '/work/settings'
@@ -462,6 +473,7 @@ export interface FileRouteTypes {
     | '/health/ready'
     | '/passport/$code'
     | '/work/audit'
+    | '/work/billing'
     | '/work/learning'
     | '/work/portfolio'
     | '/work/settings'
@@ -663,6 +675,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkAuditRouteImport
       parentRoute: typeof WorkRoute
     }
+    '/work/billing': {
+      id: '/work/billing'
+      path: '/billing'
+      fullPath: '/work/billing'
+      preLoaderRoute: typeof WorkBillingRouteImport
+      parentRoute: typeof WorkRoute
+    }
     '/work/learning': {
       id: '/work/learning'
       path: '/learning'
@@ -780,6 +799,7 @@ declare module '@tanstack/react-router' {
 
 interface WorkRouteChildren {
   WorkAuditRoute: typeof WorkAuditRoute
+  WorkBillingRoute: typeof WorkBillingRoute
   WorkLearningRoute: typeof WorkLearningRoute
   WorkPortfolioRoute: typeof WorkPortfolioRoute
   WorkSettingsRoute: typeof WorkSettingsRoute
@@ -798,6 +818,7 @@ interface WorkRouteChildren {
 
 const WorkRouteChildren: WorkRouteChildren = {
   WorkAuditRoute: WorkAuditRoute,
+  WorkBillingRoute: WorkBillingRoute,
   WorkLearningRoute: WorkLearningRoute,
   WorkPortfolioRoute: WorkPortfolioRoute,
   WorkSettingsRoute: WorkSettingsRoute,

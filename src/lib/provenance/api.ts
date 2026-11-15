@@ -153,3 +153,54 @@ export const downloadEvidencePack = createServerFn({ method: "GET" })
     const ops = await import("./portfolio.server");
     return ops.downloadPack(context.userId, data);
   });
+
+// ---------------------------------------------------------------- billing
+
+export const getBilling = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ops = await import("./billing.server");
+    return ops.getBilling(context.userId);
+  });
+
+export const startPlanCheckout = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { plan: string; origin: string }) => {
+    if (!data || typeof data.plan !== "string" || typeof data.origin !== "string" || data.origin.length > 200) throw new Error("invalid request");
+    return data;
+  })
+  .handler(async ({ context, data }) => {
+    const ops = await import("./billing.server");
+    return ops.createPlanCheckout(context.userId, data);
+  });
+
+export const openBillingPortal = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { origin: string }) => {
+    if (!data || typeof data.origin !== "string" || data.origin.length > 200) throw new Error("invalid request");
+    return data;
+  })
+  .handler(async ({ context, data }) => {
+    const ops = await import("./billing.server");
+    return ops.createPortalSession(context.userId, data);
+  });
+
+export const listOrgPlans = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ops = await import("./billing.server");
+    return ops.listOrgPlans(context.userId);
+  });
+
+export const setOrgPlan = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { organizationId: string; side: "supplier" | "buyer"; plan: string; periodEnd: string | null; note: string }) => {
+    if (!data || typeof data.organizationId !== "string" || data.organizationId.length > 80) throw new Error("invalid request");
+    if (data.side !== "supplier" && data.side !== "buyer") throw new Error("invalid request");
+    if (typeof data.plan !== "string" || (data.periodEnd !== null && typeof data.periodEnd !== "string")) throw new Error("invalid request");
+    return { ...data, note: typeof data.note === "string" ? data.note : "" };
+  })
+  .handler(async ({ context, data }) => {
+    const ops = await import("./billing.server");
+    return ops.setOrgPlan(context.userId, data);
+  });

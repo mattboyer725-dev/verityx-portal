@@ -31,6 +31,12 @@ const EVENTS = [
   "checkout.session.async_payment_succeeded",
   "checkout.session.async_payment_failed",
   "payment_intent.succeeded",
+  // Yearly supplier/buyer plans
+  "customer.subscription.created",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+  "invoice.paid",
+  "invoice.payment_failed",
 ];
 
 function die(msg) {

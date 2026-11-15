@@ -286,6 +286,8 @@ export async function sealPassport(userId: string, data: { id: string }) {
   await mutateGuard(actor, "passport.seal");
   const p = await scopedPassport(actor, data.id);
   if (p.status !== "draft") throw new Error(`This passport is already ${p.status}.`);
+  const { assertCanSeal } = await import("./billing.server");
+  await assertCanSeal(actor.organizationId);
   const chain = await loadPublishedChain(p.inputs);
   const problems = sealProblems(p, [...chain.values()].map(toNode));
   if (problems.length) throw new Error(problems.join(" "));

@@ -75,7 +75,7 @@ function PilotPage() {
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-mute">
           {money(PILOT_PRICE_USD)} flat, paid by card or bank transfer after we confirm scope. You get a sealed evidence packet and an
           advisory decision on one live order. The fee is credited in full if you move to an{" "}
-          <Link to="/pricing" className="underline">annual plan</Link> within {PILOT_CREDIT_DAYS} days.
+          <Link to="/pricing" className="underline">paid plan</Link> within {PILOT_CREDIT_DAYS} days.
         </p>
         {canceled ? (
           <p className="mt-5 max-w-2xl rounded-[10px] border border-warn/50 bg-warn/10 p-4 text-sm text-warn">

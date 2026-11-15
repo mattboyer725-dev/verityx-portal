@@ -131,6 +131,8 @@ export async function importPortfolio(userId: string, data: { csv: string }) {
   if (typeof data.csv !== "string" || data.csv.length > 2_000_000) throw new Error("The file is too large (2 MB max).");
   const parsed = parsePortfolioCsv(data.csv);
   if (!parsed.items.length) throw new Error(parsed.errors[0] ?? "No parts found in the file.");
+  const { assertPortfolioFits } = await import("./billing.server");
+  await assertPortfolioFits(actor.organizationId, parsed.items.slice(0, MAX_IMPORT_ROWS));
   for (const it of parsed.items.slice(0, MAX_IMPORT_ROWS)) await upsert(actor.organizationId, actor.userId, it);
   await writeAudit(actor, "portfolio.import", "portfolio", actor.organizationId, { rows: parsed.items.length, errors: parsed.errors.length });
   return { imported: parsed.items.length, errors: parsed.errors.slice(0, 50) };
@@ -141,6 +143,8 @@ export async function addPortfolioItem(userId: string, data: { item: unknown }) 
   assertCan(actor.role, "portfolio.write");
   await mutateGuard(actor, "portfolio.write");
   const it = normalizeItem((data.item ?? {}) as Partial<Record<keyof PortfolioItemInput, unknown>>);
+  const { assertPortfolioFits } = await import("./billing.server");
+  await assertPortfolioFits(actor.organizationId, [it]);
   await upsert(actor.organizationId, actor.userId, it);
   await writeAudit(actor, "portfolio.add", "portfolio", actor.organizationId, { part: it.partNumber, code: it.passportCode });
   return { ok: true as const };
@@ -191,6 +195,8 @@ export async function generatePack(userId: string, data: { program?: string }) {
   const program = typeof data.program === "string" ? data.program.slice(0, 80) : "";
   const rows = await resolveRows(program ? all.filter((r) => String(r.program ?? "") === program) : all);
   if (!rows.length) throw new Error("There are no parts to put in a pack.");
+  const { assertCanPack } = await import("./billing.server");
+  await assertCanPack(actor.organizationId);
   const sorted = sortRows(rows.map((r) => ({ ...r, changed: false })));
   const codes = new Set<string>();
   for (const r of sorted) for (const s of r.analysis?.stages ?? []) for (const src of s.sources) codes.add(src.code);

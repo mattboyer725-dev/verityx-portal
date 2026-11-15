@@ -86,10 +86,14 @@ export function normalizeEmail(email: string): string {
 }
 
 /** In-app paths the sign-in return is allowed to land on. Default is the hub. */
-export type AppReturnPath = "/" | "/work" | "/admin" | "/core";
+export type AppReturnPath = "/" | "/work" | "/work/passports" | "/work/portfolio" | "/work/billing" | "/admin" | "/core";
+
+/** Exact workspace pages a sign-in may return to (pricing and invitations link straight to them). */
+const WORK_PAGES = new Set<AppReturnPath>(["/work/passports", "/work/portfolio", "/work/billing"]);
 
 export function safeAppPath(raw: string | null | undefined): AppReturnPath {
   const v = (raw ?? "").trim();
+  if (WORK_PAGES.has(v as AppReturnPath)) return v as AppReturnPath;
   if (v === "/work" || v.startsWith("/work/")) return "/work";
   if (v === "/admin" || v.startsWith("/admin/")) return "/admin";
   if (v === "/core" || v.startsWith("/core/")) return "/core";

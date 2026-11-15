@@ -552,6 +552,13 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
   } catch {
     return Response.json({ error: "invalid_signature" }, { status: 400 });
   }
+  // Plan subscriptions (supplier/buyer) are synced separately from one-off pilot payments.
+  const { subscriptionIdFromEvent } = await import("@/lib/provenance/billing-sync");
+  if (subscriptionIdFromEvent(event as unknown as { type: string; data: { object: Record<string, unknown> } })) {
+    const { handleSubscriptionEvent } = await import("@/lib/provenance/billing.server");
+    const sub = await handleSubscriptionEvent(event as unknown as { id: string; type: string; data: { object: Record<string, unknown> } });
+    return Response.json({ received: true, subscription: sub });
+  }
   const result = await applyVerifiedStripeEvent(event);
   return Response.json({ received: true, ...result });
 }
