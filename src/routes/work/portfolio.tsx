@@ -168,7 +168,7 @@ function PortfolioPage() {
             onClick={() => setFilter(filter === "changed" ? "" : "changed")}
             className={`panel p-4 text-left ${filter === "changed" ? "ring-1 ring-gold" : ""}`}
           >
-            <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Changed</p>
+            <p className="text-xs text-mute">Changed</p>
             <p className={`mt-1 font-display text-3xl ${data.summary.changed ? "text-bad" : ""}`}>{data.summary.changed}</p>
           </button>
           {STATE_ORDER.map((s) => (
@@ -178,7 +178,7 @@ function PortfolioPage() {
               onClick={() => setFilter(filter === s ? "" : s)}
               className={`panel p-4 text-left ${filter === s ? "ring-1 ring-gold" : ""}`}
             >
-              <p className="text-[11px] uppercase tracking-[0.14em] text-mute">{STATE_LABEL[s]}</p>
+              <p className="text-xs text-mute">{STATE_LABEL[s]}</p>
               <p className="mt-1 font-display text-3xl">{data.summary[s]}</p>
             </button>
           ))}
@@ -186,7 +186,7 @@ function PortfolioPage() {
       ) : null}
 
       {data && changedIds.length ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[16px] border border-bad/30 bg-bad/10 p-4 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[6px] border border-bad/30 bg-bad/10 p-4 text-sm">
           <p>
             {changedIds.length} part{changedIds.length === 1 ? "" : "s"} changed since your last review — usually a supplier revoked a
             lot or an upstream lot was revoked.
@@ -209,7 +209,7 @@ function PortfolioPage() {
       {data && rows.length ? (
         <div className="panel overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
-            <thead className="text-[11px] uppercase tracking-[0.14em] text-mute">
+            <thead className="text-xs text-mute">
               <tr className="border-b border-line">
                 <th className="w-8 px-4 py-3">
                   <input
@@ -317,7 +317,7 @@ function PortfolioPage() {
               part with the same code updates it.
             </p>
             <div className="flex flex-wrap gap-2">
-              <label className="inline-flex cursor-pointer items-center rounded-[8px] border border-line px-4 py-2 text-sm hover:bg-raised">
+              <label className="inline-flex cursor-pointer items-center rounded-[4px] border border-line px-4 py-2 text-sm hover:bg-raised">
                 <input
                   type="file"
                   accept=".csv,text/csv,text/plain"
@@ -405,10 +405,10 @@ function PortfolioPage() {
           </p>
           <ul className="space-y-2">
             {data.packs.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-line px-3 py-2 text-sm">
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border border-line px-3 py-2 text-sm">
                 <span className="min-w-0">
                   {formatWhen(p.createdAt)} · {p.program || "All programs"} · {p.itemCount} parts
-                  <span className="block break-all font-mono text-[11px] text-mute">sha256 {p.digest}</span>
+                  <span className="block break-all font-mono text-xs text-mute">sha256 {p.digest}</span>
                 </span>
                 <Button variant="ghost" onClick={() => redownload(p.id)} disabled={busy !== null}>
                   {busy === `dl-${p.id}` ? "Preparing…" : "Download"}

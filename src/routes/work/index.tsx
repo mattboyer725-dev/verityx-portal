@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Layers, PackageCheck, Upload } from "lucide-react";
+import { AlertTriangle, Layers, PackageCheck, Upload } from "lucide-react";
 import type { ReactNode } from "react";
 import { ErrorNote, PageHeader, Skeleton } from "@/components/page-header";
 import { Pill } from "@/components/status";
@@ -23,8 +23,8 @@ const TONE: Record<ItemState, string> = {
 
 function Stat({ label, value, tone }: { label: string; value: number | string; tone?: "bad" | "ok" | "warn" }) {
   return (
-    <div className="rounded-[16px] border border-line bg-ink/40 p-4">
-      <p className="text-[11px] uppercase tracking-[0.14em] text-mute">{label}</p>
+    <div className="rounded-[6px] border border-line bg-ink/40 p-4">
+      <p className="text-xs text-mute">{label}</p>
       <p className={`mt-1 font-display text-3xl tabular-nums ${tone === "bad" ? "text-bad" : tone === "ok" ? "text-ok" : tone === "warn" ? "text-warn" : ""}`}>
         {value}
       </p>
@@ -42,7 +42,6 @@ function Card({ title, icon, to, cta, children }: { title: string; icon: ReactNo
         </h2>
         <Link to={to as "/"} className="inline-flex items-center gap-1 text-sm text-mute hover:text-paper">
           {cta}
-          <ArrowRight className="size-3.5" />
         </Link>
       </div>
       {children}
@@ -83,7 +82,7 @@ function Overview() {
       />
 
       {d.portfolio.changed.length ? (
-        <section className="rounded-[20px] border border-bad/30 bg-bad/10 p-5">
+        <section className="rounded-[6px] border border-bad/30 bg-bad/10 p-5">
           <p className="inline-flex items-center gap-2 font-medium text-bad">
             <AlertTriangle className="size-4" />
             {d.portfolio.changed.length} part{d.portfolio.changed.length === 1 ? "" : "s"} changed since your last review
@@ -99,7 +98,7 @@ function Overview() {
             ))}
           </ul>
           <Link to="/work/portfolio" className="mt-3 inline-flex items-center gap-1 text-sm underline-offset-2 hover:underline">
-            Review in Portfolio <ArrowRight className="size-3.5" />
+            Review in Portfolio
           </Link>
         </section>
       ) : null}
@@ -114,7 +113,7 @@ function Overview() {
               when a lot is revoked, and export a sealed evidence pack.
             </p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm text-gold">
-              Import parts <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+              Import parts
             </span>
           </Link>
           <Link to="/work/passports" className="panel group p-6 transition-colors hover:border-gold/40">
@@ -125,7 +124,7 @@ function Overview() {
               buyer. Five a year are free.
             </p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm text-gold">
-              Create a passport <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+              Create a passport
             </span>
           </Link>
         </section>
@@ -188,7 +187,7 @@ function Overview() {
         </div>
       )}
 
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-[20px] border border-line p-5">
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-[6px] border border-line p-5">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <span>
             <span className="text-mute">Supplier plan </span>
@@ -210,7 +209,7 @@ function Overview() {
           </span>
         </div>
         <Link to="/work/billing" className="inline-flex items-center gap-1 text-sm text-gold hover:text-paper">
-          Billing <ArrowRight className="size-3.5" />
+          Billing
         </Link>
       </section>
     </div>

@@ -1,37 +1,47 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 @import "./styles.desk.css";
 
+/*
+ * Oxide — VerityX's palette is taken from the material it tracks.
+ * ink      neodymium-oxide powder, the pale lilac-grey ground
+ * paper    magnetite, the text
+ * gold     neodymium glass violet: the colour of action (kept as "gold" so every component inherits it)
+ * seal     bastnäsite foil: used only to mean "sealed on the ledger"
+ */
 @theme {
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 
-  --color-ink: #0b0a0e;
-  --color-graphite: #14121a;
-  --color-raised: #1c1924;
-  --color-paper: #e8e4d9;
-  --color-mist: #b7c0c8;
-  --color-mute: #8b8680;
-  --color-line: #2a2433;
-  --color-ok: #7d9a78;
-  --color-warn: #c4a574;
-  --color-bad: #c17b74;
-  --color-gold: #c9b07a;
-  --color-violet: #6e5a8a;
-  --color-plum: #120c1a;
+  --color-ink: #eeedf2;
+  --color-graphite: #f8f7fb;
+  --color-raised: #e3e1ea;
+  --color-paper: #17152a;
+  --color-mist: #47445a;
+  --color-mute: #5e5b6b;
+  --color-line: #d3d0dc;
+  --color-ok: #24683f;
+  --color-warn: #8a5a00;
+  --color-bad: #a3241c;
+  --color-gold: #5440b8;
+  --color-violet: #5440b8;
+  --color-plum: #ffffff;
+  --color-seal: #d9a621;
+  --color-magnetite: #17152a;
 
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-variant-numeric: tabular-nums;
   }
 
   html,
@@ -40,6 +50,11 @@
     min-height: 100%;
     background: var(--color-ink);
     color: var(--color-paper);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-stretch: 100%;
   }
 
   button:not(:disabled),
@@ -58,7 +73,7 @@
   }
 
   ::selection {
-    background: color-mix(in oklab, var(--color-gold) 28%, transparent);
+    background: color-mix(in oklab, var(--color-gold) 22%, transparent);
     color: var(--color-paper);
   }
 
@@ -67,25 +82,15 @@
   select {
     font: inherit;
   }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
+  }
 }
 
 body {
   position: relative;
-}
-
-body::before {
-  content: "";
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background-image:
-    radial-gradient(900px 480px at 8% -8%, color-mix(in oklab, var(--color-violet) 14%, transparent), transparent 55%),
-    radial-gradient(720px 420px at 92% 0%, color-mix(in oklab, var(--color-gold) 8%, transparent), transparent 50%),
-    linear-gradient(to right, color-mix(in oklab, var(--color-gold) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--color-gold) 5%, transparent) 1px, transparent 1px);
-  background-size: auto, auto, 72px 72px, 72px 72px;
-  mask-image: radial-gradient(ellipse at top, black 22%, transparent 78%);
 }
 
 #app {
@@ -93,14 +98,18 @@ body::before {
   z-index: 1;
 }
 
+/* Headings are stamped like an equipment nameplate: Archivo at its widest. */
 .font-display {
   font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .panel {
   background: var(--color-graphite);
-  border: 1px solid color-mix(in oklab, var(--color-gold) 12%, var(--color-line));
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
 }
 
 .hairline {
@@ -111,11 +120,9 @@ body::before {
 @keyframes vx-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -143,44 +150,42 @@ body::before {
 
 @media (prefers-reduced-motion: no-preference) {
   .vx-enter {
-    animation: vx-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: vx-in 240ms ease-out both;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .vx-enter {
-    animation: none;
-  }
-}
+/* ---------- Wordmark ---------- */
 
 .vx-wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.6rem;
 }
 
 .vx-wordmark-name {
   font-family: var(--font-display);
-  letter-spacing: 0.06em;
-  font-weight: 500;
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.vx-wordmark .vx-mark {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 
 .vx-wordmark .vx-wordmark-name {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 .vx-mark-hero {
   display: block;
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
 }
 
-@media (min-width: 640px) {
-  .vx-mark-hero {
-    width: 96px;
-    height: 96px;
-  }
-}
+/* ---------- Site nav ---------- */
 
 .site-nav {
   display: flex;
@@ -189,6 +194,8 @@ body::before {
   gap: 0.35rem 0.5rem;
   width: 100%;
   position: relative;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .site-nav-brand {
@@ -196,41 +203,70 @@ body::before {
   align-items: center;
   min-height: 44px;
   padding-right: 0.5rem;
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  letter-spacing: 0.06em;
+  color: var(--color-paper);
 }
 
 .site-nav-brand .vx-mark {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
 }
 
 .site-nav-row {
   display: none;
-  align-items: center;
-  gap: 0.15rem;
+  align-items: stretch;
+  gap: 1.75rem;
 }
 
 .site-nav-actions {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
   margin-left: auto;
 }
 
-.site-nav-link,
-.site-nav-sheet-link {
+.site-nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
-  padding: 0 0.85rem;
-  border-radius: 999px;
-  font-size: 0.875rem;
-  transition:
-    color 150ms cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-height: 44px;
+  font-size: 0.9375rem;
+  color: var(--color-mute);
+  transition: color 120ms ease-out;
+}
+
+.site-nav-link:hover {
+  color: var(--color-paper);
+}
+
+/* Active page: a violet bar sitting on the nav rule, like a gauge needle. */
+.site-nav-link.is-active {
+  color: var(--color-paper);
+}
+
+.site-nav-link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(-0.75rem - 1px);
+  height: 3px;
+  background: var(--color-gold);
+}
+
+.site-nav-sheet-link {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  border-bottom: 1px solid var(--color-line);
+  font-size: 1rem;
+  color: var(--color-mute);
+}
+
+.site-nav-sheet-link.is-active {
+  color: var(--color-paper);
+  box-shadow: inset 3px 0 0 var(--color-gold);
+  padding-left: 0.85rem;
 }
 
 .site-nav-menu {
@@ -238,68 +274,109 @@ body::before {
   width: 44px;
   height: 44px;
   place-items: center;
-  border-radius: 12px;
-  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-line);
+  color: var(--color-paper);
 }
 
 .site-nav-sheet {
   display: flex;
   flex-direction: column;
   width: 100%;
-  padding-top: 0.35rem;
+  padding-top: 0.5rem;
 }
 
-.site-nav-ink .site-nav-brand,
-.site-nav-ink .site-nav-link,
-.site-nav-ink .site-nav-sheet-link {
+.site-nav-cmd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0 0.7rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-line);
+  color: var(--color-mute);
+  font-size: 0.8125rem;
+  background: var(--color-graphite);
+}
+
+.site-nav-cmd:hover {
+  color: var(--color-paper);
+  border-color: var(--color-mute);
+}
+
+.site-nav-cmd kbd {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
   color: var(--color-mute);
 }
 
-.site-nav-ink .site-nav-brand {
-  color: var(--color-paper);
+@media (max-width: 639px) {
+  .site-nav-cmd kbd {
+    display: none;
+  }
 }
 
-.site-nav-ink .site-nav-link:hover,
-.site-nav-ink .site-nav-sheet-link:hover {
-  color: var(--color-paper);
-  background: var(--color-raised);
+.site-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-gold);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background-color 120ms ease-out;
 }
 
-.site-nav-ink .site-nav-link.is-active,
-.site-nav-ink .site-nav-sheet-link.is-active {
-  color: var(--color-gold);
-  background: color-mix(in oklab, var(--color-violet) 16%, transparent);
+.site-nav-cta:hover {
+  background: color-mix(in oklab, var(--color-gold) 86%, black);
 }
 
-.site-nav-ink .site-nav-menu {
-  color: var(--color-paper);
-  border-color: var(--color-line);
+.site-nav-cta-block {
+  margin-top: 0.75rem;
+  min-height: 48px;
 }
 
+.site-nav-cta-wrap {
+  display: none;
+}
+
+.site-nav-cmd-rail {
+  width: 100%;
+  justify-content: space-between;
+  margin-left: 0;
+}
+
+@media (min-width: 960px) {
+  .site-nav-row {
+    display: flex;
+    margin-left: auto;
+    margin-right: 1.25rem;
+  }
+  .site-nav-menu,
+  .site-nav-sheet {
+    display: none;
+  }
+  .site-nav-actions {
+    margin-left: 0;
+  }
+  .site-nav-cta-wrap {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-link {
+    transition: none;
+  }
+}
+
+/* Older surfaces still pass tone="linen"; it now renders the same as ink. */
 .site-nav-linen .site-nav-brand {
-  color: var(--color-fg, #1a1612);
-}
-
-.site-nav-linen .site-nav-link,
-.site-nav-linen .site-nav-sheet-link {
-  color: var(--color-muted, #6d655a);
-}
-
-.site-nav-linen .site-nav-link:hover,
-.site-nav-linen .site-nav-sheet-link:hover {
-  color: var(--color-fg, #1a1612);
-  background: var(--color-surface-3, #ebe4d8);
-}
-
-.site-nav-linen .site-nav-link.is-active,
-.site-nav-linen .site-nav-sheet-link.is-active {
-  color: var(--color-accent, #8a6f3a);
-  background: color-mix(in oklab, var(--color-accent, #8a6f3a) 14%, transparent);
-}
-
-.site-nav-linen .site-nav-menu {
-  color: var(--color-fg, #1a1612);
-  border-color: var(--color-line, #ddd4c6);
+  color: var(--color-paper);
 }
 
 .login-solo {
@@ -320,25 +397,23 @@ body::before {
 }
 
 .login-plane {
-  background:
-    radial-gradient(900px 480px at 0% 0%, color-mix(in oklab, var(--color-violet) 14%, transparent), transparent 55%),
-    radial-gradient(640px 360px at 100% 100%, color-mix(in oklab, var(--color-gold) 8%, transparent), transparent 50%);
+  background: var(--color-magnetite);
+  color: var(--color-ink);
 }
 
 .login-lockup .vx-wordmark-name {
-  font-size: 1.5rem;
-  color: var(--color-paper);
+  font-size: 1.4rem;
 }
 
 .login-lockup .vx-mark {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
 }
 
 .gate-nav {
   grid-column: 1 / -1;
   padding: 0.65rem 1.1rem 0;
-  background: var(--color-bg, #f3eee6);
+  background: var(--color-ink);
 }
 
 .gate-nav .site-nav {
@@ -346,106 +421,7 @@ body::before {
   margin: 0 auto;
 }
 
-@media (min-width: 960px) {
-  .site-nav-row {
-    display: flex;
-    margin-left: auto;
-  }
-  .site-nav-menu,
-  .site-nav-sheet {
-    display: none;
-  }
-  .site-nav-actions {
-    margin-left: 0.35rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .site-nav-link,
-  .site-nav-sheet-link {
-    transition: none;
-  }
-}
-
-.site-nav-cmd {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 40px;
-  padding: 0 0.75rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in oklab, var(--color-gold) 22%, var(--color-line));
-  color: var(--color-mute);
-  font-size: 0.8125rem;
-  background: transparent;
-}
-
-.site-nav-cmd:hover {
-  color: var(--color-paper);
-  border-color: color-mix(in oklab, var(--color-gold) 40%, var(--color-line));
-}
-
-.site-nav-cmd kbd {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.04em;
-  color: var(--color-gold);
-}
-
-@media (max-width: 639px) {
-  .site-nav-cmd kbd {
-    display: none;
-  }
-}
-
-.site-nav-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  min-height: 40px;
-  padding: 0 1rem;
-  border-radius: 999px;
-  background: var(--color-gold);
-  color: var(--color-plum);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  transition: background-color 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.site-nav-cta:hover {
-  background: color-mix(in oklab, var(--color-gold) 86%, white);
-}
-
-.site-nav-cta-block {
-  margin-top: 0.5rem;
-  min-height: 44px;
-}
-
-.site-nav-cta-wrap {
-  display: none;
-}
-
-@media (min-width: 960px) {
-  .site-nav-cta-wrap {
-    display: inline-flex;
-  }
-}
-
-.site-nav-cmd-rail {
-  width: 100%;
-  justify-content: space-between;
-  margin-left: 0;
-}
-
-.site-nav-linen .site-nav-cmd {
-  color: var(--color-fg, #1a1612);
-  border-color: var(--color-line, #ddd4c6);
-}
-
-.site-nav-linen .site-nav-cmd kbd {
-  color: var(--color-accent, #8a6f3a);
-}
+/* ---------- Footer ---------- */
 
 .site-footer {
   display: grid;
@@ -453,7 +429,7 @@ body::before {
   padding: 2.5rem 0 2rem;
   border-top: 1px solid var(--color-line);
   color: var(--color-mute);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.55;
 }
 
@@ -475,16 +451,14 @@ body::before {
 
 .site-footer-cols h3 {
   margin-bottom: 0.6rem;
-  font-size: 0.6875rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--color-paper);
-  font-weight: 500;
 }
 
 .site-footer-cols ul {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 .site-footer a {
@@ -493,6 +467,8 @@ body::before {
 
 .site-footer a:hover {
   color: var(--color-gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .site-footer-legal {
@@ -513,9 +489,7 @@ body::before {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 1.25rem;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
   color: var(--color-mute);
 }
 
@@ -549,10 +523,8 @@ body::before {
 }
 
 .field-matrix thead th {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--color-mute);
 }
 
@@ -583,16 +555,16 @@ body::before {
   display: grid;
   place-items: start center;
   padding: 12vh 1rem 2rem;
-  background: color-mix(in oklab, var(--color-plum) 72%, transparent);
+  background: color-mix(in oklab, var(--color-magnetite) 45%, transparent);
 }
 
 .vx-cmd {
   width: min(100%, 40rem);
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--color-gold) 18%, var(--color-line));
-  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
   background: var(--color-graphite);
-  box-shadow: 0 24px 80px color-mix(in oklab, var(--color-plum) 55%, transparent);
+  box-shadow: 0 24px 60px color-mix(in oklab, var(--color-magnetite) 28%, transparent);
 }
 
 .vx-cmd [cmdk-input] {
@@ -613,10 +585,9 @@ body::before {
 }
 
 .vx-cmd [cmdk-group-heading] {
-  padding: 0.55rem 0.65rem 0.25rem;
-  font-size: 0.6875rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  padding: 0.65rem 0.65rem 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--color-mute);
 }
 
@@ -627,7 +598,7 @@ body::before {
   gap: 1rem;
   min-height: 40px;
   padding: 0.45rem 0.65rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 
@@ -653,10 +624,10 @@ body::before {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--color-gold) 18%, var(--color-line));
-  border-radius: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
   background: var(--color-graphite);
-  box-shadow: 0 24px 80px color-mix(in oklab, var(--color-plum) 55%, transparent);
+  box-shadow: 0 24px 60px color-mix(in oklab, var(--color-magnetite) 28%, transparent);
 }
 
 .vx-proof-json {
@@ -677,6 +648,333 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .vx-cmd-scrim {
-    background: var(--color-plum);
+    background: color-mix(in oklab, var(--color-magnetite) 45%, transparent);
   }
+}
+
+/* ---------- Example passport (home hero) ---------- */
+
+.vx-specimen {
+  position: relative;
+  background: var(--color-graphite);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-xs);
+  box-shadow:
+    0 1px 0 color-mix(in oklab, var(--color-magnetite) 6%, transparent),
+    12px 12px 0 color-mix(in oklab, var(--color-gold) 12%, transparent);
+  color: var(--color-paper);
+}
+
+.vx-specimen-head {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.vx-specimen-kind {
+  font-size: 0.8125rem;
+  color: var(--color-mute);
+}
+
+.vx-specimen-code {
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 1.375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.vx-specimen-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, auto));
+  justify-content: start;
+  gap: 1.5rem;
+  font-size: 0.8125rem;
+}
+
+.vx-specimen-meta dt {
+  color: var(--color-mute);
+}
+
+.vx-specimen-meta dd {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.vx-chain {
+  position: relative;
+  padding: 0.5rem 1.25rem;
+}
+
+/* The chain: one violet line that runs from the mine to the magnet. */
+.vx-chain::before {
+  content: "";
+  position: absolute;
+  left: calc(1.25rem + 5px);
+  top: 1.6rem;
+  bottom: 1.6rem;
+  width: 2px;
+  background: var(--color-gold);
+  transform-origin: top;
+}
+
+.vx-chain li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-areas: "node body country" "node body print";
+  column-gap: 0.9rem;
+  align-items: center;
+  padding: 0.6rem 0;
+}
+
+.vx-chain li + li {
+  border-top: 1px dashed var(--color-line);
+}
+
+.vx-chain-node {
+  grid-area: node;
+  width: 12px;
+  height: 12px;
+  background: var(--color-gold);
+  border: 2px solid var(--color-graphite);
+  outline: 2px solid var(--color-gold);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.vx-chain-body {
+  grid-area: body;
+  min-width: 0;
+}
+
+.vx-chain-stage {
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.vx-chain-where {
+  font-size: 0.8125rem;
+  color: var(--color-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vx-chain-country {
+  grid-area: country;
+  justify-self: end;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--color-paper);
+  border-radius: var(--radius-xs);
+}
+
+.vx-chain-print {
+  grid-area: print;
+  justify-self: end;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-mute);
+}
+
+.vx-specimen-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.25rem 1.15rem;
+  border-top: 1px solid var(--color-line);
+}
+
+.vx-seal svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.vx-seal rect {
+  fill: var(--color-seal);
+}
+
+.vx-seal path {
+  fill: none;
+  stroke: var(--color-magnetite);
+  stroke-width: 2.6;
+  stroke-linecap: square;
+}
+
+.vx-specimen-sealed {
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.vx-specimen-proof {
+  font-size: 0.8125rem;
+  color: var(--color-mute);
+}
+
+@media (min-width: 1120px) {
+  .vx-specimen-head {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+}
+
+@media (min-width: 520px) {
+  .vx-chain li {
+    grid-template-columns: 12px minmax(0, 1fr) auto 5.5rem;
+    grid-template-areas: "node body country print";
+  }
+}
+
+/* The one moving moment: the chain seals from mine to magnet, then the foil stamp lands. */
+@media (prefers-reduced-motion: no-preference) {
+  .vx-chain::before {
+    animation: vx-chain-draw 1100ms cubic-bezier(0.5, 0, 0.2, 1) 300ms both;
+  }
+  .vx-chain-node {
+    animation: vx-node-seal 260ms ease-out both;
+    animation-delay: calc(300ms + var(--i) * 220ms);
+  }
+  .vx-seal {
+    animation: vx-stamp 380ms cubic-bezier(0.3, 1.6, 0.5, 1) 1500ms both;
+  }
+}
+
+@keyframes vx-chain-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes vx-node-seal {
+  from {
+    background: var(--color-graphite);
+  }
+  to {
+    background: var(--color-gold);
+  }
+}
+
+@keyframes vx-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.8) rotate(-12deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* ---------- Home ---------- */
+
+.vx-hero-title {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+  font-size: clamp(2.75rem, 7.4vw, 5.75rem);
+}
+
+.vx-band {
+  background: var(--color-magnetite);
+  color: var(--color-ink);
+}
+
+.vx-band .vx-band-mute {
+  color: color-mix(in oklab, var(--color-ink) 68%, var(--color-magnetite));
+}
+
+.vx-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 1.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-gold);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  transition: background-color 120ms ease-out;
+}
+
+.vx-btn-primary:hover {
+  background: color-mix(in oklab, var(--color-gold) 86%, black);
+}
+
+.vx-btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 0.25rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--color-paper);
+  text-decoration: underline;
+  text-decoration-color: var(--color-line);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.vx-btn-quiet:hover {
+  text-decoration-color: var(--color-gold);
+}
+
+/* Sign-in: the chain, stamped large on magnetite. */
+.login-chain {
+  position: relative;
+  padding-left: 1.5rem;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(2rem, 3.6vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+.login-chain::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.35em;
+  bottom: 0.35em;
+  width: 3px;
+  background: var(--color-gold);
+}
+
+.login-chain li:last-child {
+  color: var(--color-seal);
+}
+
+/* The same chain on a real passport page: no load animation, gaps and covered countries called out. */
+.vx-chain-static::before,
+.vx-chain-static .vx-chain-node {
+  animation: none !important;
+}
+
+.vx-chain-static li {
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-areas: "node body country";
+}
+
+.vx-chain li.is-missing .vx-chain-node {
+  background: var(--color-graphite);
+  outline-color: var(--color-warn);
+}
+
+.vx-chain-country.is-covered {
+  border-color: var(--color-bad);
+  background: var(--color-bad);
+  color: #fff;
 }

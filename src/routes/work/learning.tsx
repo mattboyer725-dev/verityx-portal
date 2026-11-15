@@ -21,19 +21,19 @@ function LearningPage() {
       <ErrorNote message={dash.error ?? fb.error ?? outcomes.error} />
       <section className="grid gap-3 sm:grid-cols-4">
         <div className="panel p-5">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Outcomes</p>
+          <p className="text-xs text-mute">Outcomes</p>
           <p className="mt-2 font-display text-3xl tabular-nums">{dash.data?.counts.outcomes ?? "—"}</p>
         </div>
         <div className="panel p-5">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Feedback notes</p>
+          <p className="text-xs text-mute">Feedback notes</p>
           <p className="mt-2 font-display text-3xl tabular-nums">{dash.data?.counts.feedback ?? "—"}</p>
         </div>
         <div className="panel p-5">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Reports</p>
+          <p className="text-xs text-mute">Reports</p>
           <p className="mt-2 font-display text-3xl tabular-nums">{dash.data?.counts.reports ?? "—"}</p>
         </div>
         <div className="panel p-5">
-          <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Paid pilots</p>
+          <p className="text-xs text-mute">Paid pilots</p>
           <p className="mt-2 font-display text-3xl tabular-nums">{dash.data?.counts.paidPilots ?? "—"}</p>
         </div>
       </section>

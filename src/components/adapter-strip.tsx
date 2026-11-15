@@ -15,7 +15,7 @@ export function AdapterStrip({
             <div className="flex items-center justify-between gap-3">
               <h3 className="min-w-0 font-display text-xl tracking-tight">{a.name}</h3>
               <span
-                className={`shrink-0 text-[10px] uppercase tracking-[0.16em] ${
+                className={`shrink-0 text-xs ${
                   a.status === "LIVE" ? "text-ok" : a.status === "DOWN" ? "text-bad" : "text-warn"
                 }`}
               >
@@ -23,7 +23,7 @@ export function AdapterStrip({
               </span>
             </div>
                         {compact ? null : <p className="mt-3 text-sm leading-relaxed text-mute">{a.detail}</p>}
-            {compact ? null : <p className="mt-3 text-[11px] leading-relaxed text-mute">{a.protocol}</p>}
+            {compact ? null : <p className="mt-3 text-xs leading-relaxed text-mute">{a.protocol}</p>}
           </article>
         );
       })}

@@ -69,7 +69,7 @@ function DecisionDetail() {
           ["Approved", decision.approvedAt ? formatWhen(decision.approvedAt) : "—"],
         ].map(([k, v]) => (
           <div key={k} className="panel p-4">
-            <p className="text-[11px] uppercase tracking-[0.14em] text-mute">{k}</p>
+            <p className="text-xs text-mute">{k}</p>
             <p className="mt-2 font-mono text-sm">{v}</p>
           </div>
         ))}
@@ -79,7 +79,7 @@ function DecisionDetail() {
         <h2 className="font-display text-2xl">Evidence</h2>
         <ul className="mt-4 space-y-4">
           {decision.evidence.map((e) => (
-            <li key={e.id} className="rounded-[16px] border border-line p-4">
+            <li key={e.id} className="rounded-[6px] border border-line p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-medium">{e.title}</p>
                 <Pill>{e.kind.replaceAll("_", " ")}</Pill>

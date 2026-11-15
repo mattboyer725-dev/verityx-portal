@@ -50,7 +50,7 @@ export function Pill({ children, tone }: { children: ReactNode; tone?: string })
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center rounded-full border px-2 text-[11px] font-medium tracking-wide uppercase",
+        "inline-flex h-6 items-center whitespace-nowrap rounded-[4px] border px-2 text-xs font-medium",
         tones[tone ?? ""] ?? "text-mist border-line",
       )}
     >

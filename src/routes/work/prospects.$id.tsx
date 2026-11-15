@@ -175,12 +175,12 @@ function ProspectDetail() {
       />
 
       <section className="panel p-5 sm:p-6">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Finish this file</p>
+        <p className="text-xs text-mute">Finish this file</p>
         <ol className="mt-4 grid gap-2 sm:grid-cols-5">
           {checks.map(([label, on]) => (
             <li
               key={label}
-              className="flex items-center gap-2 rounded-[12px] border border-line bg-ink/50 px-3 py-2 text-sm"
+              className="flex items-center gap-2 rounded-[4px] border border-line bg-ink/50 px-3 py-2 text-sm"
             >
               <Check className={`size-4 ${on ? "text-ok" : "text-mute/40"}`} strokeWidth={1.8} />
               <span className={on ? "text-paper" : "text-mute"}>{label}</span>
@@ -270,7 +270,7 @@ function ProspectDetail() {
           {mailto ? (
             <a
               href={mailto}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-[8px] border border-line px-4 text-sm text-paper hover:bg-raised"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-[4px] border border-line px-4 text-sm text-paper hover:bg-raised"
             >
               Open mail
             </a>
@@ -288,7 +288,7 @@ function ProspectDetail() {
                   <span className="truncate">{o.subject}</span>
                   <span className="shrink-0 text-xs tabular-nums text-mute">{formatWhenPrecise(o.createdAt)}</span>
                 </div>
-                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-mute">{o.channel}</p>
+                <p className="mt-1 text-xs text-mute">{o.channel}</p>
               </li>
             ))}
           </ul>

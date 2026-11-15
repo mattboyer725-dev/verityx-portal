@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PILOT_CREDIT_DAYS, PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
@@ -10,7 +10,7 @@ import { LEGAL } from "@/lib/legal";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "Pricing · VerityX" },
+      { title: "Pricing | VerityX" },
       {
         name: "description",
         content: `Verifying a lot passport is free. Suppliers publish from ${money(PAID_PLANS.supplier.annualUsd)} a year; buyers monitor parts and generate evidence packs from ${money(PAID_PLANS.team.annualUsd)} a year.`,
@@ -43,14 +43,14 @@ function Plan({
   cta: Cta;
   highlight?: boolean;
 }) {
-  const cls = `mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-[8px] px-5 text-sm ${
-    highlight ? "bg-gold font-medium text-plum" : "border border-line hover:bg-raised"
+  const cls = `mt-7 inline-flex h-11 items-center justify-center gap-2 rounded-[4px] px-5 text-sm ${
+    highlight ? "bg-gold font-semibold text-white" : "border border-line hover:bg-raised"
   }`;
   return (
-    <div className={`panel flex h-full flex-col p-7 ${highlight ? "ring-1 ring-gold/60" : ""}`}>
-      <p className="text-[11px] uppercase tracking-[0.18em] text-mute">{kicker}</p>
+    <div className={`panel flex h-full flex-col p-7 ${highlight ? "border-t-4 border-t-gold" : ""}`}>
+      <p className="text-xs text-mute">{kicker}</p>
       <p className="mt-2 font-display text-2xl">{name}</p>
-      <p className={`mt-2 whitespace-nowrap font-display tracking-tight ${from ? "text-3xl" : "text-4xl"}`}>
+      <p className={`mt-2 whitespace-nowrap font-display tracking-tight ${from ? "text-[1.6rem]" : "text-[2rem]"}`}>
         {from ? <span className="mr-1 text-base text-mute">from</span> : null}
         {price}
         {per ? <span className="ml-1 text-base text-mute">{per}</span> : null}
@@ -75,7 +75,6 @@ function Plan({
       ) : (
         <a href={`/login?redirect=${encodeURIComponent(cta.redirect ?? "/work")}`} className={cls}>
           {cta.label}
-          {highlight ? <ArrowRight className="size-4" /> : null}
         </a>
       )}
     </div>
@@ -91,7 +90,7 @@ function PricingPage() {
       </div>
 
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-6">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-gold">Pricing</p>
+        <p className="text-xs text-gold">Pricing</p>
         <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.08] tracking-tight sm:text-5xl">
           Free to verify. Pay to publish, or to monitor.
         </h1>
@@ -102,7 +101,7 @@ function PricingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-4">
-        <h2 className="font-display text-2xl">Suppliers · publish lot passports</h2>
+        <h2 className="font-display text-2xl">Suppliers publish lot passports</h2>
         <p className="mt-1 text-sm text-mute">Mines, separators, metal and alloy makers, magnet makers.</p>
       </section>
       <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-12 md:grid-cols-2">
@@ -127,7 +126,7 @@ function PricingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-4">
-        <h2 className="font-display text-2xl">Buyers · monitor parts, export evidence</h2>
+        <h2 className="font-display text-2xl">Buyers monitor parts and export evidence</h2>
         <p className="mt-1 text-sm text-mute">Contractors and subcontractors with magnet-bearing parts on their programs.</p>
       </section>
       <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-12 md:grid-cols-2 lg:grid-cols-4">
@@ -171,14 +170,14 @@ function PricingPage() {
       <section className="mx-auto max-w-6xl px-6 pb-10">
         <div className="panel flex flex-col gap-4 p-7 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Also available · one purchase order</p>
-            <p className="mt-2 font-display text-2xl">Price-check pilot · {money(PILOT_PRICE_USD)}</p>
+            <p className="text-xs text-mute">For a single purchase order</p>
+            <p className="mt-2 font-display text-2xl">Price-check pilot, {money(PILOT_PRICE_USD)}</p>
             <p className="mt-2 max-w-2xl text-sm text-mute">
               Should-cost against licensed reference prices, supplier screening and a sealed decision on one live order, {PILOT_SLA_HOURS}-hour
               target. Credited in full to a first-year plan signed within {PILOT_CREDIT_DAYS} days.
             </p>
           </div>
-          <Link to="/pilot" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-[8px] border border-line px-5 text-sm hover:bg-raised">
+          <Link to="/pilot" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-[4px] border border-line px-5 text-sm hover:bg-raised">
             Request a pilot
           </Link>
         </div>

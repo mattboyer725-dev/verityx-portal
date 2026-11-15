@@ -25,13 +25,13 @@ function PaidPage() {
         <SiteNav tone="ink" />
       </div>
       <section className="mx-auto max-w-3xl px-6 pb-16 pt-6">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-ok">Payment received</p>
+        <p className="text-xs text-ok">Payment received</p>
         <h1 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl">Thank you. Your pilot is booked.</h1>
         {ref ? <p className="mt-3 font-mono text-xs text-mute">Reference {ref.slice(0, 12)}</p> : null}
         <ol className="panel mt-8 grid gap-4 p-6">
           {NEXT.map(([k, v]) => (
             <li key={k} className="grid gap-1 border-t border-line pt-4 text-sm first:border-0 first:pt-0 sm:grid-cols-[7rem_1fr]">
-              <span className="font-mono text-xs uppercase tracking-[0.12em] text-gold">{k}</span>
+              <span className="font-mono text-xs text-gold">{k}</span>
               <span className="leading-relaxed">{v}</span>
             </li>
           ))}

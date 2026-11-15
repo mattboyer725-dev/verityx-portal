@@ -57,7 +57,7 @@ function SettingsPage() {
         </Button>
       </form>
       <section className="panel max-w-xl space-y-3 p-5 text-sm sm:p-6">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Live configuration</p>
+        <p className="text-xs text-mute">Live configuration</p>
         <dl className="grid grid-cols-[8rem_1fr] gap-y-2 text-sm">
           <dt className="text-mute">Opened</dt>
           <dd>{formatWhen(data.organization.createdAt)}</dd>

@@ -67,7 +67,7 @@ function PassportsPage() {
       {data && data.length > 0 ? (
         <div className="panel overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="text-[11px] uppercase tracking-[0.14em] text-mute">
+            <thead className="text-xs text-mute">
               <tr className="border-b border-line">
                 <th className="px-5 py-3 font-medium">Passport</th>
                 <th className="px-5 py-3 font-medium">Material</th>

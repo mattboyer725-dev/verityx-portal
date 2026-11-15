@@ -1,34 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, BadgeCheck, FileCheck2, Layers, PackageCheck, ShieldCheck } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PassportLookup } from "@/components/passport-lookup";
+import { PassportSpecimen } from "@/components/passport-specimen";
 import { ENTERPRISE, FREE, PAID_PLANS } from "@/lib/provenance/plans";
-import { STAGES, STAGE_LABEL } from "@/lib/provenance/passport";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
 
-const STEPS = [
+const FLOW = [
   {
-    icon: Layers,
-    n: "01",
-    title: "Suppliers publish",
-    body: "Each lot gets a passport: where every stage happened, linked to the passports of the lots it was made from, with fingerprints of the evidence. Sealed on a public ledger.",
+    who: "The supplier publishes",
+    body: "A mine, separator, refiner, alloy maker or magnet maker records where its stage happened and links the passports of the lots it used. The evidence stays on its own systems; only fingerprints are sealed.",
   },
   {
-    icon: PackageCheck,
-    n: "02",
-    title: "Buyers monitor",
-    body: "Import the parts you ship with their passport codes. See every chain from mine to magnet and get an alert the moment a lot upstream is revoked or corrected.",
+    who: "The buyer watches",
+    body: "A prime or tier-1 imports the parts it ships with their passport codes and sees each chain end to end. If a lot anywhere upstream is revoked or corrected, the part is flagged.",
   },
   {
-    icon: BadgeCheck,
-    n: "03",
-    title: "Anyone verifies",
-    body: "A contracting officer, auditor or customer opens the code and checks it in their own browser. No account, no fee, no need to trust us.",
+    who: "Anyone checks",
+    body: "A contracting officer, auditor or customer opens the code. The checks run in their own browser against our published key, so they don't have to take our word for it.",
   },
 ] as const;
 
@@ -38,136 +31,116 @@ function Home() {
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-ink text-paper">
-      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-5 pt-4 sm:px-6">
         <SiteNav tone="ink" />
       </div>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pb-16 pt-10 sm:pt-20">
-        <p className="inline-flex items-center gap-2 rounded-full border border-line px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-mute">
-          <ShieldCheck className="size-3.5 text-gold" />
-          Magnet provenance, mine to magnet
-        </p>
-        <h1 className="mt-6 max-w-4xl font-display text-[2.6rem] leading-[1.04] tracking-tight sm:text-6xl">
-          Know where every magnet came from. Prove it in one click.
-        </h1>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute sm:text-lg">
-          Sealed lot passports that cover all five stages defense buyers are asked about, from mining to the finished
-          magnet. Suppliers publish once; every buyer downstream can check it.
-        </p>
-
-        <PassportLookup size="lg" className="mt-9" />
-        <p className="mt-3 pl-4 text-xs text-mute">Have a code from a supplier? Paste it to check the chain. Free, no account.</p>
-
-        <div className="mt-10 flex flex-wrap items-center gap-3">
-          <Link
-            {...workspace}
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-paper px-5 text-sm font-medium text-ink transition-opacity hover:opacity-90"
-          >
-            {user ? "Open workspace" : "Start free"}
-            <ArrowRight className="size-4" />
-          </Link>
-          <Link
-            to="/pricing"
-            className="inline-flex h-11 items-center rounded-full border border-line px-5 text-sm text-paper transition-colors hover:bg-raised"
-          >
-            See pricing
-          </Link>
-        </div>
-      </section>
-
-      {/* Chain strip */}
-      <section className="mx-auto max-w-6xl px-6 pb-16">
-        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          {STAGES.map((s, i) => (
-            <li key={s} className="rounded-[16px] border border-line bg-raised/40 px-4 py-4 last:col-span-2 sm:last:col-span-1">
-              <p className="font-mono text-[11px] text-gold">{String(i + 1).padStart(2, "0")}</p>
-              <p className="mt-1 font-display text-lg capitalize">{s}</p>
-              <p className="mt-1 text-xs leading-snug text-mute">{STAGE_LABEL[s].replace(/^[^(]*\(?/, "").replace(/\)$/, "")}</p>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-4 max-w-3xl text-xs leading-relaxed text-mute">
-          The five stages named in DFARS 252.225-7052 for covered magnets. A passport records what the supplier declares
-          and fingerprints their evidence. It is not a determination of compliance; that stays with the buyer and the
-          contracting officer.
-        </p>
-      </section>
-
-      {/* How it works */}
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <h2 className="font-display text-3xl tracking-tight sm:text-4xl">How it works</h2>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {STEPS.map(({ icon: Icon, n, title, body }) => (
-            <div key={n} className="panel p-6">
-              <div className="flex items-center justify-between">
-                <Icon className="size-5 text-gold" strokeWidth={1.6} />
-                <span className="font-mono text-xs text-mute">{n}</span>
-              </div>
-              <h3 className="mt-5 font-display text-2xl">{title}</h3>
-              <p className="mt-3 text-sm leading-relaxed text-mute">{body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Two paths */}
-      <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-20 md:grid-cols-2">
-        <div className="panel flex flex-col p-7">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-gold">For suppliers</p>
-          <h3 className="mt-3 font-display text-3xl tracking-tight">Answer every buyer once</h3>
-          <p className="mt-3 text-sm leading-relaxed text-mute">
-            Mines, separators, metal and alloy makers, magnet makers. Publish a passport per lot instead of filling in
-            another questionnaire. Your documents stay with you; only their fingerprints go on the ledger.
+      <section className="mx-auto grid max-w-6xl gap-14 px-5 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-12 lg:pt-20">
+        <div>
+          <h1 className="vx-hero-title">Mine to magnet, sealed.</h1>
+          <p className="mt-7 max-w-[34rem] text-lg leading-relaxed text-mist">
+            Rare-earth suppliers publish a sealed passport for every lot. Every buyer downstream can check where it was
+            mined, separated, refined, melted and made.
           </p>
-          <p className="mt-6 text-sm">
-            <span className="font-display text-2xl">Free</span>
-            <span className="text-mute"> for {FREE.seals} lots a year · then {usd(PAID_PLANS.supplier.annualUsd)}/yr unlimited</span>
-          </p>
-          <Link {...workspace} className="mt-6 inline-flex items-center gap-1 text-sm text-gold hover:text-paper">
-            Publish your first lot <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
-        <div className="panel flex flex-col p-7">
-          <p className="text-[11px] uppercase tracking-[0.18em] text-gold">For buyers</p>
-          <h3 className="mt-3 font-display text-3xl tracking-tight">Know before the audit does</h3>
-          <p className="mt-3 text-sm leading-relaxed text-mute">
-            Primes and tier-1s shipping magnet-bearing parts. One view of every part's chain, alerts when anything
-            upstream changes, and a sealed evidence pack ready to hand over.
-          </p>
-          <p className="mt-6 text-sm">
-            <span className="font-display text-2xl">Free</span>
-            <span className="text-mute">
-              {" "}
-              for {FREE.parts} parts · Team {usd(PAID_PLANS.team.annualUsd)}/yr · Enterprise from {usd(ENTERPRISE.fromUsd)}
-            </span>
-          </p>
-          <Link {...workspace} className="mt-6 inline-flex items-center gap-1 text-sm text-gold hover:text-paper">
-            Import your parts <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
-      </section>
 
-      {/* Also */}
-      <section className="mx-auto max-w-6xl px-6 pb-20">
-        <div className="flex flex-col gap-4 rounded-[20px] border border-line p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-4">
-            <FileCheck2 className="mt-0.5 size-5 shrink-0 text-gold" strokeWidth={1.6} />
-            <div>
-              <p className="font-medium">Also free: check a rare-earth purchase order price</p>
-              <p className="mt-1 text-sm text-mute">Supplier, commodity, kg and total against live reference prices and a should-cost band.</p>
-            </div>
+          <div className="mt-10">
+            <p className="mb-3 text-sm font-semibold">Check a passport</p>
+            <PassportLookup size="lg" />
+            <p className="mt-2.5 text-sm text-mute">Paste the code from your supplier. It's free and needs no account.</p>
           </div>
-          <Link
-            to="/check"
-            className="inline-flex h-10 shrink-0 items-center gap-1 self-start rounded-full border border-line px-4 text-sm hover:bg-raised sm:self-auto"
-          >
-            Price check <ArrowRight className="size-3.5" />
+
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link {...workspace} className="vx-btn-primary">
+              {user ? "Open your workspace" : "Start free"}
+            </Link>
+            <Link to="/pricing" className="vx-btn-quiet">
+              See pricing
+            </Link>
+          </div>
+        </div>
+
+        <div className="lg:pt-3">
+          <PassportSpecimen />
+          <p className="mt-7 max-w-md text-xs leading-relaxed text-mute">
+            The five stages are the ones DFARS 252.225-7052 names for covered magnets. A passport records what the supplier
+            declares and fingerprints its evidence. Deciding compliance stays with the buyer and the contracting officer.
+          </p>
+        </div>
+      </section>
+
+      <section className="vx-band">
+        <div className="mx-auto max-w-6xl px-5 py-20 sm:px-6">
+          <h2 className="font-display max-w-2xl text-3xl leading-tight sm:text-[2.5rem]">
+            One passport, written once, checked by everyone after.
+          </h2>
+          <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+            {FLOW.map((f, i) => (
+              <li
+                key={f.who}
+                className="border-t-2 pt-5"
+                style={{ borderColor: i === 0 ? "var(--color-seal)" : "color-mix(in oklab, var(--color-ink) 30%, transparent)" }}
+              >
+                <h3 className="text-lg font-bold" style={{ fontStretch: "125%" }}>
+                  {f.who}
+                </h3>
+                <p className="vx-band-mute mt-3 text-[0.9375rem] leading-relaxed">{f.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-6">
+        <h2 className="font-display text-3xl leading-tight sm:text-[2.5rem]">Free to check. Paid to publish or to monitor.</h2>
+        <div className="mt-12 grid border-y border-line md:grid-cols-2">
+          <div className="py-8 md:pr-10">
+            <h3 className="text-xl font-bold" style={{ fontStretch: "125%" }}>
+              If you make or process the material
+            </h3>
+            <p className="mt-3 max-w-md leading-relaxed text-mist">
+              Publish a passport per lot instead of filling in each customer's questionnaire. Your documents stay with you.
+            </p>
+            <p className="mt-6">
+              <span className="font-display text-3xl">Free</span>
+              <span className="ml-2 text-mute">for {FREE.seals} lots a year</span>
+            </p>
+            <p className="mt-1 text-sm text-mute">Then {usd(PAID_PLANS.supplier.annualUsd)} a year for unlimited lots.</p>
+            <Link {...workspace} className="vx-btn-quiet mt-5">
+              Publish your first lot
+            </Link>
+          </div>
+          <div className="border-t border-line py-8 md:border-l md:border-t-0 md:pl-10">
+            <h3 className="text-xl font-bold" style={{ fontStretch: "125%" }}>
+              If you buy parts with magnets in them
+            </h3>
+            <p className="mt-3 max-w-md leading-relaxed text-mist">
+              See every part's chain, get flagged when anything upstream changes, and hand over a sealed evidence pack.
+            </p>
+            <p className="mt-6">
+              <span className="font-display text-3xl">Free</span>
+              <span className="ml-2 text-mute">for {FREE.parts} parts</span>
+            </p>
+            <p className="mt-1 text-sm text-mute">
+              Team {usd(PAID_PLANS.team.annualUsd)} a year. Enterprise from {usd(ENTERPRISE.fromUsd)}.
+            </p>
+            <Link {...workspace} className="vx-btn-quiet mt-5">
+              Import your parts
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-14 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between">
+          <p className="max-w-xl text-mist">
+            <span className="font-semibold text-paper">Buying rare-earth material?</span> Check one purchase order's price
+            against live reference prices and a should-cost range, free.
+          </p>
+          <Link to="/check" className="vx-btn-quiet shrink-0">
+            Check a price
           </Link>
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-6 pb-10">
+      <div className="mx-auto max-w-6xl px-5 pb-10 sm:px-6">
         <SiteFooter />
       </div>
     </main>

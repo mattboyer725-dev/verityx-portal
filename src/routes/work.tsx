@@ -25,11 +25,11 @@ function WorkLayout() {
         <div className="lg:pl-60">
           <div className="h-14 border-b border-line lg:hidden" />
           <div className="p-8">
-            <div className="h-10 w-48 animate-pulse rounded-[12px] bg-raised" />
+            <div className="h-10 w-48 animate-pulse rounded-[4px] bg-raised" />
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="h-28 animate-pulse rounded-[24px] bg-graphite" />
-              <div className="h-28 animate-pulse rounded-[24px] bg-graphite" />
-              <div className="h-28 animate-pulse rounded-[24px] bg-graphite" />
+              <div className="h-28 animate-pulse rounded-[6px] bg-graphite" />
+              <div className="h-28 animate-pulse rounded-[6px] bg-graphite" />
+              <div className="h-28 animate-pulse rounded-[6px] bg-graphite" />
             </div>
           </div>
         </div>

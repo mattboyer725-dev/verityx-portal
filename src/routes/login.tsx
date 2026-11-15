@@ -84,17 +84,14 @@ function Login() {
         <Link to="/" className="login-lockup">
           <VxWordmark />
         </Link>
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-mute">Supply chain risk audit</p>
-          <h1 className="mt-4 max-w-md font-display text-5xl leading-[1.1] text-paper">
-            One paying pilot. A decision you can defend.
-          </h1>
-          <p className="mt-6 max-w-sm text-sm leading-relaxed text-mute">
-            $5,000 pilot, credited to a plan · 72-hour target · advisory only. Evidence in, human approval for BLOCK, no fabricated
-            intelligence.
-          </p>
-        </div>
-        <p className="text-xs text-mute">v1.0-soft-prod · Customer Zero OS</p>
+        <ol className="login-chain" aria-label="The five stages a passport covers">
+          {["Mined", "Separated", "Refined", "Melted", "Produced"].map((st) => (
+            <li key={st}>{st}</li>
+          ))}
+        </ol>
+        <p className="max-w-sm text-sm leading-relaxed" style={{ color: "color-mix(in oklab, var(--color-ink) 68%, var(--color-magnetite))" }}>
+          Publish lot passports, watch the parts you ship, and export sealed evidence packs.
+        </p>
       </section>
 
       <section className="flex items-center justify-center px-6 py-10 sm:py-16">
@@ -107,8 +104,8 @@ function Login() {
           </h2>
           <p className="mt-2 text-sm text-mute">
             {mode === "in"
-              ? "Continue, then return to the platform hub."
-              : "Register the organization that will own the first customer."}
+              ? "Pick up where you left off."
+              : "Set up your company. You can invite your team afterwards."}
           </p>
 
           <form className="mt-8 space-y-4" onSubmit={onSubmit}>
@@ -138,7 +135,7 @@ function Login() {
             </Field>
             <ErrorNote message={error} />
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Working…" : mode === "in" ? "Enter platform" : "Create workspace"}
+              {busy ? "Working…" : mode === "in" ? "Sign in" : "Create workspace"}
             </Button>
           </form>
 
@@ -156,7 +153,7 @@ function Login() {
 
           {authEnabled ? (
             <div className="mt-8">
-              <p className="mb-3 text-center text-[11px] uppercase tracking-[0.16em] text-mute">Or continue with</p>
+              <p className="mb-3 text-center text-xs text-mute">Or continue with</p>
               <div className="space-y-2">
                 {GROK_PROVIDERS.map((p) => (
                   <Button
@@ -179,16 +176,10 @@ function Login() {
 
           <div className="mt-8 space-y-2 border-t border-line pt-6 text-sm">
             <Link to="/" className="block text-mute hover:text-paper">
-              Back to the platform hub →
+              Back to home
             </Link>
-            <Link to="/check" className="block text-mute hover:text-paper">
-              Check a quote →
-            </Link>
-            <Link to="/core" className="block text-mute hover:text-paper">
-              Verify the signed core →
-            </Link>
-            <Link to="/admin" className="block text-mute hover:text-paper">
-              Owner command →
+            <Link to="/verify" className="block text-mute hover:text-paper">
+              Check a passport without signing in
             </Link>
           </div>
         </div>

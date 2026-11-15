@@ -129,7 +129,7 @@ function PublicPassportPage() {
       </div>
 
       <section className="mx-auto max-w-6xl px-6 pb-8 pt-4">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-gold">Lot passport</p>
+        <p className="text-xs text-gold">Lot passport</p>
         <h1 className="mt-3 break-all font-display text-4xl tracking-tight sm:text-5xl">{code.toUpperCase()}</h1>
         {q.isPending ? <p className="mt-6 text-sm text-mute">Loading…</p> : null}
         {q.error ? <p className="mt-6 text-sm text-bad">{String((q.error as Error).message || q.error)}</p> : null}
@@ -155,7 +155,7 @@ function PublicPassportPage() {
         <>
           {data.entry.status === "revoked" ? (
             <section className="mx-auto max-w-6xl px-6 pb-6">
-              <div className="rounded-[16px] border border-bad/30 bg-bad/10 p-5 text-sm">
+              <div className="rounded-[6px] border border-bad/30 bg-bad/10 p-5 text-sm">
                 <p className="font-medium text-bad">Revoked {data.revokedAt ? formatWhen(data.revokedAt) : ""}</p>
                 <p className="mt-1">{data.revokedReason}</p>
                 {data.supersededBy ? (
@@ -177,23 +177,38 @@ function PublicPassportPage() {
                 <Pill tone={data.analysis.status}>{data.analysis.status.replace(/-/g, " ")}</Pill>
               </div>
               <p className="text-sm text-mute">{STATUS_TEXT[data.analysis.status]}</p>
-              <ol className="grid gap-2 sm:grid-cols-5">
+              <ol className="vx-chain vx-chain-static -mx-1">
                 {data.analysis.stages.map((s) => (
-                  <li key={s.stage} className="min-w-0 rounded-[12px] border border-line p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-mute">{s.stage}</p>
-                    {s.covered ? (
-                      s.sources.map((src, i) => (
-                        <p key={i} className={`mt-1 break-words text-sm ${COVERED_COUNTRIES[src.country] ? "text-bad" : ""}`}>
-                          {src.country} · {src.facility}
-                          {src.recycled ? " · recycled" : ""}
-                          <Link to="/passport/$code" params={{ code: src.code }} className="block font-mono text-[11px] text-mute hover:text-gold">
-                            {src.code}
-                          </Link>
-                        </p>
-                      ))
-                    ) : (
-                      <p className="mt-1 text-sm text-warn">Not declared</p>
-                    )}
+                  <li key={s.stage} className={s.covered ? "" : "is-missing"}>
+                    <span className="vx-chain-node" aria-hidden />
+                    <div className="vx-chain-body">
+                      <p className="vx-chain-stage capitalize">{s.stage}</p>
+                      {s.covered ? (
+                        s.sources.map((src, i) => (
+                          <p key={i} className="vx-chain-where !whitespace-normal">
+                            {src.facility}
+                            {src.recycled ? ", recycled feedstock" : ""}
+                            {src.code !== data.entry.code ? (
+                              <>
+                                {" "}
+                                <Link to="/passport/$code" params={{ code: src.code }} className="font-mono text-gold hover:underline">
+                                  {src.code}
+                                </Link>
+                              </>
+                            ) : null}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="vx-chain-where text-warn">Not declared</p>
+                      )}
+                    </div>
+                    <span className="flex flex-wrap justify-end gap-1" style={{ gridArea: "country" }}>
+                      {s.sources.map((src, i) => (
+                        <span key={i} className={`vx-chain-country ${COVERED_COUNTRIES[src.country] ? "is-covered" : ""}`}>
+                          {src.country}
+                        </span>
+                      ))}
+                    </span>
                   </li>
                 ))}
               </ol>
@@ -203,15 +218,15 @@ function PublicPassportPage() {
             </div>
 
             <div className="panel space-y-3 p-6">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Checked in your browser</p>
+              <p className="text-xs text-mute">Checked in your browser</p>
               <p className={`font-display text-2xl ${checks === null ? "text-mute" : verified ? "text-ok" : "text-bad"}`}>
                 {checks === null ? "Checking…" : verified ? "Seal verified" : "Does not verify"}
               </p>
               <ul className="space-y-2 text-sm">
                 {allChecks.map((c) => (
                   <li key={c.label} className="flex gap-3">
-                    <span className={`w-20 shrink-0 text-[11px] uppercase tracking-[0.14em] ${c.ok ? "text-ok" : "text-bad"}`}>
-                      {c.ok ? "pass" : "fail"} · {c.label}
+                    <span className={`w-20 shrink-0 text-xs ${c.ok ? "text-ok" : "text-bad"}`}>
+                      {c.label}: {c.ok ? "pass" : "fail"}
                     </span>
                     <span className="min-w-0 text-mute">{c.detail}</span>
                   </li>
@@ -225,7 +240,7 @@ function PublicPassportPage() {
                   Verify a receipt
                 </Link>
               </div>
-              <p className="break-all font-mono text-[11px] text-mute">sha256 {data.entry.digest}</p>
+              <p className="break-all font-mono text-xs text-mute">sha256 {data.entry.digest}</p>
             </div>
           </section>
 
@@ -236,7 +251,7 @@ function PublicPassportPage() {
                 Got a certificate of origin, assay or invoice from the supplier? Choose it here. It is fingerprinted in this browser and
                 compared with every evidence fingerprint sealed in this lot and the lots upstream of it. Nothing is uploaded.
               </p>
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-[8px] border border-line px-4 py-2 text-sm hover:bg-raised">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-[4px] border border-line px-4 py-2 text-sm hover:bg-raised">
                 <input
                   type="file"
                   multiple
@@ -251,7 +266,7 @@ function PublicPassportPage() {
               {matches.length ? (
                 <ul className="space-y-2 text-sm">
                   {matches.map((m) => (
-                    <li key={m.sha256 + m.name} className="rounded-[12px] border border-line p-3">
+                    <li key={m.sha256 + m.name} className="rounded-[4px] border border-line p-3">
                       <p className={m.hits.length ? "text-ok" : "text-warn"}>
                         {m.name}: {m.hits.length ? "matches" : "no match in this chain"}
                       </p>
@@ -260,7 +275,7 @@ function PublicPassportPage() {
                           {h.code} · {h.stage} · sealed as “{h.file}”
                         </p>
                       ))}
-                      <p className="break-all font-mono text-[11px] text-mute">{m.sha256}</p>
+                      <p className="break-all font-mono text-xs text-mute">{m.sha256}</p>
                     </li>
                   ))}
                 </ul>
@@ -334,7 +349,7 @@ function LotList({
   return (
     <ul className="mt-2 space-y-2">
       {lots.map((l) => (
-        <li key={l.code} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-line px-3 py-2 text-sm">
+        <li key={l.code} className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border border-line px-3 py-2 text-sm">
           <span className="min-w-0">
             <Link to="/passport/$code" params={{ code: l.code }} className="font-mono hover:text-gold">
               {l.code}

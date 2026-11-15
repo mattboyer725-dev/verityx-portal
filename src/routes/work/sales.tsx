@@ -96,18 +96,18 @@ function Command() {
           ["Reports", String(data.counts.reports)],
         ].map(([k, v]) => (
           <div key={k} className="panel p-5">
-            <p className="text-[11px] uppercase tracking-[0.16em] text-mute">{k}</p>
+            <p className="text-xs text-mute">{k}</p>
             <p className="mt-2 font-display text-3xl tabular-nums">{v}</p>
           </div>
         ))}
       </section>
 
       <section className="panel p-5 sm:p-6">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Core loop</p>
+        <p className="text-xs text-mute">Core loop</p>
         <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {data.loop.map((item, i) => (
-            <li key={item.stage} className="rounded-[16px] border border-line bg-ink/50 p-3">
-              <p className="text-[10px] tabular-nums text-mute">{String(i + 1).padStart(2, "0")}</p>
+            <li key={item.stage} className="rounded-[6px] border border-line bg-ink/50 p-3">
+              <p className="text-xs tabular-nums text-mute">{String(i + 1).padStart(2, "0")}</p>
               <p className="mt-1 font-display text-lg capitalize">{item.stage.replace("_", " ")}</p>
               <p className="mt-1 text-xs text-mute">{item.detail}</p>
               <div className="mt-3 h-1 rounded-full bg-line">

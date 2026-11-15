@@ -32,7 +32,7 @@ function DecisionsPage() {
       {data && data.length > 0 ? (
         <div className="overflow-x-auto panel">
           <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="text-[11px] uppercase tracking-[0.14em] text-mute">
+            <thead className="text-xs text-mute">
               <tr className="border-b border-line">
                 <th className="px-5 py-3 font-medium">Pilot</th>
                 <th className="px-5 py-3 font-medium">Action</th>

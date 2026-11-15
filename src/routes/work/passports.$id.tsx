@@ -243,14 +243,14 @@ function PassportDetail() {
         </div>
         <ol className="grid gap-2 sm:grid-cols-5">
           {analysis.stages.map((s) => (
-            <li key={s.stage} className="rounded-[12px] border border-line p-3">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-mute">{s.stage}</p>
+            <li key={s.stage} className="rounded-[4px] border border-line p-3">
+              <p className="text-xs text-mute">{s.stage}</p>
               {s.covered ? (
                 s.sources.map((src, i) => (
                   <p key={i} className={`mt-1 text-sm ${COVERED_COUNTRIES[src.country] ? "text-bad" : ""}`}>
                     {src.country} · {src.facility}
                     {src.recycled ? " · recycled" : ""}
-                    <span className="block font-mono text-[11px] text-mute">{src.code}</span>
+                    <span className="block font-mono text-xs text-mute">{src.code}</span>
                   </p>
                 ))
               ) : (
@@ -366,12 +366,12 @@ function PassportDetail() {
                       </label>
                     ) : null}
                     <div className="sm:col-span-3">
-                      <p className="text-[11px] uppercase tracking-[0.14em] text-mute">Evidence fingerprints</p>
+                      <p className="text-xs text-mute">Evidence fingerprints</p>
                       <ul className="mt-2 space-y-1">
                         {decl.evidence.map((e) => (
                           <li key={e.sha256} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                             <span className="min-w-0 break-all">
-                              {e.name} <span className="font-mono text-[11px] text-mute">{e.sha256.slice(0, 16)}…</span>
+                              {e.name} <span className="font-mono text-xs text-mute">{e.sha256.slice(0, 16)}…</span>
                             </span>
                             {editable ? (
                               <button
@@ -420,7 +420,7 @@ function PassportDetail() {
           {draft.inputs.map((code) => {
             const c = chainByCode.get(code);
             return (
-              <li key={code} className="flex flex-wrap items-center justify-between gap-2 rounded-[12px] border border-line px-3 py-2 text-sm">
+              <li key={code} className="flex flex-wrap items-center justify-between gap-2 rounded-[4px] border border-line px-3 py-2 text-sm">
                 <span>
                   <span className="font-mono">{code}</span>
                   {c ? ` · ${MATERIALS[c.material].label} · ${c.publisher} · lot ${c.lotRef}` : " · save to resolve"}
@@ -483,11 +483,11 @@ function PassportDetail() {
           <h2 className="font-display text-2xl">Seal</h2>
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div className="min-w-0">
-              <dt className="text-[11px] uppercase tracking-[0.14em] text-mute">Content digest (SHA-256)</dt>
+              <dt className="text-xs text-mute">Content digest (SHA-256)</dt>
               <dd className="mt-1 break-all font-mono text-xs">{p.digest}</dd>
             </div>
             <div className="min-w-0">
-              <dt className="text-[11px] uppercase tracking-[0.14em] text-mute">Ledger entry</dt>
+              <dt className="text-xs text-mute">Ledger entry</dt>
               <dd className="mt-1 break-all font-mono text-xs">{p.ledgerHash ?? "—"}</dd>
             </div>
           </dl>

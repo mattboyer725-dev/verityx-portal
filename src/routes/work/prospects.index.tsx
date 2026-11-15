@@ -176,7 +176,7 @@ function ProspectsPage() {
                 key={key}
                 type="button"
                 onClick={() => setFilter(key)}
-                className={`h-11 rounded-[8px] border px-3 text-sm ${
+                className={`h-11 rounded-[4px] border px-3 text-sm ${
                   filter === key ? "border-gold bg-gold text-plum" : "border-line text-mute hover:text-paper"
                 }`}
               >
@@ -187,7 +187,7 @@ function ProspectsPage() {
 
           <div className="overflow-x-auto panel">
             <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-[0.14em] text-mute">
+              <thead className="text-xs text-mute">
                 <tr className="border-b border-line">
                   <th className="px-5 py-3 font-medium">Company</th>
                   <th className="px-5 py-3 font-medium">Contact</th>

@@ -80,7 +80,7 @@ function BillingPage() {
     const otherBuyerPaid = p.side === "buyer" && billing.buyerPlan !== "free" && !active;
     return (
       <div key={id} className="panel flex flex-col p-6">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">{p.side === "supplier" ? "Publish" : "Monitor"}</p>
+        <p className="text-xs text-mute">{p.side === "supplier" ? "Publish" : "Monitor"}</p>
         <p className="mt-2 font-display text-2xl">{p.name}</p>
         <p className="mt-1 font-display text-3xl tracking-tight">
           {money(p.annualUsd)}
@@ -158,7 +158,7 @@ function BillingPage() {
       </section>
 
       {!data.stripeReady ? (
-        <p className="rounded-[12px] border border-warn/30 bg-warn/10 p-4 text-sm">
+        <p className="rounded-[4px] border border-warn/30 bg-warn/10 p-4 text-sm">
           Online payment is not switched on yet. To start a plan now, email{" "}
           {LEGAL.supportEmail ? <a className="underline" href={`mailto:${LEGAL.supportEmail}`}>{LEGAL.supportEmail}</a> : "us"} and we will invoice you.
         </p>
@@ -205,7 +205,7 @@ function OwnerPlans() {
   return (
     <section className="panel space-y-4 p-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-gold">Owner only</p>
+        <p className="text-xs text-gold">Owner only</p>
         <h2 className="mt-1 font-display text-2xl">Organizations and invoiced plans</h2>
         <p className="mt-1 text-sm text-mute">
           For customers who pay by invoice or wire: set their plan and end date here. Stripe subscriptions update themselves.
@@ -214,7 +214,7 @@ function OwnerPlans() {
       <ErrorNote message={q.error ? errorMessage(q.error) : null} />
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="text-[11px] uppercase tracking-[0.14em] text-mute">
+          <thead className="text-xs text-mute">
             <tr className="border-b border-line">
               <th className="px-3 py-2 font-medium">Organization</th>
               <th className="px-3 py-2 font-medium">Supplier</th>

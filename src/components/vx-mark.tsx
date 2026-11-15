@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 
-/** VerityX seal: a gold V held inside circle, hexagon, and hexagram. */
+/** VerityX mark: a neodymium-violet tile, a V cut like a stamped nameplate, and one foil seal point where the chain closes. */
 export function VxMark({ className, title }: { className?: string; title?: string }) {
   return (
     <svg
@@ -11,41 +11,9 @@ export function VxMark({ className, title }: { className?: string; title?: strin
       aria-hidden={title ? undefined : true}
       aria-label={title}
     >
-      <circle cx="32" cy="32" r="31.2" fill="var(--color-plum, #120C1A)" />
-      <circle
-        cx="32"
-        cy="32"
-        r="28.6"
-        stroke="var(--color-violet, #6E5A8A)"
-        strokeWidth="0.9"
-        opacity="0.9"
-      />
-      <polygon
-        points="32.00,6.00 54.52,19.00 54.52,45.00 32.00,58.00 9.48,45.00 9.48,19.00"
-        stroke="var(--color-gold, #C9B07A)"
-        strokeWidth="0.7"
-        opacity="0.55"
-      />
-      <polygon
-        points="32.00,12.00 49.32,42.00 14.68,42.00"
-        stroke="var(--color-violet, #6E5A8A)"
-        strokeWidth="0.7"
-        opacity="0.7"
-      />
-      <circle cx="32" cy="32" r="9.2" stroke="var(--color-gold, #C9B07A)" strokeWidth="0.6" opacity="0.4" />
-      <path
-        d="M49.32 22 L32 52 L14.68 22"
-        stroke="var(--color-gold, #C9B07A)"
-        strokeWidth="2.35"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="32" cy="6" r="1.05" fill="var(--color-gold, #C9B07A)" opacity="0.8" />
-      <circle cx="54.52" cy="19" r="1.05" fill="var(--color-gold, #C9B07A)" opacity="0.55" />
-      <circle cx="54.52" cy="45" r="1.05" fill="var(--color-gold, #C9B07A)" opacity="0.55" />
-      <circle cx="32" cy="58" r="1.05" fill="var(--color-gold, #C9B07A)" opacity="0.8" />
-      <circle cx="9.48" cy="45" r="1.05" fill="var(--color-gold, #C9B07A)" opacity="0.55" />
-      <circle cx="9.48" cy="19" r="1.05" fill="var(--color-gold, #C9B07A)" opacity="0.55" />
+      <rect x="1" y="1" width="62" height="62" rx="5" fill="var(--color-gold, #5440B8)" />
+      <path d="M15 16 L32 48 L49 16" stroke="#FFFFFF" strokeWidth="7" strokeLinejoin="miter" strokeLinecap="square" />
+      <rect x="27" y="43" width="10" height="10" transform="rotate(45 32 48)" fill="var(--color-seal, #D9A621)" />
     </svg>
   );
 }

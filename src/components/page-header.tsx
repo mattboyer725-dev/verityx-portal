@@ -16,9 +16,9 @@ export function PageHeader({
     <header className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {kicker ? (
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.18em] text-mute">{kicker}</p>
+          <p className="mb-1.5 text-sm text-mute">{kicker}</p>
         ) : null}
-        <h1 className="font-display text-3xl font-medium tracking-tight text-paper sm:text-4xl">{title}</h1>
+        <h1 className="font-display text-[1.75rem] leading-tight text-paper sm:text-[2.25rem]">{title}</h1>
         {description ? <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">{description}</p> : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
@@ -47,7 +47,7 @@ export function EmptyState({
 export function ErrorNote({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p className="rounded-[12px] border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad" role="alert">
+    <p className="rounded-[4px] border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad" role="alert">
       {message}
     </p>
   );
@@ -66,12 +66,12 @@ export function MissingRecord({
     <div className="space-y-4">
       <ErrorNote message={message} />
       <Link to={to} className="text-sm text-mute hover:text-paper">
-        {label} →
+        {label}
       </Link>
     </div>
   );
 }
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-[12px] bg-raised ${className ?? "h-24"}`} />;
+  return <div className={`animate-pulse rounded-[4px] bg-raised ${className ?? "h-24"}`} />;
 }

@@ -16,8 +16,8 @@ type Published = { available: boolean; publicKey?: string; kid?: string; ephemer
 function Row({ label, r }: { label: string; r: { ok: boolean; detail: string } }) {
   return (
     <li className="grid grid-cols-[5.5rem_1fr] gap-4 border-t border-line py-3 first:border-0">
-      <span className={`font-mono text-xs uppercase tracking-[0.12em] ${r.ok ? "text-ok" : "text-bad"}`}>
-        {r.ok ? "Pass" : "Fail"} · {label}
+      <span className={`text-sm font-semibold ${r.ok ? "text-ok" : "text-bad"}`}>
+        {label}: {r.ok ? "pass" : "fail"}
       </span>
       <span className="text-sm leading-relaxed">{r.detail}</span>
     </li>
@@ -78,7 +78,7 @@ function VerifyPage() {
         <SiteNav tone="ink" />
       </div>
       <section className="mx-auto max-w-6xl px-6 pb-6 pt-8">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold">Verify</p>
+        <p className="text-xs font-medium text-gold">Verify</p>
         <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] tracking-tight sm:text-6xl">
           Check a VerityX record yourself. No account, no trust required.
         </h1>
@@ -121,7 +121,7 @@ function VerifyPage() {
           <label className="grid gap-1.5 text-sm">
             <span>…or paste it</span>
             <textarea
-              className="h-40 w-full rounded-[8px] border border-line bg-ink/60 p-3 font-mono text-xs text-paper focus:border-gold focus:outline-none"
+              className="h-40 w-full rounded-[4px] border border-line bg-ink/60 p-3 font-mono text-xs text-paper focus:border-gold focus:outline-none"
               value={text}
               onChange={(e) => setText(e.target.value)}
               spellCheck={false}
@@ -130,7 +130,7 @@ function VerifyPage() {
           <button
             type="button"
             onClick={() => void check(text)}
-            className="inline-flex h-11 w-fit items-center rounded-full bg-gold px-5 text-sm font-medium text-plum"
+            className="inline-flex h-11 w-fit items-center rounded-[4px] bg-gold px-5 text-sm font-medium text-plum"
           >
             Verify
           </button>
@@ -180,8 +180,8 @@ function VerifyPage() {
             </div>
           ) : (
             <>
-              <div className={`rounded-[12px] border p-5 ${verdict.valid ? "border-ok/50 bg-ok/10 text-ok" : "border-bad/50 bg-bad/10 text-bad"}`}>
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em]">Result</p>
+              <div className={`rounded-[4px] border p-5 ${verdict.valid ? "border-ok/50 bg-ok/10 text-ok" : "border-bad/50 bg-bad/10 text-bad"}`}>
+                <p className="font-mono text-xs">Result</p>
                 <p className="mt-2 font-display text-3xl tracking-tight">
                   {verdict.valid ? "Valid — unchanged, in the ledger, signed by VerityX" : "Not valid — do not rely on this record"}
                 </p>
@@ -195,7 +195,7 @@ function VerifyPage() {
                 </ul>
               </div>
               <div className="panel grid gap-2 p-6 text-sm">
-                <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-mute">What was sealed</h2>
+                <h2 className="text-sm font-medium text-mute">What was sealed</h2>
                 {p?.title ? <p className="font-display text-xl">{String(p.title)}</p> : null}
                 {p?.choice ? <p>Verdict: {String(p.choice)}</p> : null}
                 {p?.context ? <p className="text-mute">{String(p.context)}</p> : null}

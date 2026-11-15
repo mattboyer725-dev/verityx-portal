@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { normalizePassportCode } from "@/lib/provenance/passport";
 
@@ -46,7 +46,7 @@ export function PassportLookup({ className, size = "md" }: { className?: string;
             aria-invalid={!!error}
             aria-describedby={error ? `${id}-err` : undefined}
             className={cn(
-              "w-full rounded-full border border-line bg-ink/60 pl-11 pr-4 font-mono tracking-wide text-paper placeholder:text-mute/60 focus:border-gold/60 focus:outline-none",
+              "w-full rounded-[4px] border border-mute/50 bg-graphite pl-11 pr-4 font-mono text-paper placeholder:text-mute/70 focus:border-gold focus:outline-none",
               tall,
             )}
           />
@@ -54,12 +54,11 @@ export function PassportLookup({ className, size = "md" }: { className?: string;
         <button
           type="submit"
           className={cn(
-            "inline-flex shrink-0 items-center gap-2 rounded-full bg-gold px-5 font-medium text-plum transition-opacity hover:opacity-90",
+            "inline-flex shrink-0 items-center rounded-[4px] bg-gold px-5 font-semibold text-white transition-colors hover:bg-[color-mix(in_oklab,var(--color-gold)_86%,black)]",
             tall,
           )}
         >
           Verify
-          <ArrowRight className="size-4" />
         </button>
       </div>
       {error ? (

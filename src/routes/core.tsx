@@ -62,7 +62,7 @@ function CoreStatus() {
 
       <section className="mx-auto grid max-w-6xl gap-10 px-6 pb-10 pt-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-ok">
+          <p className="text-xs font-medium text-ok">
             Offline integrity layer · v{CORE_VERSION}
           </p>
           <h1 className="mt-5 font-display text-5xl leading-[0.95] tracking-tight sm:text-7xl">Proof over trust.</h1>
@@ -74,18 +74,18 @@ function CoreStatus() {
           </p>
           <SurfaceLoop className="mt-8" />
           <div className="mt-8 flex flex-wrap gap-3">
-            <span className="inline-flex h-11 items-center gap-2 rounded-[8px] border border-ok/40 bg-ok/10 px-4 text-sm text-ok">
+            <span className="inline-flex h-11 items-center gap-2 rounded-[4px] border border-ok/40 bg-ok/10 px-4 text-sm text-ok">
               <span className="size-1.5 rounded-full bg-ok" />
               {statusLabel}
             </span>
-            <span className="inline-flex h-11 items-center rounded-[8px] border border-line px-4 font-mono text-xs text-mute">
+            <span className="inline-flex h-11 items-center rounded-[4px] border border-line px-4 font-mono text-xs text-mute">
               {LOCAL_CORE.sha.slice(0, 12)}
             </span>
           </div>
         </div>
 
         <div className="panel p-6">
-          <div className="mb-5 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
+          <div className="mb-5 flex items-center justify-between font-mono text-xs text-mute">
             <span>core_events</span>
             <span>{ok ? "chain verified" : "pending"}</span>
           </div>
@@ -93,12 +93,12 @@ function CoreStatus() {
             {(data?.events.slice(-4) ?? []).map((e, i) => (
               <div
                 key={e.id}
-                className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-ink/50 px-3 py-3"
+                className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[4px] border border-line bg-ink/50 px-3 py-3"
               >
                 <span className="font-mono text-xs text-ok">{String(i + 1).padStart(2, "0")}</span>
                 <span>
                   <span className="block text-sm">{e.type}</span>
-                  <span className="font-mono text-[11px] text-mute">{shortHash(e.hash)}</span>
+                  <span className="font-mono text-xs text-mute">{shortHash(e.hash)}</span>
                 </span>
                 <Check className="size-4 text-ok" strokeWidth={1.8} />
               </div>
@@ -121,13 +121,13 @@ function CoreStatus() {
         ].map((m) => (
           <div key={m.l} className="border-r border-line px-6 py-8 last:border-r-0">
             <p className="font-display text-3xl">{m.v}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-mute">{m.l}</p>
+            <p className="mt-1 text-xs text-mute">{m.l}</p>
           </div>
         ))}
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-12">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Live adapters on this host</p>
+        <p className="text-xs text-mute">Live adapters on this host</p>
         <div className="mt-4">
           <AdapterStrip adapters={adapters} compact />
         </div>
@@ -164,7 +164,7 @@ function CoreStatus() {
             },
           ].map((c) => (
             <article key={c.n} className="panel min-h-52 p-6">
-              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ok">{c.n}</p>
+              <p className="font-mono text-xs text-ok">{c.n}</p>
               <h3 className="mt-8 text-base">{c.t}</h3>
               <p className="mt-2 text-sm leading-relaxed text-mute">{c.d}</p>
             </article>
@@ -180,9 +180,9 @@ function CoreStatus() {
             persists rows. It never gossips, never joins MESH_PEERS, and never exposes a public write API.
           </p>
         </div>
-        <div className="grid overflow-hidden rounded-[24px] border border-line lg:grid-cols-2">
+        <div className="grid overflow-hidden rounded-[6px] border border-line lg:grid-cols-2">
           <div className="bg-graphite p-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ok">Local trusted host</p>
+            <p className="font-mono text-xs text-ok">Local trusted host</p>
             <ul className="mt-6 space-y-3 text-sm text-mist">
               <li className="border-t border-line pt-3">Signed append-only event log</li>
               <li className="border-t border-line pt-3">HMAC secret (32+ bytes)</li>
@@ -191,7 +191,7 @@ function CoreStatus() {
             </ul>
           </div>
           <div className="bg-raised/40 p-8">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-warn">This deployed surface</p>
+            <p className="font-mono text-xs text-warn">This deployed surface</p>
             <ul className="mt-6 space-y-3 text-sm text-mist">
               <li className="border-t border-line pt-3">Live doctor + Merkle snapshot</li>
               <li className="border-t border-line pt-3">Postgres persistence (Neon)</li>
@@ -205,7 +205,7 @@ function CoreStatus() {
       <section className="mx-auto max-w-6xl px-6 pb-20">
         <div className="panel p-6 sm:p-8">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h3 className="text-sm uppercase tracking-[0.14em]">Merkle root</h3>
+            <h3 className="text-sm">Merkle root</h3>
             <span className="inline-flex items-center gap-2 text-xs text-mute">
               <Shield className="size-3.5" />
               {data?.snap.algorithm}
@@ -213,7 +213,7 @@ function CoreStatus() {
           </div>
           <p className="break-all font-mono text-sm leading-relaxed text-paper">{data?.snap.merkle_root ?? "…"}</p>
           {data?.proof ? (
-            <p className="mt-4 font-mono text-[11px] text-mute">
+            <p className="mt-4 font-mono text-xs text-mute">
               tip proof · index {data.proof.index} · {data.proof.valid ? "VALID" : "INVALID"} · path{" "}
               {data.proof.path.length} · {shortHash(data.proof.leaf, 12)}
             </p>
@@ -226,13 +226,13 @@ function CoreStatus() {
           ) : null}
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/check" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-4 text-sm text-plum">
+          <Link to="/check" className="inline-flex h-11 items-center gap-2 rounded-[4px] bg-gold px-4 text-sm text-plum">
             Check a quote
             <ArrowRight className="size-4" />
           </Link>
           <Link
             to="/"
-            className="inline-flex h-11 items-center rounded-[8px] border border-line px-4 text-sm text-paper hover:bg-raised"
+            className="inline-flex h-11 items-center rounded-[4px] border border-line px-4 text-sm text-paper hover:bg-raised"
           >
             Back to hub
           </Link>

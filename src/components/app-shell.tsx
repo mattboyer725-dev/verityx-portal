@@ -59,7 +59,7 @@ function NavLinks({ onNavigate, ownerTools }: { onNavigate?: () => void; ownerTo
       {workGroupsFor(ownerTools).map((group) => (
         <div key={group.title ?? "home"}>
           {group.title ? (
-            <p className="mb-1.5 px-3 text-[10px] uppercase tracking-[0.18em] text-mute/80">{group.title}</p>
+            <p className="mb-1 px-3 text-xs font-semibold text-mute">{group.title}</p>
           ) : null}
           <div className="flex flex-col gap-0.5">
             {group.links.map((item) => {
@@ -73,8 +73,8 @@ function NavLinks({ onNavigate, ownerTools }: { onNavigate?: () => void; ownerTo
                   title={item.hint}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm transition-colors",
-                    active ? "bg-raised text-paper shadow-[inset_2px_0_0_var(--color-gold)]" : "text-mute hover:bg-raised/60 hover:text-paper",
+                    "flex h-10 items-center gap-3 rounded-[4px] px-3 text-sm transition-colors",
+                    active ? "bg-raised font-medium text-paper shadow-[inset_3px_0_0_var(--color-gold)]" : "text-mist hover:bg-raised/60 hover:text-paper",
                   )}
                 >
                   <Icon className={cn("size-4", active && "text-gold")} strokeWidth={1.6} />
@@ -86,7 +86,7 @@ function NavLinks({ onNavigate, ownerTools }: { onNavigate?: () => void; ownerTo
         </div>
       ))}
       <div>
-        <p className="mb-1.5 px-3 text-[10px] uppercase tracking-[0.18em] text-mute/80">Public</p>
+        <p className="mb-1 px-3 text-xs font-semibold text-mute">Public site</p>
         <div className="flex flex-col gap-0.5">
           {SURFACES.filter((s) => s.to !== "/").map((item) => {
             const Icon = ICONS[item.to] ?? Globe;
@@ -96,7 +96,7 @@ function NavLinks({ onNavigate, ownerTools }: { onNavigate?: () => void; ownerTo
                 to={item.to}
                 onClick={onNavigate}
                 title={item.hint}
-                className="flex h-10 items-center gap-3 rounded-[10px] px-3 text-sm text-mute transition-colors hover:bg-raised/60 hover:text-paper"
+                className="flex h-10 items-center gap-3 rounded-[4px] px-3 text-sm text-mist transition-colors hover:bg-raised/60 hover:text-paper"
               >
                 <Icon className="size-4" strokeWidth={1.6} />
                 {item.label}
@@ -114,8 +114,8 @@ function Brand() {
     <Link to="/work" className="flex items-center gap-3 px-1">
       <VxMark className="size-8 shrink-0" title="VerityX" />
       <span>
-        <span className="block font-display vx-wordmark-name text-lg leading-none">VerityX</span>
-        <span className="mt-1 block text-[10px] uppercase tracking-[0.18em] text-mute">Workspace</span>
+        <span className="block vx-wordmark-name text-base leading-none">VerityX</span>
+        <span className="mt-0.5 block text-xs text-mute">Workspace</span>
       </span>
     </Link>
   );
@@ -135,7 +135,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-dvh bg-ink text-paper">
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-line bg-graphite/90 px-3 py-5 lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-line bg-graphite px-3 py-5 lg:flex">
         <Brand />
         <div className="mt-8 flex-1 overflow-y-auto px-0">
           <NavLinks ownerTools={!!workspace?.ownerTools} />
@@ -146,14 +146,14 @@ export function AppShell() {
               <p className="truncate text-xs text-mute">{workspace.organization.name}</p>
               <div className="mt-2 flex items-center gap-2">
                 <Pill tone={workspace.role}>{workspace.role}</Pill>
-                <span className="text-[10px] uppercase tracking-[0.14em] text-mute">
+                <span className="text-xs text-mute">
                   {(workspace.members?.length ?? 0)} seat
                   {(workspace.members?.length ?? 0) === 1 ? "" : "s"}
                 </span>
               </div>
             </div>
           ) : (
-            <div className="h-10 animate-pulse rounded-[8px] bg-raised" />
+            <div className="h-10 animate-pulse rounded-[4px] bg-raised" />
           )}
           <button type="button" className="site-nav-cmd site-nav-cmd-rail" onClick={() => openCommandPalette()}>
             <span className="site-nav-cmd-label">Search</span>
@@ -171,7 +171,7 @@ export function AppShell() {
           </button>
           <button
             type="button"
-            className="grid size-11 place-items-center rounded-[12px] border border-line"
+            className="grid size-11 place-items-center rounded-[4px] border border-line"
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((v) => !v)}
           >
@@ -202,15 +202,14 @@ export function AppShell() {
 
       <main className="lg:pl-60">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
-          <div className="mb-6 flex flex-wrap items-center justify-end gap-2 text-[11px] uppercase tracking-[0.16em] text-mute">
+          <div className="mb-6 flex flex-wrap items-center justify-end gap-2 text-xs text-mute">
             <LivePulse refreshing={refreshing} updatedAt={updatedAt} />
           </div>
           {blocked ? (
             <div className="panel max-w-xl p-8">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Not available</p>
-              <h1 className="mt-3 font-display text-3xl">This area isn’t part of your workspace.</h1>
+              <h1 className="font-display text-2xl">This area isn’t part of your workspace.</h1>
               <Link to="/work" className="mt-6 inline-flex text-sm text-gold hover:text-paper">
-                Back to overview →
+                Back to overview
               </Link>
             </div>
           ) : (

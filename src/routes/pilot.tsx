@@ -27,7 +27,7 @@ const NOT = [
 ];
 
 const inputCls =
-  "h-11 w-full rounded-[8px] border border-line bg-ink/60 px-3 text-paper placeholder:text-mute/70 focus:border-gold focus:outline-none";
+  "h-11 w-full rounded-[4px] border border-line bg-ink/60 px-3 text-paper placeholder:text-mute/70 focus:border-gold focus:outline-none";
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -68,7 +68,7 @@ function PilotPage() {
         <SiteNav tone="ink" />
       </div>
       <section className="mx-auto max-w-6xl px-6 pb-10 pt-6">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-gold">Pilot</p>
+        <p className="text-xs text-gold">Pilot</p>
         <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.08] tracking-tight sm:text-5xl">
           One purchase order. {PILOT_SLA_HOURS} hours. A decision you can prove.
         </h1>
@@ -78,7 +78,7 @@ function PilotPage() {
           <Link to="/pricing" className="underline">paid plan</Link> within {PILOT_CREDIT_DAYS} days.
         </p>
         {canceled ? (
-          <p className="mt-5 max-w-2xl rounded-[10px] border border-warn/50 bg-warn/10 p-4 text-sm text-warn">
+          <p className="mt-5 max-w-2xl rounded-[4px] border border-warn/50 bg-warn/10 p-4 text-sm text-warn">
             Payment was cancelled and nothing was charged. Reply to the email we sent you if you would like to pay another way.
           </p>
         ) : null}
@@ -89,13 +89,13 @@ function PilotPage() {
           <ol className="panel grid gap-4 p-6">
             {STEPS.map(([when, what]) => (
               <li key={when} className="grid gap-1 border-t border-line pt-4 text-sm first:border-0 first:pt-0 sm:grid-cols-[7rem_1fr]">
-                <span className="font-mono text-xs uppercase tracking-[0.12em] text-gold">{when}</span>
+                <span className="font-mono text-xs text-gold">{when}</span>
                 <span className="leading-relaxed">{what}</span>
               </li>
             ))}
           </ol>
           <div className="panel p-6 text-sm">
-            <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-mute">What it is not</h2>
+            <h2 className="text-sm font-medium text-mute">What it is not</h2>
             <ul className="mt-3 grid gap-2 leading-relaxed text-mute">
               {NOT.map((t) => (
                 <li key={t}>{t}</li>
@@ -112,7 +112,7 @@ function PilotPage() {
 
         {done ? (
           <div className="panel grid content-start gap-3 p-6" role="status">
-            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-ok">Request received · {done}</p>
+            <p className="font-mono text-xs text-ok">Request received · {done}</p>
             <h2 className="font-display text-3xl tracking-tight">Thank you — we will reply within one business day.</h2>
             <p className="text-sm leading-relaxed text-mute">
               We will confirm scope, then send a secure payment link. The {PILOT_SLA_HOURS}-hour clock starts when we have your purchase
@@ -169,7 +169,7 @@ function PilotPage() {
             <button
               type="submit"
               disabled={busy}
-              className="inline-flex h-11 items-center justify-center rounded-[8px] bg-gold px-5 text-sm font-medium text-plum disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center rounded-[4px] bg-gold px-5 text-sm font-medium text-plum disabled:opacity-60"
             >
               {busy ? "Sending…" : `Request a ${money(PILOT_PRICE_USD)} pilot`}
             </button>

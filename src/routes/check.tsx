@@ -43,7 +43,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 const inputCls =
-  "h-11 w-full rounded-[8px] border border-line bg-ink/60 px-3 text-paper placeholder:text-mute/70 focus:border-gold focus:outline-none";
+  "h-11 w-full rounded-[4px] border border-line bg-ink/60 px-3 text-paper placeholder:text-mute/70 focus:border-gold focus:outline-none";
 
 function CheckPage() {
   const { user } = useCurrentUserState();
@@ -134,7 +134,7 @@ function CheckPage() {
         <SiteNav tone="ink" />
       </div>
       <section className="mx-auto max-w-6xl px-6 pb-6 pt-8">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold">Check a quote</p>
+        <p className="text-xs font-medium text-gold">Check a quote</p>
         <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] tracking-tight sm:text-6xl">
           Is this price fair, and is this supplier who they say they are?
         </h1>
@@ -186,7 +186,7 @@ function CheckPage() {
             <textarea className={`${inputCls} h-24 py-2`} value={form.otherPrices} onChange={set("otherPrices")} />
           </Field>
           {model ? (
-            <fieldset className="grid gap-4 rounded-[10px] border border-line p-4">
+            <fieldset className="grid gap-4 rounded-[4px] border border-line p-4">
               <legend className="px-1 text-sm text-paper">Your licensed benchmark (optional, recommended)</legend>
               <p className="text-xs leading-relaxed text-mute">
                 Without it, {needs.cu ? "copper uses the World Bank monthly average" : "rare earths use the USGS annual average, which is context only"}.
@@ -221,7 +221,7 @@ function CheckPage() {
           <button
             type="submit"
             disabled={busy !== ""}
-            className="inline-flex h-11 items-center justify-center rounded-[8px] bg-gold px-5 text-sm font-medium text-plum disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-[4px] bg-gold px-5 text-sm font-medium text-plum disabled:opacity-60"
           >
             {busy === "check" ? "Checking…" : "Check this quote"}
           </button>
@@ -240,12 +240,12 @@ function CheckPage() {
             </div>
           ) : (
             <>
-              <div className={`rounded-[12px] border p-5 ${tone[result.verdict]}`}>
-                <p className="font-mono text-[11px] uppercase tracking-[0.16em]">Advisory verdict</p>
+              <div className={`rounded-[4px] border p-5 ${tone[result.verdict]}`}>
+                <p className="font-mono text-xs">Advisory verdict</p>
                 <p className="mt-2 font-display text-3xl tracking-tight">{verdictWord[result.verdict]}</p>
               </div>
               <div className="panel p-6">
-                <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-mute">Why</h2>
+                <h2 className="text-sm font-medium text-mute">Why</h2>
                 <ul className="mt-3 grid gap-2 text-sm leading-relaxed">
                   {result.reasons.map((r) => (
                     <li key={r} className="border-t border-line pt-2 first:border-0 first:pt-0">
@@ -256,7 +256,7 @@ function CheckPage() {
               </div>
               {sc && sc.ok ? (
                 <div className="panel grid gap-2 p-6 text-sm">
-                  <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-mute">Should-cost · {sc.title}</h2>
+                  <h2 className="text-sm font-medium text-mute">Should-cost · {sc.title}</h2>
                   <p className="font-display text-2xl">
                     {money(sc.perKg.low * result.input.quantityKg, sc.currency)} – {money(sc.perKg.high * result.input.quantityKg, sc.currency)}
                   </p>
@@ -273,7 +273,7 @@ function CheckPage() {
                 </div>
               ) : null}
               <div className="panel grid gap-2 p-6 text-sm">
-                <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-mute">Supplier screen</h2>
+                <h2 className="text-sm font-medium text-mute">Supplier screen</h2>
                 <p>
                   GLEIF:{" "}
                   {result.screen.gleif
@@ -294,7 +294,7 @@ function CheckPage() {
               <div className="panel grid gap-3 p-6 text-sm">
                 {sealed ? (
                   <>
-                    <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-ok">Sealed into the ledger</h2>
+                    <h2 className="text-sm font-medium text-ok">Sealed into the ledger</h2>
                     <p className="break-all font-mono text-xs">entry {sealed.entry.hash}</p>
                     <p className="break-all font-mono text-xs">
                       Merkle root {sealed.proof.root} · proof {sealed.proof.valid ? "VALID" : "INVALID"}
@@ -302,7 +302,7 @@ function CheckPage() {
                     {sealed.receiptJson ? (
                       <button
                         type="button"
-                        className="inline-flex h-11 w-fit items-center rounded-[8px] border border-gold/60 px-4 text-sm text-gold"
+                        className="inline-flex h-11 w-fit items-center rounded-[4px] border border-gold/60 px-4 text-sm text-gold"
                         onClick={() => {
                           const blob = new Blob([sealed.receiptJson!], { type: "application/json" });
                           const a = document.createElement("a");
@@ -319,10 +319,10 @@ function CheckPage() {
                     )}
                     <div className="flex flex-wrap gap-4">
                       <Link to="/verify" className="text-gold hover:text-paper">
-                        Verify a receipt →
+                        Verify a receipt
                       </Link>
                       <Link to="/core" className="text-gold hover:text-paper">
-                        See it on the ledger →
+                        See it on the ledger
                       </Link>
                     </div>
                   </>
@@ -336,7 +336,7 @@ function CheckPage() {
                       type="button"
                       onClick={() => void seal()}
                       disabled={busy !== ""}
-                      className="inline-flex h-11 w-fit items-center rounded-[8px] border border-gold/60 px-4 text-sm text-gold disabled:opacity-60"
+                      className="inline-flex h-11 w-fit items-center rounded-[4px] border border-gold/60 px-4 text-sm text-gold disabled:opacity-60"
                     >
                       {busy === "seal" ? "Sealing…" : "Seal to the ledger"}
                     </button>

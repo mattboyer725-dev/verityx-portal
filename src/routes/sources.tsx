@@ -120,7 +120,7 @@ function SourcesPage() {
         <SiteNav tone="ink" />
       </div>
       <section className="mx-auto max-w-4xl px-6 pb-8 pt-6">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-mute">Data</p>
+        <p className="text-xs text-mute">Data</p>
         <h1 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl">Sources &amp; licences</h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-mute">
           Every figure VerityX shows comes from a source that permits this use, and carries its period and attribution.
@@ -130,15 +130,15 @@ function SourcesPage() {
       </section>
       <section className="mx-auto grid max-w-4xl gap-10 px-6 pb-16">
         <div>
-          <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.14em] text-mute">Prices</h2>
+          <h2 className="mb-4 text-sm font-medium text-mute">Prices</h2>
           <Table rows={priceRows()} />
         </div>
         <div>
-          <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.14em] text-mute">Supplier screening and context</h2>
+          <h2 className="mb-4 text-sm font-medium text-mute">Supplier screening and context</h2>
           <Table rows={SCREENING} />
         </div>
         <div>
-          <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.14em] text-mute">What VerityX does not use</h2>
+          <h2 className="mb-4 text-sm font-medium text-mute">What VerityX does not use</h2>
           <ul className="panel grid gap-3 p-5 text-sm leading-relaxed text-mute">
             {NOT_USED.map((t) => (
               <li key={t}>{t}</li>

@@ -80,7 +80,7 @@ function PilotDetail() {
   const evidenceEditor = useMemo(
     () =>
       evidence.map((item, index) => (
-        <div key={item.id} className="rounded-[16px] border border-line bg-ink/40 p-4">
+        <div key={item.id} className="rounded-[6px] border border-line bg-ink/40 p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Title">
               <Input
@@ -403,13 +403,13 @@ function PilotDetail() {
       />
 
       {prospect.isSample ? (
-        <p className="rounded-[16px] border border-line bg-raised/60 px-4 py-3 text-sm text-mute">
+        <p className="rounded-[6px] border border-line bg-raised/60 px-4 py-3 text-sm text-mute">
           Labeled sample walkthrough. Contents are not live intelligence and must not be presented as a real-world finding.
         </p>
       ) : null}
 
       {waitingOnStripe && !paid ? (
-        <p className="rounded-[16px] border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn">
+        <p className="rounded-[6px] border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn">
           Confirming Stripe payment against the live ledger. This view refreshes until the verified webhook lands.
         </p>
       ) : null}
@@ -456,7 +456,7 @@ function PilotDetail() {
         ) : (
           <div className="mt-4 grid gap-6 lg:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-[0.14em] text-mute">Stripe Checkout</p>
+              <p className="text-xs text-mute">Stripe Checkout</p>
               <p className="mt-2 text-sm text-mute">
                 {stripeConfigured
                   ? "Creates a Stripe payment page for the buyer, in test or live mode according to the server key."
@@ -529,7 +529,7 @@ function PilotDetail() {
             <Button type="button" variant="quiet" size="sm" onClick={() => setEvidence([...evidence, emptyEvidence()])}>
               Add evidence
             </Button>
-            {preview ? <pre className="whitespace-pre-wrap rounded-[12px] bg-ink p-3 text-xs text-mist">{preview}</pre> : null}
+            {preview ? <pre className="whitespace-pre-wrap rounded-[4px] bg-ink p-3 text-xs text-mist">{preview}</pre> : null}
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" disabled={busy !== null} onClick={runPreview}>
                 Preview rules
