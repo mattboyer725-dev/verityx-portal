@@ -1,5 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getLiveSnapshot } from "@/lib/live-api";
 import { fallbackBundle } from "@/lib/feeds";
 import { seedAdapterCards } from "@/lib/adapters";
@@ -12,49 +11,12 @@ export type DeskTape = Awaited<ReturnType<typeof getLiveSnapshot>>;
 
 const TAPE_PLACEHOLDER = {
   ...fallbackBundle(),
-  sapCount: 0,
-  sap: [],
-  ariba: [],
-  writebacks: [],
-  cluster: [],
   adapters: [],
   core: undefined,
 } as unknown as DeskTape;
 
+/** Live data-source health and reference prices, refreshed every 15 seconds. */
 export function useDeskTape(enabled = true) {
-  const client = useQueryClient();
-  useEffect(() => {
-    if (!enabled || typeof window === "undefined") return;
-    const es = new EventSource("/api/oracle/stream");
-    es.addEventListener("tick", (ev) => {
-      try {
-        const tick = JSON.parse((ev as MessageEvent).data) as {
-          metals?: DeskTape["metals"];
-          rareEarths?: DeskTape["rareEarths"];
-          fx?: DeskTape["fx"];
-          health?: Partial<DeskTape["health"]>;
-        };
-        client.setQueryData(deskKeys.tape, (prev: DeskTape | undefined) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            metals: tick.metals || prev.metals,
-            rareEarths: tick.rareEarths || prev.rareEarths,
-            fx: tick.fx || prev.fx,
-            // Health comes from the server's own assessment, never inferred from a label.
-            health: { ...prev.health, ...(tick.health || {}) } as DeskTape["health"],
-          };
-        });
-      } catch {
-        /* ignore malformed tick */
-      }
-    });
-    es.onerror = () => {
-      /* polling remains */
-    };
-    return () => es.close();
-  }, [client, enabled]);
-
   return useQuery({
     queryKey: deskKeys.tape,
     queryFn: () => getLiveSnapshot(),
@@ -72,8 +34,4 @@ export function useLiveAdapters() {
   const live = tape.data?.adapters;
   const adapters = live?.length ? live : seedAdapterCards();
   return { tape, adapters };
-}
-
-export function useDeskTapeCache() {
-  return useQueryClient();
 }

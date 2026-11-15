@@ -1,4 +1,8 @@
-/** REFERENCE = a dated, licensed reference average (shown with its period), not a live feed. */
+/**
+ * DATA SOURCES — only sources this site actually calls or bundles.
+ * REFERENCE = a dated, licensed reference average (shown with its period), not a live feed.
+ * No vendor names: nothing here stands in for a product VerityX does not connect to.
+ */
 export type AdapterHealth = "LIVE" | "REFERENCE" | "STALE" | "DOWN";
 
 export type AdapterCard = {
@@ -11,114 +15,49 @@ export type AdapterCard = {
 };
 
 export function buildAdapterCards(input: {
-  sapCount: number;
-  aribaCount?: number;
   prices: AdapterHealth;
   gleif: AdapterHealth;
   sanctions: AdapterHealth;
-  opensanctions?: AdapterHealth;
   news?: AdapterHealth;
-  pbftSeq: number;
-  pbftCommitted?: boolean;
-  circulorLots: number;
-  minespiderBatches?: number;
-  okta: AdapterHealth;
 }): AdapterCard[] {
-  const screen: AdapterHealth =
-    input.gleif === "LIVE" || input.sanctions === "LIVE" || input.opensanctions === "LIVE"
-      ? "LIVE"
-      : input.gleif === "DOWN" && input.sanctions === "DOWN"
-        ? "DOWN"
-        : "STALE";
-  const news = input.news ?? "STALE";
-  const ecovadis: AdapterHealth =
-    input.gleif === "LIVE" || news === "LIVE" ? "LIVE" : input.gleif === "DOWN" && news === "DOWN" ? "DOWN" : "STALE";
-  const prewave: AdapterHealth = news === "LIVE" ? "LIVE" : news === "DOWN" ? "DOWN" : "STALE";
-  const aribaCount = input.aribaCount ?? input.sapCount;
-  const minespiderBatches = input.minespiderBatches ?? input.circulorLots;
   return [
-    {
-      id: "sap",
-      name: "SAP OData tenant",
-      status: input.sapCount > 0 ? "LIVE" : "STALE",
-      protocol: "API_PURCHASEORDER_PROCESS_SRV · BAPI_PO_CHANGE · IDoc ORDERS05 · Ariba sourcing v2",
-      path: "/sap/opu/odata/sap/API_PURCHASEORDER_PROCESS_SRV",
-      detail: `${input.sapCount} purchase orders · ${aribaCount} Ariba RFQs. CSRF, ETag, HOLD/RELEASE, sourcing events. Hosted here — not Siemens S/4HANA / Ariba.`,
-    },
     {
       id: "prices",
       name: "Reference prices",
       status: input.prices,
       protocol: "World Bank Pink Sheet (monthly) · USGS MCS (annual) · ECB FX (daily)",
-      path: "/api/oracle",
-      detail: "Licensed public reference averages with their period and attribution — not spot quotes, not a price-agency assessment. Buyers add their own licensed benchmark on a check.",
-    },
-    {
-      id: "ecovadis",
-      name: "ESG scorecard (21 criteria)",
-      status: ecovadis,
-      protocol: "21-criteria · 4 themes · NACE 27 weights",
-      path: "/ecovadis/api/v2/scorecards",
+      path: "/sources",
       detail:
-        "Public methodology-shaped medals from GLEIF identity, the UN list and GDELT news headlines. EcoVadis is not a tenant.",
+        "Licensed public reference averages with their period and attribution — not spot quotes, not a price-agency assessment. Buyers add their own licensed benchmark on a check.",
     },
     {
-      id: "prewave",
-      name: "Media-risk heat",
-      status: prewave,
-      protocol: "GDELT headline incidents · heat on the PO",
-      path: "/prewave/api/v1/risks",
-      detail: "Media-risk heat and alerts from live GDELT headlines on the same purchase order. Prewave is not a tenant.",
+      id: "gleif",
+      name: "Legal entity identity",
+      status: input.gleif,
+      protocol: "GLEIF LEI API",
+      path: "/sources",
+      detail: "Supplier names resolved to their Legal Entity Identifier records.",
     },
     {
-      id: "screen",
-      name: "SCREEN stack",
-      status: screen,
-      protocol: "GLEIF · UN consolidated list · disclosure heuristic",
-      path: "/api/adapters",
-      detail: "Identity, sanctions, and a disclosure heuristic (listed vs opaque). Not a credit rating.",
+      id: "sanctions",
+      name: "Sanctions list",
+      status: input.sanctions,
+      protocol: "UN Security Council Consolidated List",
+      path: "/sources",
+      detail: "Name screening. A match prompts human review; it is not a sanctions determination.",
     },
     {
-      id: "circulor",
-      name: "Lot custody ledger",
-      status: input.circulorLots > 0 ? "LIVE" : "STALE",
-      protocol: "Mass-balance custody · Minespider SHA-256 batch · EU DPP · GS1 Digital Link",
-      path: "/api/circulor/lots",
-      detail: `${input.circulorLots} lots · ${minespiderBatches} Minespider batches on the hash chain. Circulor / Minespider vendors are not subscribed.`,
-    },
-    {
-      id: "pbft",
-      name: "PBFT cluster",
-      status: input.pbftSeq > 0 ? "LIVE" : "STALE",
-      protocol: "27 hosts · f=8 · quorum 2f+1=19 · HMAC MACs",
-      path: "/api/pbft",
-      detail: input.pbftCommitted
-        ? `Seq ${input.pbftSeq} committed over the in-process network. Not 27 separate machines.`
-        : "27 independent voters, delayed envelopes, view 0. Awaiting first seal.",
-    },
-    {
-      id: "okta",
-      name: "OIDC workforce IdP",
-      status: input.okta,
-      protocol: "OIDC RS256 · JWKS · password grant",
-      path: "/oauth2/default/.well-known/openid-configuration",
-      detail: "Live authorize / token / userinfo / keys on this host. Okta Workforce is not provisioned.",
+      id: "media",
+      name: "Media risk",
+      status: input.news ?? "STALE",
+      protocol: "GDELT headlines",
+      path: "/sources",
+      detail: "Recent headlines on the supplier, classified by topic. Says so when headlines could not be checked.",
     },
   ];
 }
 
-/** Honest first paint: hosted analogs LIVE, market-dependent SCREEN STALE until feeds land. */
+/** First paint before the live check lands: references are bundled, everything fetched starts STALE. */
 export function seedAdapterCards(): AdapterCard[] {
-  return buildAdapterCards({
-    sapCount: 8,
-    prices: "REFERENCE",
-    gleif: "STALE",
-    sanctions: "STALE",
-    opensanctions: "STALE",
-    news: "STALE",
-    pbftSeq: 1,
-    pbftCommitted: true,
-    circulorLots: 8,
-    okta: "LIVE",
-  });
+  return buildAdapterCards({ prices: "REFERENCE", gleif: "STALE", sanctions: "STALE", news: "STALE" });
 }

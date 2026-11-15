@@ -84,7 +84,7 @@ const NOT_USED = [
   "LME prices and settlement data — not licensed; copper and aluminium are World Bank monthly averages instead.",
   "Stock-market prices — not used for any price, index or score.",
   "OpenSanctions — commercial use requires a paid data licence; not queried.",
-  "Credit ratings (e.g. RapidRatings, D&B) — not used. The financial-health signal is VerityX’s own disclosure heuristic and says so.",
+  "Credit ratings (e.g. RapidRatings, D&B) — not used. VerityX shows no financial-health score.",
 ];
 
 function Table({ rows }: { rows: Row[] }) {

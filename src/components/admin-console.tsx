@@ -188,7 +188,7 @@ function AdminSignIn() {
         <p className="hint">
           <Link to="/">Hub</Link>
           {" · "}
-          <Link to="/desk">Desk</Link>
+          <Link to="/check">Check</Link>
           {" · "}
           <Link to="/core">Core</Link>
           {" · "}
@@ -292,8 +292,8 @@ function AdminConsole() {
             {denied} Platform owner is {OWNER_EMAIL}.
           </p>
           <div className="vx-actions">
-            <Link className="vx-btn vx-btn-primary" to="/desk">
-              Open desk
+            <Link className="vx-btn vx-btn-primary" to="/check">
+              Check a quote
             </Link>
             <Link className="vx-btn vx-btn-ghost" to="/">
               Hub
@@ -356,8 +356,8 @@ function AdminConsole() {
           <Link className="vx-btn vx-btn-ghost" to="/">
             Hub
           </Link>
-          <Link className="vx-btn vx-btn-ghost" to="/field">
-            Field
+          <Link className="vx-btn vx-btn-ghost" to="/work">
+            OS
           </Link>
           <button className="vx-btn vx-btn-ghost" type="button" onClick={() => openCommandPalette()}>
             Menu
@@ -742,9 +742,9 @@ function MonitorPanel({
           <div className="s">5–30 minutes</div>
         </div>
         <div className="vx-kpi">
-          <div className="k">Desk verifies</div>
+          <div className="k">Verifies</div>
           <div className="v">{state.kpis.verifies}</div>
-          <div className="s">recorded on the analog desk</div>
+          <div className="s">recorded in the ledger</div>
         </div>
         <div className="vx-kpi">
           <div className="k">Open alerts</div>
@@ -1440,7 +1440,7 @@ function PoliciesPanel({
     <section className="vx-card">
       <div className="vx-card-h">
         Gate policies
-        <span>MAD · CoV · PBFT · anomaly</span>
+        <span>MAD · CoV · anomaly</span>
       </div>
       {state.policies.map((p) => (
         <div key={p.key} className="vx-policy">
@@ -1623,7 +1623,7 @@ function SecurityPanel({
         <div className="vx-policy">
           <div>
             <strong>Maintenance mode</strong>
-            <div className="vx-sub">Blocks the analog desk login. Command stays up for operators.</div>
+            <div className="vx-sub">Blocks workspace sign-in. Command stays up for operators.</div>
           </div>
           <button
             type="button"
@@ -1734,7 +1734,7 @@ function KeysPanel({
           </div>
         ) : null}
         {state.keys.length === 0 ? (
-          <p className="vx-pad vx-copy">No keys issued. Use these for SAP analog writeback and evidence export jobs.</p>
+          <p className="vx-pad vx-copy">No keys issued. Use these for evidence export jobs.</p>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="vx-table">

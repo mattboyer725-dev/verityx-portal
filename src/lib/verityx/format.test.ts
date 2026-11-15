@@ -42,7 +42,7 @@ describe("safeAppPath", () => {
     assert.equal(safeAppPath("/work"), "/work");
     assert.equal(safeAppPath("/work/pilots/abc"), "/work");
     assert.equal(safeAppPath("/admin"), "/admin");
-    assert.equal(safeAppPath("/desk"), "/desk");
+    assert.equal(safeAppPath("/desk"), "/");
     assert.equal(safeAppPath("/core"), "/core");
   });
 });

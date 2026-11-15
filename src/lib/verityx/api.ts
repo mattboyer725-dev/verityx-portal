@@ -283,14 +283,6 @@ export const logOutreach = createServerFn({ method: "POST" })
     return ops.logOutreach(context.userId, data);
   });
 
-export const pullDeskPacket = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator(ids<{ pilotId: string; scenarioId?: string }>("pilotId"))
-  .handler(async ({ context, data }) => {
-    const ops = await import("./ops.server");
-    return ops.pullDeskPacket(context.userId, data);
-  });
-
 export const sealQuoteCheck = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((data: unknown) => parseQuoteInput(data))

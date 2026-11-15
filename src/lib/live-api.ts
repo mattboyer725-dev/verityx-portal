@@ -2,42 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { parseQuoteInput } from "@/lib/quote-check";
 import { z } from "zod";
 import { fallbackBundle, fetchLiveBundle } from "@/lib/feeds";
-import { runPipeline, sapWriteback, SCENARIOS, BUYER } from "@/lib/engine";
-import { issueDeskToken, oidcDiscovery, oidcJwks } from "@/lib/oidc";
-import { clusterSnapshot, lastPbftRound, pbftSeq, runPbft } from "@/lib/pbft";
-import { getAriba, getSapPo, listSapPos, listAribaRfqs, sapGetEntity, sapWritebackLog, seedSapPo } from "@/lib/sap";
-import { getCirculorLot, listCirculorLots, recordCirculorLot } from "@/lib/circulor";
-import { getMinespiderByLot, listMinespiderBatches } from "@/lib/minespider";
 import { buildAdapterCards } from "@/lib/adapters";
 
 const adapterHealth = (h: string | undefined) => (h === "LIVE" || h === "REFERENCE" || h === "DOWN" ? h : "STALE");
 import { merkleSnapshot, merkleProofAt, verifyChain, listEvents, LOCAL_CORE, doctor } from "@/lib/core-ledger";
-
-async function seedAll() {
-  for (const s of SCENARIOS) {
-    seedSapPo({
-      po: s.po,
-      id: s.id,
-      supplier: s.supplier,
-      title: s.title,
-      plant: s.plant,
-      commodity: s.commodity,
-      amount: s.proposed,
-      currency: s.currency,
-    });
-    const key = `CIR-SGRE-${s.po.slice(-8)}`;
-    if (!getCirculorLot(key) || !getMinespiderByLot(key)) {
-      await recordCirculorLot({
-        id: s.id,
-        po: s.po,
-        commodity: s.commodity,
-        plant: s.plant,
-        tiers: s.tiers,
-      });
-    }
-  }
-  if (pbftSeq() === 0) await runPbft("adapter-genesis");
-}
 
 function withBudget<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
   return Promise.race([
@@ -54,41 +22,6 @@ async function hydrateIfDurable() {
     await Promise.race([refreshLedger(), new Promise<void>((resolve) => setTimeout(resolve, 2800))]);
   } catch {
     /* the status view reports what it has */
-  }
-}
-
-/** Every ledger write goes through the store's lock (one chain across all instances). */
-async function ledgerWrite<T>(fn: () => Promise<T>): Promise<T> {
-  const { withLedger } = await import("@/lib/core-store.server");
-  return withLedger(fn);
-}
-
-async function persistIfDurable() {
-  if (typeof process === "undefined") return;
-  try {
-    // The core ledger persists inside its own locked write; only adapters remain here.
-    const tasks: Promise<unknown>[] = [];
-    const { persistAdapters } = await import("@/lib/adapter-store.server");
-    tasks.push(persistAdapters());
-    await Promise.race([
-      Promise.all(tasks),
-      new Promise<void>((resolve) => setTimeout(resolve, 1500)),
-    ]);
-  } catch {
-    /* best-effort */
-  }
-}
-
-async function hydrateAdaptersIfAny() {
-  if (typeof process === "undefined") return;
-  try {
-    const { hydrateAdapters } = await import("@/lib/adapter-store.server");
-    await Promise.race([
-      hydrateAdapters(),
-      new Promise<void>((resolve) => setTimeout(resolve, 1600)),
-    ]);
-  } catch {
-    /* in-memory is enough */
   }
 }
 
@@ -118,116 +51,18 @@ async function coreSlice() {
 }
 
 export const getLiveSnapshot = createServerFn({ method: "GET" }).handler(async () => {
-  await hydrateAdaptersIfAny();
-  await seedAll();
   const live = await withBudget(fetchLiveBundle(), 4000, fallbackBundle());
-  // Dated history: record LIVE prices at most every 15 minutes (never blocks the tape).
+  // Dated history: record prices at most every 15 minutes (never blocks the response).
   void import("@/lib/price-history.server").then((m) => m.recordSnapshotIfDue(live)).catch(() => undefined);
   const core = await withBudget(coreSlice(), 3200, undefined);
-  const last = lastPbftRound();
   const adapters = buildAdapterCards({
-    sapCount: listSapPos().length,
-    aribaCount: listAribaRfqs().length,
     prices: live.health.metals === "DOWN" ? "DOWN" : live.health.fx === "LIVE" ? "LIVE" : "REFERENCE",
     gleif: adapterHealth(live.health.gleif),
     sanctions: adapterHealth(live.health.sanctions),
-    opensanctions: adapterHealth(live.health.opensanctions),
     news: adapterHealth(live.health.news),
-    pbftSeq: pbftSeq(),
-    pbftCommitted: last?.committed,
-    circulorLots: listCirculorLots().length,
-    minespiderBatches: listMinespiderBatches().length,
-    okta: "LIVE",
   });
-  return {
-    ...live,
-    sapCount: listSapPos().length,
-    sap: listSapPos().map((p) => ({
-      PurchaseOrder: p.PurchaseOrder,
-      ReleaseStatus: p.ReleaseStatus,
-      NetAmount: p.NetAmount,
-      Supplier: p.Supplier,
-      LastChangeDateTime: p.LastChangeDateTime,
-      ETag: p.ETag,
-    })),
-    ariba: listAribaRfqs(),
-    writebacks: sapWritebackLog().slice(0, 8),
-    cluster: clusterSnapshot(last || undefined),
-    adapters,
-    core,
-  };
+  return { ...live, adapters, core };
 });
-
-export const runLiveVerify = createServerFn({ method: "POST" })
-  .validator((data: unknown) => z.object({ id: z.string().min(1).max(40) }).parse(data))
-  .handler(async ({ data }) => {
-    await hydrateAdaptersIfAny();
-    await seedAll();
-    const live = await withBudget(fetchLiveBundle(), 2800, fallbackBundle());
-    // Pipeline + receipt under the ledger lock: if the entry does not commit, no receipt leaves.
-    const { packet, receiptJson } = await ledgerWrite(async () => {
-      const packet = await runPipeline(data.id, live);
-      // The receipt travels as its exact JSON text: a proof must not be re-encoded on the way.
-      return { packet, receiptJson: await receiptFor(packet.sealed!.decision) };
-    });
-    await persistIfDurable();
-    const { sealed: _sealed, ...rest } = packet;
-    void _sealed;
-    return { ...rest, receiptJson };
-  });
-
-export const postSapWriteback = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
-    z.object({ id: z.string().min(1).max(40), action: z.enum(["HOLD", "RELEASE"]) }).parse(data),
-  )
-  .handler(async ({ data }) => {
-    await hydrateAdaptersIfAny();
-    await seedAll();
-    const s = SCENARIOS.find((x) => x.id === data.id) || SCENARIOS[0];
-    const rec = sapWriteback(s, data.action, data.action === "HOLD" ? "HOLD_PO" : "RELEASE_PO");
-    void persistIfDurable();
-    return {
-      rec,
-      sap: getSapPo(s.po),
-      ariba: getAriba(s.po),
-      entity: sapGetEntity(s.po),
-    };
-  });
-
-export const oidcToken = createServerFn({ method: "POST" })
-  .validator((data: unknown) =>
-    z
-      .object({
-        email: z.string().email().optional(),
-        password: z.string().min(1).max(80).optional(),
-        seat: z.boolean().optional(),
-      })
-      .parse(data),
-  )
-  .handler(async ({ data }) => {
-    const email = data.seat ? BUYER.email : data.email || "";
-    const password = data.seat ? BUYER.password : data.password || "";
-    const tok = await issueDeskToken(email, password);
-    if (!tok) return { ok: false as const, error: "invalid_grant" };
-    return {
-      ok: true as const,
-      access_token: tok.access_token,
-      id_token: tok.id_token,
-      token_type: "Bearer" as const,
-      expires_in: tok.expires_in,
-      claims: {
-        sub: String(tok.claims.sub || ""),
-        iss: String(tok.claims.iss || ""),
-        email: String(tok.claims.email || ""),
-        name: String(tok.claims.name || ""),
-        idp: "okta",
-      },
-    };
-  });
-
-export const oidcWellKnown = createServerFn({ method: "GET" }).handler(async () => oidcDiscovery());
-
-export const oidcKeys = createServerFn({ method: "GET" }).handler(async () => oidcJwks());
 
 export const getCoreStatus = createServerFn({ method: "GET" }).handler(async () => {
   await hydrateIfDurable();

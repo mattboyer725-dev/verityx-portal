@@ -1,7 +1,6 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
   ClipboardList,
-  Compass,
   Crown,
   FileText,
   Fingerprint,
@@ -26,8 +25,6 @@ import { VxMark } from "./vx-mark";
 
 const ICONS: Record<string, ComponentType<{ className?: string; strokeWidth?: number }>> = {
   "/": Home,
-  "/desk": Shield,
-  "/field": Compass,
   "/core": Fingerprint,
   "/work": LayoutDashboard,
   "/work/prospects": Users,

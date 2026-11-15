@@ -88,6 +88,16 @@
       ],
       "destination": "https://verityx-portal.vercel.app/:path*",
       "permanent": false
+    },
+    {
+      "source": "/desk",
+      "destination": "/check",
+      "permanent": false
+    },
+    {
+      "source": "/field",
+      "destination": "/",
+      "permanent": false
     }
   ],
   "crons": [

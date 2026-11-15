@@ -31,18 +31,18 @@ const TOOLS = [
     cta: "Verify a receipt",
   },
   {
-    to: "/desk",
+    to: "/check",
     kicker: "Should-cost",
     title: "What it should cost",
     body: "Material × price ÷ yield, plus conversion, loss and margin, as a low / mid / high band. Licensed reference prices, or your own benchmark.",
-    cta: "Open should-cost",
+    cta: "Run should-cost",
   },
   {
-    to: "/desk",
-    kicker: "Price history",
-    title: "Know when prices move",
-    body: "Dated snapshots of every price used. A move past 10% raises a drift alert above the PO list, with the source of each figure.",
-    cta: "See price drift",
+    to: "/pricing",
+    kicker: "Pricing",
+    title: "Pilot, then a plan",
+    body: "One live purchase order as a pilot, credited in full if you move to a yearly plan.",
+    cta: "See pricing",
   },
 ] as const;
 
@@ -60,11 +60,11 @@ function Home() {
         <VxMark className="vx-mark-hero" title="VerityX" />
         <p className="mt-5 text-[11px] font-medium uppercase tracking-[0.22em] text-mute">Sovereign · v1.0 live</p>
         <h1 className="mt-5 max-w-4xl font-display text-4xl leading-[1.06] tracking-tight sm:text-6xl">
-          One product. A live magnetics desk, a paying-pilot OS, and a signed continuity core.
+          Prove a magnet or rare-earth purchase order before it clears.
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute">
-          Siemens Gamesa procurement on the PO line. Customer Zero operating system for the {money(PILOT_PRICE_USD)} / {PILOT_SLA_HOURS}-hour audit.
-          HMAC + Merkle continuity from local-core v{CORE_VERSION}. Advisory decisions — never an automatic fraud finding.
+          Price against licensed references, supplier identity and sanctions screening, and a signed receipt anyone can verify.
+          A {money(PILOT_PRICE_USD)} / {PILOT_SLA_HOURS}-hour pilot on one live order. Advisory decisions — a person always decides.
         </p>
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Link to="/pilot" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-5 text-sm font-medium text-plum">
@@ -102,52 +102,16 @@ function Home() {
       </section>
 
       <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-16 sm:grid-cols-2">
-        <Link
-          to="/field"
-          className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">01 · Field</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight">The map</h2>
-            <p className="mt-3 text-sm leading-relaxed text-mute">
-              Ariba, Coupa, EcoVadis, Circulor, Argus, Okta — what they own, what we take, and what we will not pretend.
-              Live analog status on this host.
-            </p>
-          </div>
-          <p className="mt-8 flex items-center gap-2 text-sm text-gold">
-            Open the field
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </p>
-        </Link>
-
-        <Link
-          to="/desk"
-          className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">02 · Live desk</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight">Magnetics</h2>
-            <p className="mt-3 text-sm leading-relaxed text-mute">
-              One click as {BUYER.name}. SAP OData analog tenant, MAD consensus, lot custody, GLEIF / UN
-              screens, a 27-voter PBFT round, exportable packet.
-            </p>
-          </div>
-          <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-            Enter as Elena
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </p>
-        </Link>
-
         {user ? (
           <Link
             to="/work"
             className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
           >
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">03 · Customer Zero OS</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">01 · Workspace</p>
               <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
               <p className="mt-3 text-sm leading-relaxed text-mute">
-                Prospect → payment → live packet → human-approved decision → analog SAP HOLD → PDF.{" "}
+                Request → payment → evidence → human-approved decision → sealed PDF report.{" "}
                 {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}-hour target. Tenant-isolated. BLOCK never auto-applies.
               </p>
             </div>
@@ -163,10 +127,10 @@ function Home() {
             className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
           >
             <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">03 · Customer Zero OS</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">01 · Workspace</p>
               <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
               <p className="mt-3 text-sm leading-relaxed text-mute">
-                Prospect → payment → live packet → human-approved decision → analog SAP HOLD → PDF.{" "}
+                Request → payment → evidence → human-approved decision → sealed PDF report.{" "}
                 {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}-hour target. Tenant-isolated. BLOCK never auto-applies.
               </p>
             </div>
@@ -182,11 +146,10 @@ function Home() {
           className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
         >
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">04 · Local Core</p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">02 · Ledger</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Proof</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
-              Live doctor against v{CORE_VERSION} SHA {CORE_SHA.slice(0, 7)}. HMAC chain, Merkle inclusion. In-memory on the edge, durable when
-              Postgres is up. Not a mesh peer.
+              Live check of the HMAC chain and Merkle inclusion behind every receipt, stored in Postgres. Core v{CORE_VERSION} ({CORE_SHA.slice(0, 7)}).
             </p>
           </div>
           <p className="mt-8 flex items-center gap-2 text-sm text-paper">
@@ -200,7 +163,7 @@ function Home() {
           className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
         >
           <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">05 · Command</p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">03 · Command</p>
             <h2 className="mt-3 font-display text-3xl tracking-tight">Owner</h2>
             <p className="mt-3 text-sm leading-relaxed text-mute">
               Fleet, seats, policies, keys, freeze, backup. Owner account only.
@@ -214,16 +177,14 @@ function Home() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-24">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Protocol adapters · live on this host</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Data sources · checked live</p>
         <div className="mt-4">
           <AdapterStrip adapters={adapters} />
         </div>
         <p className="mt-5 max-w-3xl text-xs leading-relaxed text-mute">
-          VerityX is independent and not affiliated with Siemens Gamesa, SAP, Argus Media, Fastmarkets, the LME, EcoVadis, Prewave, RapidRatings, Circulor,
-          Minespider or Okta, and subscribes to none of them. The adapters above are VerityX’s own implementations —
-          OData with CSRF/ETag, sourcing RFQs, an SSE rare-earth index socket, a 21-criteria ESG scorecard, media-risk
-          heat on the PO, public screening, hashed lot custody and batch passports, a 27-voter PBFT round, and an
-          RS256 IdP.
+          These are the only outside sources VerityX uses. It does not connect to any ERP, procurement suite, ESG rating,
+          traceability network or price agency, and subscribes to none of them. Details on{" "}
+          <Link to="/sources" className="underline">sources and licences</Link>.
         </p>
       </section>
 

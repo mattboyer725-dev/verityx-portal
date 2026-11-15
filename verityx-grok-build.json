@@ -3,7 +3,7 @@
   "version": "v1.0-soft-prod",
   "status": "live",
   "planes": [
-    { "id": "desk", "path": "/desk", "persona": "Elena Hartmann", "tenant": "SIEMENS-GAMESA" },
+    { "id": "check", "path": "/check", "product": "Quote check + should-cost" },
     { "id": "os", "path": "/work", "persona": "founder", "product": "Customer Zero OS" },
     { "id": "core", "path": "/core", "product": "Local Core HMAC + Merkle" },
     { "id": "command", "path": "/admin", "owner": "mattboyer725@gmail.com" }

@@ -1,10 +1,8 @@
 import { nameCore, pickGleif, type GleifRec } from "./name-match.ts";
-import { scoreEcovadis, type EcoVadisScore } from "./ecovadis.ts";
-import { scorePrewave, type PrewaveRisk } from "./prewave.ts";
+import { scoreMediaRisk, type MediaRisk } from "./media-risk.ts";
 import { ECB_ATTRIBUTION, history, latest, REFERENCE, type RefKey, type RefPoint } from "./reference-prices.ts";
 
-export type { EcoVadisScore } from "./ecovadis.ts";
-export type { PrewaveRisk } from "./prewave.ts";
+export type { MediaRisk } from "./media-risk.ts";
 
 export type LiveQuote = {
   symbol: string;
@@ -44,15 +42,6 @@ export type NewsHit = {
   source: string;
   url: string;
   query: string;
-};
-
-export type RapidRating = {
-  supplier: string;
-  fhr: number;
-  outlook: "Positive" | "Stable" | "Negative" | "Opaque";
-  listed: boolean;
-  symbol?: string;
-  source: string;
 };
 
 export type FeedTrace = {
@@ -103,9 +92,7 @@ export type LiveBundle = {
   opensanctions: { source: string; ts: string; scanned: number; hits: SanctionHit[] };
   ted: TedNotice[];
   news: NewsHit[];
-  ecovadis: Record<string, EcoVadisScore>;
-  prewave: Record<string, PrewaveRisk>;
-  rapid: Record<string, RapidRating>;
+  media: Record<string, MediaRisk>;
   traces: FeedTrace[];
   fetchedAt: string;
   health: Record<string, FeedHealth>;
@@ -148,13 +135,6 @@ const SCREEN_NAMES = [
   "Nordic Conductor",
   "Siemens Gamesa",
 ];
-
-const LISTED: Record<string, string> = {
-  "Infineon Technologies AG": "IFX.DE",
-  "thyssenkrupp Steel Europe": "TKA.DE",
-  "Siemens Gamesa": "SIE.DE",
-  "Hexion GmbH": "HXL",
-};
 
 type Cache<T> = { at: number; value: T };
 let fxCache: Cache<LiveBundle["fx"]> | null = null;
@@ -445,25 +425,6 @@ async function fetchNews(): Promise<NewsHit[]> {
   }
 }
 
-function scoreRapid(supplier: string): RapidRating {
-  // VerityX's own opacity heuristic — not a credit rating and not RapidRatings.
-  // Listed companies publish audited financials; unlisted suppliers in
-  // jurisdictions with limited disclosure score as opaque.
-  const listed = !!LISTED[supplier];
-  const opaque = !listed && /China|Nanjing|Baotou|Northern/i.test(supplier);
-  const fhr = listed ? 62 : opaque ? 38 : 55;
-  return {
-    supplier,
-    fhr,
-    outlook: opaque ? "Opaque" : "Stable",
-    listed,
-    ...(listed ? { symbol: LISTED[supplier] } : {}),
-    source: listed
-      ? "VerityX disclosure heuristic · listed, audited filings public · not a credit rating"
-      : "VerityX disclosure heuristic · unlisted · not a credit rating",
-  };
-}
-
 function emptyOpenSanctions(): LiveBundle["opensanctions"] {
   return {
     source: "OpenSanctions default collection",
@@ -523,18 +484,12 @@ function assembleBundle(
 ): LiveBundle {
   const ref = referenceBlocks();
   const suppliers = Object.keys(SUPPLIER_GLEIF);
-  const ecovadis: Record<string, EcoVadisScore> = {};
-  const prewave: Record<string, PrewaveRisk> = {};
-  const rapid: Record<string, RapidRating> = {};
+  const media: Record<string, MediaRisk> = {};
   for (const s of suppliers) {
-    const gKey = SUPPLIER_GLEIF[s];
-    const g = gleif[gKey] || null;
     const hit =
       sanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched) ||
       opensanctions.hits.some((h) => s.toUpperCase().includes(h.name.split(" ")[0].toUpperCase()) && h.matched);
-    ecovadis[s] = scoreEcovadis({ supplier: s, gleif: g, sanctionsHit: hit, listed: !!LISTED[s], news });
-    prewave[s] = scorePrewave({ supplier: s, news, sanctionsHit: hit });
-    rapid[s] = scoreRapid(s);
+    media[s] = scoreMediaRisk({ supplier: s, news, sanctionsHit: hit });
   }
   const health: LiveBundle["health"] = {
     // Bundled, dated reference averages: shown with their period, never called live.
@@ -545,13 +500,8 @@ function assembleBundle(
     sanctions: sanctions.scanned > 1000 ? "LIVE" : "STALE",
     ted: ted.length ? "LIVE" : "STALE",
     news: news.length ? "LIVE" : "STALE",
-    sap: "LIVE",
-    ariba: "LIVE",
-    pbft: "LIVE",
-    okta: "LIVE",
     opensanctions: opensanctions.scanned > 0 ? "LIVE" : "STALE",
-    ecovadis: Object.values(gleif).some(Boolean) || news.length ? "LIVE" : "STALE",
-    prewave: news.length ? "LIVE" : "STALE",
+    media: news.length ? "LIVE" : "STALE",
   };
   return {
     ...ref,
@@ -561,9 +511,7 @@ function assembleBundle(
     opensanctions,
     ted,
     news,
-    ecovadis,
-    prewave,
-    rapid,
+    media,
     traces: TRACES.slice(0, 16),
     fetchedAt: new Date().toISOString(),
     health,

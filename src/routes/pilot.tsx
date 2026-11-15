@@ -103,7 +103,7 @@ function PilotPage() {
             </ul>
             <p className="mt-4 text-xs text-mute">
               Try it first: <Link className="underline underline-offset-2" to="/check">check a quote</Link> or{" "}
-              <Link className="underline underline-offset-2" to="/desk">open the demo desk</Link>. Terms:{" "}
+              <Link className="underline underline-offset-2" to="/verify">verify a receipt</Link>. Terms:{" "}
               <Link className="underline underline-offset-2" to="/terms">pilot terms</Link> ·{" "}
               <Link className="underline underline-offset-2" to="/privacy">privacy</Link>.
             </p>

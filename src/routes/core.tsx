@@ -226,8 +226,8 @@ function CoreStatus() {
           ) : null}
         </div>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/desk" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-4 text-sm text-plum">
-            Open magnetics desk
+          <Link to="/check" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-4 text-sm text-plum">
+            Check a quote
             <ArrowRight className="size-4" />
           </Link>
           <Link

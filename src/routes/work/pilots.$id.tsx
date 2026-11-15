@@ -279,19 +279,6 @@ function PilotDetail() {
     }
   }
 
-  async function pullDesk() {
-    setBusy("desk");
-    try {
-      const result = await mutate.pullDeskPacket({ pilotId: id });
-      setEvidence(result.evidence);
-      toast.success(`Live packet ${result.po} · ${result.evidence.length} evidence items`);
-    } catch (err) {
-      toast.error(errorMessage(err));
-    } finally {
-      setBusy(null);
-    }
-  }
-
   async function saveDecision() {
     setBusy("decision");
     try {
@@ -312,11 +299,8 @@ function PilotDetail() {
     setBusy("approve");
     try {
       const d = await mutate.approveDecision({ id: decisionId, note: "Approved in workspace" });
-      toast.success(
-        d.writeback
-          ? `Approved · analog SAP ${d.writeback.action} ${d.writeback.doc}`
-          : "Human approval recorded",
-      );
+      void d;
+      toast.success("Human approval recorded");
     } catch (err) {
       toast.error(errorMessage(err));
     } finally {
@@ -432,30 +416,6 @@ function PilotDetail() {
 
       <SlaClock inputsReceivedAt={pilot.inputsReceivedAt} slaHours={pilot.slaHours} />
 
-      {pilot.deskPacket ? (
-        <section className="panel p-5 sm:p-6">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-mute">Live magnetics packet</p>
-          <div className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              ["PO", pilot.deskPacket.po],
-              ["Scenario", pilot.deskPacket.scenarioId],
-              ["Custody lot", pilot.deskPacket.circulorLot],
-              ["PBFT", `${pilot.deskPacket.pbft}/27`],
-            ].map(([k, v]) => (
-              <div key={k} className="min-w-0">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-mute">{k}</p>
-                <p className="mt-1 break-all font-mono text-sm">{v}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-sm text-mute">{pilot.deskPacket.message}</p>
-          <p className="mt-2 text-xs text-mute">
-            Analog SAP {pilot.deskPacket.sap || "OPEN"}. HOLD posts only after a human-approved BLOCK — never from
-            rules alone.
-          </p>
-        </section>
-      ) : null}
-
       <section className="panel grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <Field label="Title">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -558,10 +518,6 @@ function PilotDetail() {
                 Add sample sanctions hit
               </Button>
             </div>
-          ) : paid ? (
-            <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={pullDesk}>
-              {busy === "desk" ? "Sealing…" : "Pull live magnetics packet"}
-            </Button>
           ) : null}
         </div>
 
@@ -595,7 +551,6 @@ function PilotDetail() {
                   </Link>
                   <p className="text-xs text-mute">
                     {d.ruleVersion} · {d.status.replace("_", " ")} · {formatWhen(d.createdAt)}
-                    {d.writeback ? ` · analog SAP ${d.writeback.action} ${d.writeback.doc}` : ""}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

@@ -181,8 +181,8 @@ function Login() {
             <Link to="/" className="block text-mute hover:text-paper">
               Back to the platform hub →
             </Link>
-            <Link to="/desk" className="block text-mute hover:text-paper">
-              Open the Siemens Gamesa magnetics desk →
+            <Link to="/check" className="block text-mute hover:text-paper">
+              Check a quote →
             </Link>
             <Link to="/core" className="block text-mute hover:text-paper">
               Verify the signed core →

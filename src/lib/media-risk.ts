@@ -1,43 +1,43 @@
-/** VerityX media-risk heat from GDELT headlines on the same PO. Independent of Prewave. */
+/** VerityX media-risk heat: recent GDELT headlines on a supplier, classified by topic and banded. */
 
-export type PrewaveLevel = "LOW" | "MED" | "HIGH" | "CRITICAL";
+export type MediaLevel = "LOW" | "MED" | "HIGH" | "CRITICAL";
 
-export type PrewaveCategory = "DISRUPTION" | "ESG" | "LABOR" | "COMPLIANCE" | "QUALITY";
+export type MediaCategory = "DISRUPTION" | "ESG" | "LABOR" | "COMPLIANCE" | "QUALITY";
 
-export type PrewaveNews = { title: string; source: string; url: string; query?: string };
+export type MediaNews = { title: string; source: string; url: string; query?: string };
 
-export type PrewaveIncident = {
+export type MediaIncident = {
   title: string;
   source: string;
   url: string;
-  category: PrewaveCategory;
+  category: MediaCategory;
   severity: 1 | 2 | 3 | 4 | 5;
   at: string;
 };
 
-export type PrewaveRisk = {
+export type MediaRisk = {
   id: string;
   supplier: string;
   po?: string;
   risk: number;
   heat: number;
-  level: PrewaveLevel;
+  level: MediaLevel;
   headlines: string[];
-  incidents: PrewaveIncident[];
+  incidents: MediaIncident[];
   source: string;
   issuer: "VerityX media-risk heat";
   /** False when the headline source could not be reached: the heat is then a baseline, not a finding. */
   checked: boolean;
 };
 
-export const PREWAVE_BANDS: { level: PrewaveLevel; min: number }[] = [
+export const MEDIA_BANDS: { level: MediaLevel; min: number }[] = [
   { level: "CRITICAL", min: 70 },
   { level: "HIGH", min: 50 },
   { level: "MED", min: 28 },
   { level: "LOW", min: 0 },
 ];
 
-const CAT_RULES: { category: PrewaveCategory; re: RegExp; severity: 1 | 2 | 3 | 4 | 5 }[] = [
+const CAT_RULES: { category: MediaCategory; re: RegExp; severity: 1 | 2 | 3 | 4 | 5 }[] = [
   { category: "COMPLIANCE", re: /sanction|ofac|un list|embargo|investigation|indict/i, severity: 5 },
   { category: "LABOR", re: /forced labor|forced labour|traffick|slave/i, severity: 5 },
   { category: "DISRUPTION", re: /export ban|export control|blockade|outage|halt/i, severity: 4 },
@@ -52,7 +52,7 @@ function clamp(n: number, lo = 0, hi = 100) {
   return Math.max(lo, Math.min(hi, Math.round(n)));
 }
 
-export function prewaveLevel(heat: number): PrewaveLevel {
+export function mediaLevel(heat: number): MediaLevel {
   if (heat >= 70) return "CRITICAL";
   if (heat >= 50) return "HIGH";
   if (heat >= 28) return "MED";
@@ -63,7 +63,7 @@ function isCnMagnetics(supplier: string) {
   return /China|Nanjing|Baotou|Northern Rare/i.test(supplier);
 }
 
-function classify(title: string): { category: PrewaveCategory; severity: 1 | 2 | 3 | 4 | 5 } | null {
+function classify(title: string): { category: MediaCategory; severity: 1 | 2 | 3 | 4 | 5 } | null {
   for (const rule of CAT_RULES) {
     if (rule.re.test(title)) return { category: rule.category, severity: rule.severity };
   }
@@ -78,15 +78,15 @@ function slug(supplier: string) {
     .slice(0, 24);
 }
 
-export function scorePrewave(input: {
+export function scoreMediaRisk(input: {
   supplier: string;
   po?: string;
-  news: PrewaveNews[];
+  news: MediaNews[];
   sanctionsHit: boolean;
   now?: string;
   /** Whether headlines were actually fetched this pass (default: any headline present). */
   newsAvailable?: boolean;
-}): PrewaveRisk {
+}): MediaRisk {
   const checked = input.newsAvailable ?? input.news.length > 0;
   const now = input.now || new Date().toISOString();
   const key = input.supplier.split(/\s+/)[0].toLowerCase();
@@ -95,7 +95,7 @@ export function scorePrewave(input: {
       n.title.toLowerCase().includes(key) ||
       (isCnMagnetics(input.supplier) && /rare|magnet|export|china|ndpr|neodym/i.test(n.title)),
   );
-  const incidents: PrewaveIncident[] = [];
+  const incidents: MediaIncident[] = [];
   for (const n of related) {
     const hit = classify(n.title);
     if (!hit) {
@@ -131,7 +131,7 @@ export function scorePrewave(input: {
     po: input.po,
     risk: heat,
     heat,
-    level: prewaveLevel(heat),
+    level: mediaLevel(heat),
     headlines: top.slice(0, 3).map((i) => i.title),
     incidents: top,
     source: checked
@@ -142,21 +142,7 @@ export function scorePrewave(input: {
   };
 }
 
-export function prewaveTaxonomy() {
-  return {
-    protocol: "Prewave media-risk analog",
-    issuer: "VerityX media-risk heat",
-    vendor: {
-      subscribed: false,
-      note: "Heat is scored from live GDELT headlines incidents on the same purchase order the ESG scorecard scores. Independent of Prewave.",
-    },
-    categories: ["DISRUPTION", "ESG", "LABOR", "COMPLIANCE", "QUALITY"],
-    bands: PREWAVE_BANDS,
-    heat: "sum(severity × 8) + sanctions 36 + CN magnetics 12, clamped 0–100",
-  };
-}
-
-export function flattenAlerts(risks: PrewaveRisk[]) {
+export function flattenAlerts(risks: MediaRisk[]) {
   return risks.flatMap((r) =>
     r.incidents.map((i) => ({
       supplier: r.supplier,

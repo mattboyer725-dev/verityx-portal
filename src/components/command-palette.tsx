@@ -1,7 +1,6 @@
 import { Command } from "cmdk";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { FIELD } from "@/lib/competition";
 import { OS_LINKS, SURFACES, VX_COMMAND_EVENT, openCommandPalette } from "@/lib/nav";
 
 export { openCommandPalette };
@@ -91,19 +90,7 @@ export function CommandPalette() {
                 </Command.Item>
               ))}
             </Command.Group>
-            <Command.Group heading="Field">
-              {FIELD.map((row) => (
-                <Command.Item
-                  key={row.id}
-                  value={`${row.names} ${row.category} ${row.analog ?? ""} ${row.analogPath ?? ""}`}
-                  onSelect={() => go("/field", row.id)}
-                >
-                  <span>{row.names}</span>
-                  <span>{row.category}</span>
-                </Command.Item>
-              ))}
-            </Command.Group>
-            <Command.Empty>Nothing matches. Try desk, field, ESG, or pilots.</Command.Empty>
+            <Command.Empty>Nothing matches. Try check, verify, pricing or pilots.</Command.Empty>
           </Command.List>
         </Command>
       </div>

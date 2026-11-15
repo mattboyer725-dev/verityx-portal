@@ -5,9 +5,9 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <p>
-        VerityX Sovereign · advisory · HMAC + Merkle. BLOCK never auto-applies. Vendor tenants named on the field are
-        not subscribed. The demo desk uses illustrative purchase orders: the companies named there are not VerityX
-        customers and have not endorsed it.
+        VerityX · advisory only · signed, verifiable receipts. BLOCK never auto-applies. VerityX connects to no ERP,
+        procurement suite or traceability network; any company named in sample data is not a customer and has not
+        endorsed it.
       </p>
       <nav aria-label="Product">
         {SURFACES.map((s) => (
@@ -16,12 +16,10 @@ export function SiteFooter() {
           </Link>
         ))}
         <a href="/pilot">Start a pilot</a>
-        <a href="/pricing">Pricing</a>
         <a href="/terms">Terms</a>
         <a href="/privacy">Privacy</a>
         <a href="/sources">Sources &amp; licences</a>
         <a href="/health/live">Health</a>
-        <a href="/api/competition">Field API</a>
       </nav>
     </footer>
   );
