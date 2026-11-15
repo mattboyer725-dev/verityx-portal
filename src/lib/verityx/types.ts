@@ -83,6 +83,8 @@ export type Workspace = {
   stripeConfigured: boolean;
   ruleVersion: string;
   members: Member[];
+  /** The platform owner (OWNER_USER_ID), or anyone before an owner is pinned. Sees sales and owner tools. */
+  ownerTools: boolean;
 };
 
 export type Prospect = {

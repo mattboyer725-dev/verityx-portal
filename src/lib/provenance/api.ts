@@ -204,3 +204,10 @@ export const setOrgPlan = createServerFn({ method: "POST" })
     const ops = await import("./billing.server");
     return ops.setOrgPlan(context.userId, data);
   });
+
+export const getOverview = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const ops = await import("./overview.server");
+    return ops.getOverview(context.userId);
+  });

@@ -110,6 +110,19 @@ export function isPassportCode(v: unknown): v is string {
 }
 
 /** Short shareable code, e.g. LP-7K3Q-9XWD (Crockford base32, 40 bits). */
+/** Accepts "lp7k2m9q4r", "LP-7K2M 9Q4R", a pasted /passport/… link, and Crockford look-alikes (O→0, I/L→1). */
+export function normalizePassportCode(raw: string): string | null {
+  let v = raw.trim();
+  const fromUrl = v.match(/passport\/([A-Za-z0-9-]+)/);
+  if (fromUrl) v = fromUrl[1];
+  v = v.toUpperCase().replace(/[^0-9A-Z]/g, "");
+  if (v.startsWith("LP")) v = v.slice(2);
+  v = v.replace(/O/g, "0").replace(/[IL]/g, "1");
+  if (v.length !== 8) return null;
+  const code = `LP-${v.slice(0, 4)}-${v.slice(4)}`;
+  return CODE_RE.test(code) ? code : null;
+}
+
 export function newPassportCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(8));
   const chars = [...bytes].map((b) => CROCKFORD[b % 32]).join("");

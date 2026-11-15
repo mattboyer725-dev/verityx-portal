@@ -40,8 +40,8 @@ function SettingsPage() {
   return (
     <div className="space-y-8 vx-enter">
       <PageHeader
-        kicker="Workspace"
-        title="Settings"
+        kicker="Account"
+        title="Team"
         description="Single-organization ready, with tenant isolation already in the data model. Records never leak to another workspace."
       />
       <form className="panel max-w-xl space-y-4 p-5 sm:p-6" onSubmit={save}>

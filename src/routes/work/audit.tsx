@@ -24,8 +24,8 @@ function AuditPage() {
   return (
     <div className="space-y-8 vx-enter">
       <PageHeader
-        kicker="Integrity"
-        title="Audit log"
+        kicker="Account"
+        title="Activity"
         description="Live create, update, delete, payment, and report events for this tenant. Passwords, tokens, and secrets are never stored here."
       />
       {loading && !data ? <Skeleton className="h-40" /> : null}

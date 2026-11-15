@@ -1,54 +1,40 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BadgeCheck, FileCheck2, Layers, PackageCheck, ShieldCheck } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { PILOT_PRICE_USD, PILOT_SLA_HOURS } from "@/lib/verityx/constants";
-import { money } from "@/lib/verityx/format";
-import { BUYER } from "@/lib/engine";
-import { CORE_SHA, CORE_VERSION } from "@/lib/core-meta";
-import { OWNER_EMAIL } from "@/lib/admin";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
-import { VxMark } from "@/components/vx-mark";
-import { useLiveAdapters } from "@/lib/desk-live";
-import { SurfaceLoop } from "@/components/surface-loop";
-import { AdapterStrip } from "@/components/adapter-strip";
+import { PassportLookup } from "@/components/passport-lookup";
+import { ENTERPRISE, FREE, PAID_PLANS } from "@/lib/provenance/plans";
+import { STAGES, STAGE_LABEL } from "@/lib/provenance/passport";
 
 export const Route = createFileRoute("/")({ component: Home });
 
-const TOOLS = [
+const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
+
+const STEPS = [
   {
-    to: "/check",
-    kicker: "Check a PO",
-    title: "Is this price fair?",
-    body: "Paste supplier, commodity, kg and total. Get PROCEED, REVIEW or HOLD against live prices and a should-cost band. Sign in to seal it.",
-    cta: "Check a quote",
+    icon: Layers,
+    n: "01",
+    title: "Suppliers publish",
+    body: "Each lot gets a passport: where every stage happened, linked to the passports of the lots it was made from, with fingerprints of the evidence. Sealed on a public ledger.",
   },
   {
-    to: "/verify",
-    kicker: "Verify a receipt",
-    title: "Prove it wasn't changed",
-    body: "Drop a sealed receipt. Three checks — content, ledger, Ed25519 signature — run in your browser against the published key.",
-    cta: "Verify a receipt",
+    icon: PackageCheck,
+    n: "02",
+    title: "Buyers monitor",
+    body: "Import the parts you ship with their passport codes. See every chain from mine to magnet and get an alert the moment a lot upstream is revoked or corrected.",
   },
   {
-    to: "/check",
-    kicker: "Should-cost",
-    title: "What it should cost",
-    body: "Material × price ÷ yield, plus conversion, loss and margin, as a low / mid / high band. Licensed reference prices, or your own benchmark.",
-    cta: "Run should-cost",
-  },
-  {
-    to: "/pricing",
-    kicker: "Pricing",
-    title: "Pilot, then a plan",
-    body: "One live purchase order as a pilot, credited in full if you move to a yearly plan.",
-    cta: "See pricing",
+    icon: BadgeCheck,
+    n: "03",
+    title: "Anyone verifies",
+    body: "A contracting officer, auditor or customer opens the code and checks it in their own browser. No account, no fee, no need to trust us.",
   },
 ] as const;
 
 function Home() {
   const { user } = useCurrentUserState();
-  const { adapters } = useLiveAdapters();
+  const workspace = user ? { to: "/work" as const } : { to: "/login" as const, search: { redirect: "/work" } };
 
   return (
     <main className="min-h-dvh overflow-x-hidden bg-ink text-paper">
@@ -56,136 +42,129 @@ function Home() {
         <SiteNav tone="ink" />
       </div>
 
-      <section className="mx-auto max-w-6xl px-6 pb-10 pt-6 sm:pt-12">
-        <VxMark className="vx-mark-hero" title="VerityX" />
-        <p className="mt-5 text-[11px] font-medium uppercase tracking-[0.22em] text-mute">Sovereign · v1.0 live</p>
-        <h1 className="mt-5 max-w-4xl font-display text-4xl leading-[1.06] tracking-tight sm:text-6xl">
-          Prove a magnet or rare-earth purchase order before it clears.
-        </h1>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute">
-          Price against licensed references, supplier identity and sanctions screening, and a signed receipt anyone can verify.
-          A {money(PILOT_PRICE_USD)} / {PILOT_SLA_HOURS}-hour pilot on one live order. Advisory decisions — a person always decides.
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-6 pb-16 pt-10 sm:pt-20">
+        <p className="inline-flex items-center gap-2 rounded-full border border-line px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-mute">
+          <ShieldCheck className="size-3.5 text-gold" />
+          Magnet provenance, mine to magnet
         </p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link to="/pilot" className="inline-flex h-11 items-center gap-2 rounded-[8px] bg-gold px-5 text-sm font-medium text-plum">
-            Start a {money(PILOT_PRICE_USD)} pilot
+        <h1 className="mt-6 max-w-4xl font-display text-[2.6rem] leading-[1.04] tracking-tight sm:text-6xl">
+          Know where every magnet came from. Prove it in one click.
+        </h1>
+        <p className="mt-6 max-w-2xl text-base leading-relaxed text-mute sm:text-lg">
+          Sealed lot passports that cover all five stages defense buyers are asked about, from mining to the finished
+          magnet. Suppliers publish once; every buyer downstream can check it.
+        </p>
+
+        <PassportLookup size="lg" className="mt-9" />
+        <p className="mt-3 pl-4 text-xs text-mute">Have a code from a supplier? Paste it to check the chain. Free, no account.</p>
+
+        <div className="mt-10 flex flex-wrap items-center gap-3">
+          <Link
+            {...workspace}
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-paper px-5 text-sm font-medium text-ink transition-opacity hover:opacity-90"
+          >
+            {user ? "Open workspace" : "Start free"}
             <ArrowRight className="size-4" />
           </Link>
-          <Link to="/check" className="inline-flex h-11 items-center rounded-[8px] border border-line px-5 text-sm text-paper hover:bg-raised">
-            Check a quote free
+          <Link
+            to="/pricing"
+            className="inline-flex h-11 items-center rounded-full border border-line px-5 text-sm text-paper transition-colors hover:bg-raised"
+          >
+            See pricing
           </Link>
         </div>
-        <SurfaceLoop className="mt-8" />
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-10">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Use it now · no account needed to check</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {TOOLS.map((t) => (
-            <Link
-              key={t.title}
-              to={t.to}
-              className="panel vx-enter group flex h-full flex-col justify-between p-6 transition-colors hover:bg-raised"
-            >
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-gold">{t.kicker}</p>
-                <h2 className="mt-3 font-display text-2xl tracking-tight">{t.title}</h2>
-                <p className="mt-3 text-sm leading-relaxed text-mute">{t.body}</p>
+      {/* Chain strip */}
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          {STAGES.map((s, i) => (
+            <li key={s} className="rounded-[16px] border border-line bg-raised/40 px-4 py-4 last:col-span-2 sm:last:col-span-1">
+              <p className="font-mono text-[11px] text-gold">{String(i + 1).padStart(2, "0")}</p>
+              <p className="mt-1 font-display text-lg capitalize">{s}</p>
+              <p className="mt-1 text-xs leading-snug text-mute">{STAGE_LABEL[s].replace(/^[^(]*\(?/, "").replace(/\)$/, "")}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-4 max-w-3xl text-xs leading-relaxed text-mute">
+          The five stages named in DFARS 252.225-7052 for covered magnets. A passport records what the supplier declares
+          and fingerprints their evidence. It is not a determination of compliance; that stays with the buyer and the
+          contracting officer.
+        </p>
+      </section>
+
+      {/* How it works */}
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <h2 className="font-display text-3xl tracking-tight sm:text-4xl">How it works</h2>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {STEPS.map(({ icon: Icon, n, title, body }) => (
+            <div key={n} className="panel p-6">
+              <div className="flex items-center justify-between">
+                <Icon className="size-5 text-gold" strokeWidth={1.6} />
+                <span className="font-mono text-xs text-mute">{n}</span>
               </div>
-              <p className="mt-6 flex items-center gap-2 text-sm text-paper">
-                {t.cta}
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </p>
-            </Link>
+              <h3 className="mt-5 font-display text-2xl">{title}</h3>
+              <p className="mt-3 text-sm leading-relaxed text-mute">{body}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-16 sm:grid-cols-2">
-        {user ? (
-          <Link
-            to="/work"
-            className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-          >
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">01 · Workspace</p>
-              <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
-              <p className="mt-3 text-sm leading-relaxed text-mute">
-                Request → payment → evidence → human-approved decision → sealed PDF report.{" "}
-                {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}-hour target. Tenant-isolated. BLOCK never auto-applies.
-              </p>
-            </div>
-            <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-              Open workspace
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </p>
-          </Link>
-        ) : (
-          <Link
-            to="/login"
-            search={{ redirect: "/work" }}
-            className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-          >
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-mute">01 · Workspace</p>
-              <h2 className="mt-3 font-display text-3xl tracking-tight">Pilots</h2>
-              <p className="mt-3 text-sm leading-relaxed text-mute">
-                Request → payment → evidence → human-approved decision → sealed PDF report.{" "}
-                {money(PILOT_PRICE_USD)} · {PILOT_SLA_HOURS}-hour target. Tenant-isolated. BLOCK never auto-applies.
-              </p>
-            </div>
-            <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-              Sign in to OS
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-            </p>
-          </Link>
-        )}
-
-        <Link
-          to="/core"
-          className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">02 · Ledger</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight">Proof</h2>
-            <p className="mt-3 text-sm leading-relaxed text-mute">
-              Live check of the HMAC chain and Merkle inclusion behind every receipt, stored in Postgres. Core v{CORE_VERSION} ({CORE_SHA.slice(0, 7)}).
-            </p>
-          </div>
-          <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-            Verify the core
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+      {/* Two paths */}
+      <section className="mx-auto grid max-w-6xl gap-4 px-6 pb-20 md:grid-cols-2">
+        <div className="panel flex flex-col p-7">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-gold">For suppliers</p>
+          <h3 className="mt-3 font-display text-3xl tracking-tight">Answer every buyer once</h3>
+          <p className="mt-3 text-sm leading-relaxed text-mute">
+            Mines, separators, metal and alloy makers, magnet makers. Publish a passport per lot instead of filling in
+            another questionnaire. Your documents stay with you; only their fingerprints go on the ledger.
           </p>
-        </Link>
-
-        <Link
-          to="/admin"
-          className="panel vx-enter group flex h-full flex-col justify-between p-7 transition-colors hover:bg-raised"
-        >
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-mute">03 · Command</p>
-            <h2 className="mt-3 font-display text-3xl tracking-tight">Owner</h2>
-            <p className="mt-3 text-sm leading-relaxed text-mute">
-              Fleet, seats, policies, keys, freeze, backup. Owner account only.
-            </p>
-          </div>
-          <p className="mt-8 flex items-center gap-2 text-sm text-paper">
-            Owner sign-in
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          <p className="mt-6 text-sm">
+            <span className="font-display text-2xl">Free</span>
+            <span className="text-mute"> for {FREE.seals} lots a year · then {usd(PAID_PLANS.supplier.annualUsd)}/yr unlimited</span>
           </p>
-        </Link>
+          <Link {...workspace} className="mt-6 inline-flex items-center gap-1 text-sm text-gold hover:text-paper">
+            Publish your first lot <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
+        <div className="panel flex flex-col p-7">
+          <p className="text-[11px] uppercase tracking-[0.18em] text-gold">For buyers</p>
+          <h3 className="mt-3 font-display text-3xl tracking-tight">Know before the audit does</h3>
+          <p className="mt-3 text-sm leading-relaxed text-mute">
+            Primes and tier-1s shipping magnet-bearing parts. One view of every part's chain, alerts when anything
+            upstream changes, and a sealed evidence pack ready to hand over.
+          </p>
+          <p className="mt-6 text-sm">
+            <span className="font-display text-2xl">Free</span>
+            <span className="text-mute">
+              {" "}
+              for {FREE.parts} parts · Team {usd(PAID_PLANS.team.annualUsd)}/yr · Enterprise from {usd(ENTERPRISE.fromUsd)}
+            </span>
+          </p>
+          <Link {...workspace} className="mt-6 inline-flex items-center gap-1 text-sm text-gold hover:text-paper">
+            Import your parts <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-mute">Data sources · checked live</p>
-        <div className="mt-4">
-          <AdapterStrip adapters={adapters} />
+      {/* Also */}
+      <section className="mx-auto max-w-6xl px-6 pb-20">
+        <div className="flex flex-col gap-4 rounded-[20px] border border-line p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <FileCheck2 className="mt-0.5 size-5 shrink-0 text-gold" strokeWidth={1.6} />
+            <div>
+              <p className="font-medium">Also free: check a rare-earth purchase order price</p>
+              <p className="mt-1 text-sm text-mute">Supplier, commodity, kg and total against live reference prices and a should-cost band.</p>
+            </div>
+          </div>
+          <Link
+            to="/check"
+            className="inline-flex h-10 shrink-0 items-center gap-1 self-start rounded-full border border-line px-4 text-sm hover:bg-raised sm:self-auto"
+          >
+            Price check <ArrowRight className="size-3.5" />
+          </Link>
         </div>
-        <p className="mt-5 max-w-3xl text-xs leading-relaxed text-mute">
-          These are the only outside sources VerityX uses. It does not connect to any ERP, procurement suite, ESG rating,
-          traceability network or price agency, and subscribes to none of them. Details on{" "}
-          <Link to="/sources" className="underline">sources and licences</Link>.
-        </p>
       </section>
 
       <div className="mx-auto max-w-6xl px-6 pb-10">

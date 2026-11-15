@@ -3,6 +3,9 @@ import { PILOT_PRICE_USD, PILOT_SLA_HOURS, RULE_VERSION } from "./constants";
 import { iso, newId, slugify } from "./format";
 import { rateLimit } from "./rate-limit";
 import type { Member, Role, Workspace } from "./types";
+import { ownerToolsFor } from "./owner-tools";
+
+export { ownerToolsFor };
 
 export type Actor = {
   userId: string;
@@ -172,6 +175,7 @@ export function toWorkspace(actor: Actor, members: Member[] = []): Workspace {
     stripeConfigured: Boolean(process.env.STRIPE_SECRET_KEY),
     ruleVersion: RULE_VERSION,
     members,
+    ownerTools: ownerToolsFor(actor.userId),
     organization: {
       id: actor.organizationId,
       name: actor.orgName,

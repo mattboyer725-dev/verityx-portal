@@ -34,6 +34,7 @@ import { Route as WorkAuditRouteImport } from './routes/work/audit'
 import { Route as WorkBillingRouteImport } from './routes/work/billing'
 import { Route as WorkLearningRouteImport } from './routes/work/learning'
 import { Route as WorkPortfolioRouteImport } from './routes/work/portfolio'
+import { Route as WorkSalesRouteImport } from './routes/work/sales'
 import { Route as WorkSettingsRouteImport } from './routes/work/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
@@ -174,6 +175,11 @@ const WorkPortfolioRoute = WorkPortfolioRouteImport.update({
   path: '/portfolio',
   getParentRoute: () => WorkRoute,
 } as any)
+const WorkSalesRoute = WorkSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => WorkRoute,
+} as any)
 const WorkSettingsRoute = WorkSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/work/billing': typeof WorkBillingRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/portfolio': typeof WorkPortfolioRoute
+  '/work/sales': typeof WorkSalesRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -310,6 +317,7 @@ export interface FileRoutesByTo {
   '/work/billing': typeof WorkBillingRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/portfolio': typeof WorkPortfolioRoute
+  '/work/sales': typeof WorkSalesRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -352,6 +360,7 @@ export interface FileRoutesById {
   '/work/billing': typeof WorkBillingRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/portfolio': typeof WorkPortfolioRoute
+  '/work/sales': typeof WorkSalesRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -395,6 +404,7 @@ export interface FileRouteTypes {
     | '/work/billing'
     | '/work/learning'
     | '/work/portfolio'
+    | '/work/sales'
     | '/work/settings'
     | '/work/'
     | '/api/auth/$'
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/work/billing'
     | '/work/learning'
     | '/work/portfolio'
+    | '/work/sales'
     | '/work/settings'
     | '/work'
     | '/api/auth/$'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/work/billing'
     | '/work/learning'
     | '/work/portfolio'
+    | '/work/sales'
     | '/work/settings'
     | '/work/'
     | '/api/auth/$'
@@ -696,6 +708,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkPortfolioRouteImport
       parentRoute: typeof WorkRoute
     }
+    '/work/sales': {
+      id: '/work/sales'
+      path: '/sales'
+      fullPath: '/work/sales'
+      preLoaderRoute: typeof WorkSalesRouteImport
+      parentRoute: typeof WorkRoute
+    }
     '/work/settings': {
       id: '/work/settings'
       path: '/settings'
@@ -802,6 +821,7 @@ interface WorkRouteChildren {
   WorkBillingRoute: typeof WorkBillingRoute
   WorkLearningRoute: typeof WorkLearningRoute
   WorkPortfolioRoute: typeof WorkPortfolioRoute
+  WorkSalesRoute: typeof WorkSalesRoute
   WorkSettingsRoute: typeof WorkSettingsRoute
   WorkIndexRoute: typeof WorkIndexRoute
   WorkDecisionsIdRoute: typeof WorkDecisionsIdRoute
@@ -821,6 +841,7 @@ const WorkRouteChildren: WorkRouteChildren = {
   WorkBillingRoute: WorkBillingRoute,
   WorkLearningRoute: WorkLearningRoute,
   WorkPortfolioRoute: WorkPortfolioRoute,
+  WorkSalesRoute: WorkSalesRoute,
   WorkSettingsRoute: WorkSettingsRoute,
   WorkIndexRoute: WorkIndexRoute,
   WorkDecisionsIdRoute: WorkDecisionsIdRoute,

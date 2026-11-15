@@ -6,6 +6,7 @@ import {
   isPassportCode,
   ledgerNotes,
   newPassportCode,
+  normalizePassportCode,
   parseDraft,
   passportDigest,
   passportIntegrity,
@@ -217,5 +218,32 @@ describe("passportIntegrity", () => {
     const payload = { kind: "lot-passport", location: "/passport/LP-OTHR-0001", notes: `sha256:${digest}` };
     const checks = await passportIntegrity({ ...body, digest }, canonical, payload, { "LP-ALLY-0001": H1 });
     assert.equal(checks.find((c) => c.id === "ledger")?.ok, false);
+  });
+});
+
+describe("normalizePassportCode", () => {
+  it("accepts the canonical form", () => {
+    assert.equal(normalizePassportCode("LP-7K2M-9Q4R"), "LP-7K2M-9Q4R");
+  });
+  it("tolerates case, spaces, missing dashes and prefix", () => {
+    assert.equal(normalizePassportCode(" lp7k2m 9q4r "), "LP-7K2M-9Q4R");
+    assert.equal(normalizePassportCode("7K2M9Q4R"), "LP-7K2M-9Q4R");
+  });
+  it("maps Crockford look-alikes", () => {
+    assert.equal(normalizePassportCode("LP-OK2M-IQ4L"), "LP-0K2M-1Q41");
+  });
+  it("extracts a code from a pasted link", () => {
+    assert.equal(normalizePassportCode("https://verityx-portal.vercel.app/passport/LP-7K2M-9Q4R"), "LP-7K2M-9Q4R");
+  });
+  it("rejects wrong lengths and the excluded letter U", () => {
+    assert.equal(normalizePassportCode("LP-7K2M-9Q4"), null);
+    assert.equal(normalizePassportCode("LP-7K2M-9Q4U"), null);
+    assert.equal(normalizePassportCode(""), null);
+  });
+  it("round-trips every generated code", () => {
+    for (let i = 0; i < 200; i++) {
+      const c = newPassportCode();
+      assert.equal(normalizePassportCode(c.toLowerCase()), c);
+    }
   });
 });

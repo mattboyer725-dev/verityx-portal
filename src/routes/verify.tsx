@@ -2,11 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { PassportLookup } from "@/components/passport-lookup";
 import { findReceipt, verifyReceipt, type ReceiptVerdict, type SealReceipt } from "@/lib/receipt";
 import { KEYRING, KEYRING_HISTORY_URL, type Keyring } from "@/lib/seal-keyring";
 
 export const Route = createFileRoute("/verify")({
-  head: () => ({ meta: [{ title: "Verify a seal · VerityX" }] }),
+  head: () => ({ meta: [{ title: "Verify · VerityX" }] }),
   component: VerifyPage,
 });
 
@@ -77,14 +78,29 @@ function VerifyPage() {
         <SiteNav tone="ink" />
       </div>
       <section className="mx-auto max-w-6xl px-6 pb-6 pt-8">
-        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold">Verify a seal</p>
+        <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-gold">Verify</p>
         <h1 className="mt-4 max-w-3xl font-display text-4xl leading-[1.02] tracking-tight sm:text-6xl">
           Check a VerityX record yourself. No account, no trust required.
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-relaxed text-mute">
-          Drop a seal receipt or an exported evidence packet. The checks run in this browser, on the file you give it:
-          nothing is uploaded. It confirms the record was not changed, that it sits in the VerityX ledger, and that VerityX
-          signed it.
+          Every check runs in this browser against VerityX’s published key. Nothing you check is uploaded.
+        </p>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-10">
+        <div className="panel p-6 sm:p-8">
+          <h2 className="font-display text-2xl tracking-tight">Have a lot passport code?</h2>
+          <p className="mt-2 max-w-2xl text-sm text-mute">
+            Opens the passport, checks its content, ledger entry and signature, and walks every input lot back to the mine.
+          </p>
+          <PassportLookup className="mt-5" />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-4">
+        <h2 className="font-display text-2xl tracking-tight">Have a receipt or evidence pack file?</h2>
+        <p className="mt-2 max-w-2xl text-sm text-mute">
+          Drop it below. It confirms the record was not changed, that it sits in the VerityX ledger, and that VerityX signed it.
         </p>
       </section>
 
@@ -114,7 +130,7 @@ function VerifyPage() {
           <button
             type="button"
             onClick={() => void check(text)}
-            className="inline-flex h-11 w-fit items-center rounded-[8px] bg-gold px-5 text-sm font-medium text-plum"
+            className="inline-flex h-11 w-fit items-center rounded-full bg-gold px-5 text-sm font-medium text-plum"
           >
             Verify
           </button>
