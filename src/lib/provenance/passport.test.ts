@@ -8,6 +8,7 @@ import {
   newPassportCode,
   parseDraft,
   passportDigest,
+  passportIntegrity,
   requiredStages,
   sealProblems,
   type ChainNode,
@@ -175,5 +176,46 @@ describe("digest", () => {
     assert.ok(notes.startsWith(`sha256:${H("e")}`));
     assert.ok(notes.length <= 500);
     assert.match(notes, /mined=\?/);
+  });
+});
+
+describe("passportIntegrity", () => {
+  const input = node("LP-ALLY-0001", "alloy", [stage("melted", "US")]);
+  const body = node("LP-MAGN-0001", "ndfeb_magnet", [stage("produced", "US")], ["LP-ALLY-0001"]);
+  const H1 = "1".repeat(64);
+
+  it("passes when page, content, inputs and ledger all agree", async () => {
+    const canonical = canonicalPassport(body, { "LP-ALLY-0001": H1 });
+    const digest = await passportDigest(body, { "LP-ALLY-0001": H1 });
+    const view = { ...body, digest };
+    const payload = { kind: "lot-passport", location: "/passport/LP-MAGN-0001", notes: `sha256:${digest} · declared-clear` };
+    const checks = await passportIntegrity(view, canonical, payload, { "LP-ALLY-0001": H1 });
+    assert.deepEqual(checks.map((c) => [c.id, c.ok]), [["content", true], ["page", true], ["inputs", true], ["ledger", true]]);
+    void input;
+  });
+
+  it("catches a page that was altered after sealing", async () => {
+    const canonical = canonicalPassport(body, { "LP-ALLY-0001": H1 });
+    const digest = await passportDigest(body, { "LP-ALLY-0001": H1 });
+    const tampered = { ...body, digest, stages: [stage("produced", "CA")] };
+    const checks = await passportIntegrity(tampered, canonical, null, { "LP-ALLY-0001": H1 });
+    assert.equal(checks.find((c) => c.id === "content")?.ok, true);
+    assert.equal(checks.find((c) => c.id === "page")?.ok, false);
+    assert.equal(checks.find((c) => c.id === "ledger")?.ok, false);
+  });
+
+  it("catches an input whose digest no longer matches", async () => {
+    const canonical = canonicalPassport(body, { "LP-ALLY-0001": H1 });
+    const digest = await passportDigest(body, { "LP-ALLY-0001": H1 });
+    const checks = await passportIntegrity({ ...body, digest }, canonical, null, { "LP-ALLY-0001": "2".repeat(64) });
+    assert.equal(checks.find((c) => c.id === "inputs")?.ok, false);
+  });
+
+  it("refuses a ledger entry for a different passport", async () => {
+    const canonical = canonicalPassport(body, { "LP-ALLY-0001": H1 });
+    const digest = await passportDigest(body, { "LP-ALLY-0001": H1 });
+    const payload = { kind: "lot-passport", location: "/passport/LP-OTHR-0001", notes: `sha256:${digest}` };
+    const checks = await passportIntegrity({ ...body, digest }, canonical, payload, { "LP-ALLY-0001": H1 });
+    assert.equal(checks.find((c) => c.id === "ledger")?.ok, false);
   });
 });

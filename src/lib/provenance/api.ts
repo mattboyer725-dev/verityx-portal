@@ -71,3 +71,14 @@ export const lookupPassport = createServerFn({ method: "GET" })
     const ops = await import("./passport.server");
     return ops.lookupPublished(context.userId, data);
   });
+
+/** Public: no sign-in. Sealed or revoked passports only, by exact code. */
+export const getPublicPassport = createServerFn({ method: "GET" })
+  .validator((data: { code: string }) => {
+    if (!data || typeof data.code !== "string" || data.code.length > 20) throw new Error("invalid request");
+    return data;
+  })
+  .handler(async ({ data }) => {
+    const ops = await import("./passport.server");
+    return ops.getPublicPassport(data);
+  });

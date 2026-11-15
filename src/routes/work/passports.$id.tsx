@@ -495,9 +495,21 @@ function PassportDetail() {
             <Button onClick={downloadReceipt} disabled={!p.receiptJson}>
               Download receipt
             </Button>
-            <Link to="/verify">
-              <Button variant="ghost">Verify a receipt</Button>
+            <Link to="/passport/$code" params={{ code: p.code }}>
+              <Button variant="ghost">Open public page</Button>
             </Link>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const url = `${window.location.origin}/passport/${p.code}`;
+                void navigator.clipboard?.writeText(url).then(
+                  () => toast.success("Link copied — send it to your buyer"),
+                  () => toast.message(url),
+                );
+              }}
+            >
+              Copy link
+            </Button>
             {p.status === "sealed" && data.canSeal ? (
               <Button variant="ghost" onClick={supersede} disabled={busy !== null}>
                 Correct it (supersede)

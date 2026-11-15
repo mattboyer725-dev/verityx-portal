@@ -371,3 +371,82 @@ export async function lookupPublished(userId: string, data: { code: string }) {
   if (!p) return null;
   return { entry: toChainEntry(p), analysis: analyze(p, chain) };
 }
+
+// ---------------------------------------------------------------- public read
+
+const PUBLIC_PER_MINUTE = 60;
+const publicHits = new Map<string, { n: number; reset: number }>();
+
+async function publicThrottle() {
+  let ip = "unknown";
+  try {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const h = getRequest().headers;
+    ip = (h.get("x-forwarded-for") ?? h.get("x-real-ip") ?? "unknown").split(",")[0].trim();
+  } catch {
+    /* no request context (tests) */
+  }
+  const now = Date.now();
+  const hit = publicHits.get(ip);
+  if (!hit || hit.reset < now) {
+    publicHits.set(ip, { n: 1, reset: now + 60_000 });
+    if (publicHits.size > 5000) publicHits.clear();
+    return;
+  }
+  hit.n += 1;
+  if (hit.n > PUBLIC_PER_MINUTE) throw new Error("Too many requests. Wait a minute and retry.");
+}
+
+export type PublicPassport = {
+  entry: ChainEntry & { description: string };
+  /** The exact sealed bytes, so a browser can recompute the digest itself. */
+  canonical: string | null;
+  receiptJson: string | null;
+  ledgerHash: string | null;
+  revokedAt: string | null;
+  revokedReason: string | null;
+  supersedes: string | null;
+  supersededBy: string | null;
+  analysis: ChainAnalysis;
+  /** Every published lot upstream of this one. */
+  chain: ChainEntry[];
+  /** Published lots that name this one as an input. */
+  usedIn: Pick<ChainEntry, "code" | "publisher" | "lotRef" | "material" | "status">[];
+};
+
+/** Anyone with the code can read a sealed or revoked passport. Drafts do not exist publicly. */
+export async function getPublicPassport(data: { code: string }): Promise<PublicPassport | null> {
+  await publicThrottle();
+  const code = String(data.code ?? "").trim().toUpperCase();
+  if (!isPassportCode(code)) return null;
+  const sql = await getSql();
+  const rows = await sql`select * from lot_passports where code = ${code} and status in ('sealed', 'revoked') limit 1`;
+  if (!rows[0]) return null;
+  const p = mapPassport(rows[0]);
+  const chain = await loadPublishedChain(p.inputs);
+  const used = await sql`
+    select code, publisher, lot_ref, material, status from lot_passports
+    where status in ('sealed', 'revoked') and inputs_json like ${`%"${code}"%`}
+    order by sealed_at desc limit 50
+  `;
+  const next = await sql`select code from lot_passports where supersedes = ${code} and status in ('sealed', 'revoked') limit 1`;
+  return {
+    entry: { ...toChainEntry(p), description: p.description },
+    canonical: rows[0].canonical ? String(rows[0].canonical) : null,
+    receiptJson: p.receiptJson,
+    ledgerHash: p.ledgerHash,
+    revokedAt: p.revokedAt,
+    revokedReason: p.revokedReason,
+    supersedes: p.supersedes,
+    supersededBy: next[0] ? String(next[0].code) : null,
+    analysis: analyze(p, chain),
+    chain: [...chain.values()].map(toChainEntry),
+    usedIn: used.map((r) => ({
+      code: String(r.code),
+      publisher: String(r.publisher),
+      lotRef: String(r.lot_ref ?? ""),
+      material: String(r.material) as Material,
+      status: String(r.status) as PassportStatus,
+    })),
+  };
+}

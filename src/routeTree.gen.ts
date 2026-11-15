@@ -28,6 +28,7 @@ import { Route as ApiReadinessRouteImport } from './routes/api.readiness'
 import { Route as ApiSealKeyRouteImport } from './routes/api.seal-key'
 import { Route as HealthLiveRouteImport } from './routes/health.live'
 import { Route as HealthReadyRouteImport } from './routes/health.ready'
+import { Route as PassportCodeRouteImport } from './routes/passport.$code'
 import { Route as WorkIndexRouteImport } from './routes/work/index'
 import { Route as WorkAuditRouteImport } from './routes/work/audit'
 import { Route as WorkLearningRouteImport } from './routes/work/learning'
@@ -141,6 +142,11 @@ const HealthReadyRoute = HealthReadyRouteImport.update({
   path: '/health/ready',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PassportCodeRoute = PassportCodeRouteImport.update({
+  id: '/passport/$code',
+  path: '/passport/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkIndexRoute = WorkIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/api/seal-key': typeof ApiSealKeyRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/settings': typeof WorkSettingsRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/api/seal-key': typeof ApiSealKeyRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/settings': typeof WorkSettingsRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/api/seal-key': typeof ApiSealKeyRoute
   '/health/live': typeof HealthLiveRoute
   '/health/ready': typeof HealthReadyRoute
+  '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
   '/work/settings': typeof WorkSettingsRoute
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
     | '/api/seal-key'
     | '/health/live'
     | '/health/ready'
+    | '/passport/$code'
     | '/work/audit'
     | '/work/learning'
     | '/work/settings'
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/api/seal-key'
     | '/health/live'
     | '/health/ready'
+    | '/passport/$code'
     | '/work/audit'
     | '/work/learning'
     | '/work/settings'
@@ -438,6 +449,7 @@ export interface FileRouteTypes {
     | '/api/seal-key'
     | '/health/live'
     | '/health/ready'
+    | '/passport/$code'
     | '/work/audit'
     | '/work/learning'
     | '/work/settings'
@@ -477,6 +489,7 @@ export interface RootRouteChildren {
   ApiSealKeyRoute: typeof ApiSealKeyRoute
   HealthLiveRoute: typeof HealthLiveRoute
   HealthReadyRoute: typeof HealthReadyRoute
+  PassportCodeRoute: typeof PassportCodeRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiAuthMeRoute: typeof ApiAuthMeRoute
   ApiBillingStripeWebhookRoute: typeof ApiBillingStripeWebhookRoute
@@ -615,6 +628,13 @@ declare module '@tanstack/react-router' {
       path: '/health/ready'
       fullPath: '/health/ready'
       preLoaderRoute: typeof HealthReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/passport/$code': {
+      id: '/passport/$code'
+      path: '/passport/$code'
+      fullPath: '/passport/$code'
+      preLoaderRoute: typeof PassportCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/work/': {
@@ -795,6 +815,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSealKeyRoute: ApiSealKeyRoute,
   HealthLiveRoute: HealthLiveRoute,
   HealthReadyRoute: HealthReadyRoute,
+  PassportCodeRoute: PassportCodeRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiAuthMeRoute: ApiAuthMeRoute,
   ApiBillingStripeWebhookRoute: ApiBillingStripeWebhookRoute,

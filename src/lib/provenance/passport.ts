@@ -328,3 +328,87 @@ export function ledgerNotes(digest: string, analysis: ChainAnalysis): string {
     .join(" ");
   return `sha256:${digest} · ${analysis.status} · ${stages}`.slice(0, 500);
 }
+
+export type IntegrityCheck = { id: "content" | "page" | "inputs" | "ledger"; ok: boolean; detail: string };
+
+type PublicView = {
+  code: string;
+  publisher: string;
+  lotRef: string;
+  material: Material;
+  massKg: number;
+  description: string;
+  stages: StageDeclaration[];
+  inputs: string[];
+  digest: string | null;
+};
+
+/**
+ * Checks a reader can run on a public passport without trusting the server:
+ * the sealed bytes hash to the digest, the page shows exactly those bytes,
+ * each input digest matches the input passport, and the signed ledger entry
+ * names this passport and this digest. (The receipt's own signature is
+ * checked separately with verifyReceipt.)
+ */
+export async function passportIntegrity(
+  view: PublicView,
+  canonical: string | null,
+  ledgerPayload: Record<string, unknown> | null,
+  chainDigests: Record<string, string | null>,
+): Promise<IntegrityCheck[]> {
+  const out: IntegrityCheck[] = [];
+  if (!canonical || !view.digest) {
+    return [{ id: "content", ok: false, detail: "This passport has no sealed content to check." }];
+  }
+  const digest = await sha256Hex(canonical);
+  out.push({
+    id: "content",
+    ok: digest === view.digest,
+    detail: digest === view.digest ? "The sealed content hashes to the published digest." : "The sealed content does NOT hash to the published digest.",
+  });
+
+  let sealed: Record<string, unknown> | null = null;
+  try {
+    sealed = JSON.parse(canonical) as Record<string, unknown>;
+  } catch {
+    sealed = null;
+  }
+  const expected = sealed
+    ? canonicalPassport(view, Object.fromEntries(((sealed.inputs as { code: string; digest: string }[]) ?? []).map((i) => [i.code, i.digest])))
+    : "";
+  out.push({
+    id: "page",
+    ok: expected === canonical,
+    detail: expected === canonical ? "Every field on this page is exactly what was sealed." : "This page differs from what was sealed.",
+  });
+
+  const sealedInputs = ((sealed?.inputs as { code: string; digest: string }[]) ?? []);
+  const badInputs = sealedInputs.filter((i) => !chainDigests[i.code] || chainDigests[i.code] !== i.digest).map((i) => i.code);
+  out.push({
+    id: "inputs",
+    ok: badInputs.length === 0,
+    detail: !sealedInputs.length
+      ? "No input lots."
+      : badInputs.length
+        ? `Input digest mismatch or missing: ${badInputs.join(", ")}.`
+        : sealedInputs.length === 1
+          ? "The input lot matches the digest sealed into this one."
+          : `All ${sealedInputs.length} input lots match the digests sealed into this one.`,
+  });
+
+  const notes = typeof ledgerPayload?.notes === "string" ? ledgerPayload.notes : "";
+  const bound =
+    ledgerPayload?.kind === "lot-passport" &&
+    ledgerPayload?.location === `/passport/${view.code}` &&
+    notes.startsWith(`sha256:${view.digest}`);
+  out.push({
+    id: "ledger",
+    ok: bound,
+    detail: bound
+      ? "The signed ledger entry names this passport and this digest."
+      : ledgerPayload
+        ? "The ledger entry in the receipt does not name this passport and digest."
+        : "No receipt to check against.",
+  });
+  return out;
+}
