@@ -36,6 +36,8 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
 import { Route as WorkDecisionsIndexRouteImport } from './routes/work/decisions.index'
 import { Route as WorkDecisionsIdRouteImport } from './routes/work/decisions.$id'
+import { Route as WorkPassportsIndexRouteImport } from './routes/work/passports.index'
+import { Route as WorkPassportsIdRouteImport } from './routes/work/passports.$id'
 import { Route as WorkPilotsIndexRouteImport } from './routes/work/pilots.index'
 import { Route as WorkPilotsIdRouteImport } from './routes/work/pilots.$id'
 import { Route as WorkProspectsIndexRouteImport } from './routes/work/prospects.index'
@@ -179,6 +181,16 @@ const WorkDecisionsIdRoute = WorkDecisionsIdRouteImport.update({
   path: '/decisions/$id',
   getParentRoute: () => WorkRoute,
 } as any)
+const WorkPassportsIndexRoute = WorkPassportsIndexRouteImport.update({
+  id: '/passports/',
+  path: '/passports/',
+  getParentRoute: () => WorkRoute,
+} as any)
+const WorkPassportsIdRoute = WorkPassportsIdRouteImport.update({
+  id: '/passports/$id',
+  path: '/passports/$id',
+  getParentRoute: () => WorkRoute,
+} as any)
 const WorkPilotsIndexRoute = WorkPilotsIndexRouteImport.update({
   id: '/pilots/',
   path: '/pilots/',
@@ -242,10 +254,12 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/me': typeof ApiAuthMeRoute
   '/work/decisions/$id': typeof WorkDecisionsIdRoute
+  '/work/passports/$id': typeof WorkPassportsIdRoute
   '/work/pilots/$id': typeof WorkPilotsIdRoute
   '/work/prospects/$id': typeof WorkProspectsIdRoute
   '/work/reports/$id': typeof WorkReportsIdRoute
   '/work/decisions/': typeof WorkDecisionsIndexRoute
+  '/work/passports/': typeof WorkPassportsIndexRoute
   '/work/pilots/': typeof WorkPilotsIndexRoute
   '/work/prospects/': typeof WorkProspectsIndexRoute
   '/work/reports/': typeof WorkReportsIndexRoute
@@ -277,10 +291,12 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/me': typeof ApiAuthMeRoute
   '/work/decisions/$id': typeof WorkDecisionsIdRoute
+  '/work/passports/$id': typeof WorkPassportsIdRoute
   '/work/pilots/$id': typeof WorkPilotsIdRoute
   '/work/prospects/$id': typeof WorkProspectsIdRoute
   '/work/reports/$id': typeof WorkReportsIdRoute
   '/work/decisions': typeof WorkDecisionsIndexRoute
+  '/work/passports': typeof WorkPassportsIndexRoute
   '/work/pilots': typeof WorkPilotsIndexRoute
   '/work/prospects': typeof WorkProspectsIndexRoute
   '/work/reports': typeof WorkReportsIndexRoute
@@ -314,10 +330,12 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/auth/me': typeof ApiAuthMeRoute
   '/work/decisions/$id': typeof WorkDecisionsIdRoute
+  '/work/passports/$id': typeof WorkPassportsIdRoute
   '/work/pilots/$id': typeof WorkPilotsIdRoute
   '/work/prospects/$id': typeof WorkProspectsIdRoute
   '/work/reports/$id': typeof WorkReportsIdRoute
   '/work/decisions/': typeof WorkDecisionsIndexRoute
+  '/work/passports/': typeof WorkPassportsIndexRoute
   '/work/pilots/': typeof WorkPilotsIndexRoute
   '/work/prospects/': typeof WorkProspectsIndexRoute
   '/work/reports/': typeof WorkReportsIndexRoute
@@ -352,10 +370,12 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/auth/me'
     | '/work/decisions/$id'
+    | '/work/passports/$id'
     | '/work/pilots/$id'
     | '/work/prospects/$id'
     | '/work/reports/$id'
     | '/work/decisions/'
+    | '/work/passports/'
     | '/work/pilots/'
     | '/work/prospects/'
     | '/work/reports/'
@@ -387,10 +407,12 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/auth/me'
     | '/work/decisions/$id'
+    | '/work/passports/$id'
     | '/work/pilots/$id'
     | '/work/prospects/$id'
     | '/work/reports/$id'
     | '/work/decisions'
+    | '/work/passports'
     | '/work/pilots'
     | '/work/prospects'
     | '/work/reports'
@@ -423,10 +445,12 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/auth/me'
     | '/work/decisions/$id'
+    | '/work/passports/$id'
     | '/work/pilots/$id'
     | '/work/prospects/$id'
     | '/work/reports/$id'
     | '/work/decisions/'
+    | '/work/passports/'
     | '/work/pilots/'
     | '/work/prospects/'
     | '/work/reports/'
@@ -649,6 +673,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkDecisionsIdRouteImport
       parentRoute: typeof WorkRoute
     }
+    '/work/passports/': {
+      id: '/work/passports/'
+      path: '/passports'
+      fullPath: '/work/passports/'
+      preLoaderRoute: typeof WorkPassportsIndexRouteImport
+      parentRoute: typeof WorkRoute
+    }
+    '/work/passports/$id': {
+      id: '/work/passports/$id'
+      path: '/passports/$id'
+      fullPath: '/work/passports/$id'
+      preLoaderRoute: typeof WorkPassportsIdRouteImport
+      parentRoute: typeof WorkRoute
+    }
     '/work/pilots/': {
       id: '/work/pilots/'
       path: '/pilots'
@@ -707,10 +745,12 @@ interface WorkRouteChildren {
   WorkSettingsRoute: typeof WorkSettingsRoute
   WorkIndexRoute: typeof WorkIndexRoute
   WorkDecisionsIdRoute: typeof WorkDecisionsIdRoute
+  WorkPassportsIdRoute: typeof WorkPassportsIdRoute
   WorkPilotsIdRoute: typeof WorkPilotsIdRoute
   WorkProspectsIdRoute: typeof WorkProspectsIdRoute
   WorkReportsIdRoute: typeof WorkReportsIdRoute
   WorkDecisionsIndexRoute: typeof WorkDecisionsIndexRoute
+  WorkPassportsIndexRoute: typeof WorkPassportsIndexRoute
   WorkPilotsIndexRoute: typeof WorkPilotsIndexRoute
   WorkProspectsIndexRoute: typeof WorkProspectsIndexRoute
   WorkReportsIndexRoute: typeof WorkReportsIndexRoute
@@ -722,10 +762,12 @@ const WorkRouteChildren: WorkRouteChildren = {
   WorkSettingsRoute: WorkSettingsRoute,
   WorkIndexRoute: WorkIndexRoute,
   WorkDecisionsIdRoute: WorkDecisionsIdRoute,
+  WorkPassportsIdRoute: WorkPassportsIdRoute,
   WorkPilotsIdRoute: WorkPilotsIdRoute,
   WorkProspectsIdRoute: WorkProspectsIdRoute,
   WorkReportsIdRoute: WorkReportsIdRoute,
   WorkDecisionsIndexRoute: WorkDecisionsIndexRoute,
+  WorkPassportsIndexRoute: WorkPassportsIndexRoute,
   WorkPilotsIndexRoute: WorkPilotsIndexRoute,
   WorkProspectsIndexRoute: WorkProspectsIndexRoute,
   WorkReportsIndexRoute: WorkReportsIndexRoute,

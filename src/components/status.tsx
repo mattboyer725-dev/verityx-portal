@@ -2,6 +2,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 const tones: Record<string, string> = {
+  draft: "text-mist border-line",
+  sealed: "text-ok border-ok/30",
+  revoked: "text-bad border-bad/30",
+  "declared-clear": "text-ok border-ok/30",
+  "covered-country-declared": "text-bad border-bad/30",
+  incomplete: "text-warn border-warn/30",
   lead: "text-mist border-line",
   qualified: "text-mist border-line",
   discovery: "text-paper border-mist/30",

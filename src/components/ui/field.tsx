@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import { cloneElement, isValidElement, useId, type InputHTMLAttributes, type ReactElement, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
 export function Label({
@@ -45,11 +45,28 @@ export function Field({
   children: ReactNode;
   hint?: string;
 }) {
+  // Tie the label (and hint) to a single control so screen readers announce them.
+  const auto = useId();
+  const hintId = `${auto}-hint`;
+  let control = children;
+  let controlId: string | undefined;
+  if (isValidElement(children)) {
+    const el = children as ReactElement<{ id?: string; "aria-describedby"?: string }>;
+    controlId = el.props.id ?? auto;
+    control = cloneElement(el, {
+      id: controlId,
+      ...(hint ? { "aria-describedby": [el.props["aria-describedby"], hintId].filter(Boolean).join(" ") } : {}),
+    });
+  }
   return (
     <div>
-      <Label>{label}</Label>
-      {children}
-      {hint ? <p className="mt-1 text-xs text-mute">{hint}</p> : null}
+      <Label htmlFor={controlId}>{label}</Label>
+      {control}
+      {hint ? (
+        <p id={hintId} className="mt-1 text-xs text-mute">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }
