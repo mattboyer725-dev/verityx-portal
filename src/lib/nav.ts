@@ -32,6 +32,7 @@ export const OS_LINKS: { to: string; label: string; hint: string; keywords: stri
   { to: "/work", label: "Workspace", hint: "File of record", keywords: "dashboard command", exact: true },
   { to: "/work/prospects", label: "Prospects", hint: "VerityX book", keywords: "company outreach book" },
   { to: "/work/pilots", label: "Pilots", hint: "$5,000 / 72-hour loop", keywords: "payment stripe desk packet" },
+  { to: "/work/portfolio", label: "Portfolio", hint: "Parts, coverage, evidence packs", keywords: "portfolio parts bom coverage evidence pack contracting officer dfars" },
   { to: "/work/passports", label: "Passports", hint: "Lot provenance, sealed", keywords: "passport lot provenance dfars magnet mine chain" },
   { to: "/work/decisions", label: "Decisions", hint: "Human-approved BLOCK", keywords: "advisory hold monitor" },
   { to: "/work/reports", label: "Reports", hint: "Sealed PDF", keywords: "evidence packet pdf" },

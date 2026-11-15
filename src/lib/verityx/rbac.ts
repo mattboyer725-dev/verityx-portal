@@ -14,6 +14,7 @@ export const ACTIONS = {
   "audit.read": ["founder", "admin", "analyst", "viewer"],
   "passport.write": ["founder", "admin", "analyst"],
   "passport.seal": ["founder", "admin"],
+  "portfolio.write": ["founder", "admin", "analyst"],
 } as const;
 
 export type Action = keyof typeof ACTIONS;

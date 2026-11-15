@@ -141,7 +141,7 @@ async function scopedPassport(actor: Actor, id: string): Promise<Passport> {
 }
 
 /** Every published (sealed or revoked) passport reachable from these codes, breadth-first. */
-async function loadPublishedChain(codes: string[], maxDepth = 12): Promise<Map<string, Passport>> {
+export async function loadPublishedChain(codes: string[], maxDepth = 12): Promise<Map<string, Passport>> {
   const sql = await getSql();
   const found = new Map<string, Passport>();
   let frontier = [...new Set(codes.filter(isPassportCode))];
@@ -163,7 +163,7 @@ async function loadPublishedChain(codes: string[], maxDepth = 12): Promise<Map<s
   return found;
 }
 
-function analyze(p: Passport, chain: Map<string, Passport>): ChainAnalysis {
+export function analyze(p: Passport, chain: Map<string, Passport>): ChainAnalysis {
   return analyzeChain(toNode(p), (code) => {
     const hit = chain.get(code);
     return hit ? toNode(hit) : undefined;
@@ -266,7 +266,7 @@ export async function deleteDraft(userId: string, data: { id: string }) {
 }
 
 /** Append a passport event to the ledger and issue its Ed25519 receipt, under the ledger lock. */
-async function ledgerSeal(actor: Actor, payload: { title: string; location: string; kind: string; notes: string }) {
+export async function ledgerSeal(actor: Actor, payload: { title: string; location: string; kind: string; notes: string }) {
   const { appendCoreEvent, eventHashes, merkleProofAt } = await import("@/lib/core-ledger");
   const { withLedger } = await import("@/lib/core-store.server");
   const { entry, index, proof, leafCount } = await withLedger(async () => {

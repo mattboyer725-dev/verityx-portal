@@ -82,3 +82,74 @@ export const getPublicPassport = createServerFn({ method: "GET" })
     const ops = await import("./passport.server");
     return ops.getPublicPassport(data);
   });
+
+// ---------------------------------------------------------------- buyer portfolio
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function idList(v: unknown): string[] {
+  if (!Array.isArray(v) || v.length > 500) throw new Error("invalid request");
+  for (const x of v) if (typeof x !== "string" || !UUID.test(x)) throw new Error("invalid request");
+  return v as string[];
+}
+
+export const getPortfolio = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((data: { program?: string }) => ({ program: typeof data?.program === "string" ? data.program.slice(0, 80) : "" }))
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.getPortfolio(context.userId, data);
+  });
+
+export const importPortfolio = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { csv: string }) => {
+    if (!data || typeof data.csv !== "string") throw new Error("invalid request");
+    return data;
+  })
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.importPortfolio(context.userId, data);
+  });
+
+export const addPortfolioItem = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { item: unknown }) => {
+    if (!data || typeof data.item !== "object") throw new Error("invalid request");
+    return data;
+  })
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.addPortfolioItem(context.userId, data);
+  });
+
+export const removePortfolioItems = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { ids: string[] }) => ({ ids: idList(data?.ids) }))
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.removePortfolioItems(context.userId, data);
+  });
+
+export const acknowledgePortfolioItems = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { ids: string[] }) => ({ ids: idList(data?.ids) }))
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.acknowledgeItems(context.userId, data);
+  });
+
+export const generateEvidencePack = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { program?: string }) => ({ program: typeof data?.program === "string" ? data.program.slice(0, 80) : "" }))
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.generatePack(context.userId, data);
+  });
+
+export const downloadEvidencePack = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator(ids<{ id: string }>("id"))
+  .handler(async ({ context, data }) => {
+    const ops = await import("./portfolio.server");
+    return ops.downloadPack(context.userId, data);
+  });

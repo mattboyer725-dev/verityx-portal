@@ -32,6 +32,7 @@ import { Route as PassportCodeRouteImport } from './routes/passport.$code'
 import { Route as WorkIndexRouteImport } from './routes/work/index'
 import { Route as WorkAuditRouteImport } from './routes/work/audit'
 import { Route as WorkLearningRouteImport } from './routes/work/learning'
+import { Route as WorkPortfolioRouteImport } from './routes/work/portfolio'
 import { Route as WorkSettingsRouteImport } from './routes/work/settings'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiAuthMeRouteImport } from './routes/api/auth/me'
@@ -162,6 +163,11 @@ const WorkLearningRoute = WorkLearningRouteImport.update({
   path: '/learning',
   getParentRoute: () => WorkRoute,
 } as any)
+const WorkPortfolioRoute = WorkPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => WorkRoute,
+} as any)
 const WorkSettingsRoute = WorkSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -256,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
+  '/work/portfolio': typeof WorkPortfolioRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
+  '/work/portfolio': typeof WorkPortfolioRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -334,6 +342,7 @@ export interface FileRoutesById {
   '/passport/$code': typeof PassportCodeRoute
   '/work/audit': typeof WorkAuditRoute
   '/work/learning': typeof WorkLearningRoute
+  '/work/portfolio': typeof WorkPortfolioRoute
   '/work/settings': typeof WorkSettingsRoute
   '/work/': typeof WorkIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/passport/$code'
     | '/work/audit'
     | '/work/learning'
+    | '/work/portfolio'
     | '/work/settings'
     | '/work/'
     | '/api/auth/$'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/passport/$code'
     | '/work/audit'
     | '/work/learning'
+    | '/work/portfolio'
     | '/work/settings'
     | '/work'
     | '/api/auth/$'
@@ -452,6 +463,7 @@ export interface FileRouteTypes {
     | '/passport/$code'
     | '/work/audit'
     | '/work/learning'
+    | '/work/portfolio'
     | '/work/settings'
     | '/work/'
     | '/api/auth/$'
@@ -658,6 +670,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkLearningRouteImport
       parentRoute: typeof WorkRoute
     }
+    '/work/portfolio': {
+      id: '/work/portfolio'
+      path: '/portfolio'
+      fullPath: '/work/portfolio'
+      preLoaderRoute: typeof WorkPortfolioRouteImport
+      parentRoute: typeof WorkRoute
+    }
     '/work/settings': {
       id: '/work/settings'
       path: '/settings'
@@ -762,6 +781,7 @@ declare module '@tanstack/react-router' {
 interface WorkRouteChildren {
   WorkAuditRoute: typeof WorkAuditRoute
   WorkLearningRoute: typeof WorkLearningRoute
+  WorkPortfolioRoute: typeof WorkPortfolioRoute
   WorkSettingsRoute: typeof WorkSettingsRoute
   WorkIndexRoute: typeof WorkIndexRoute
   WorkDecisionsIdRoute: typeof WorkDecisionsIdRoute
@@ -779,6 +799,7 @@ interface WorkRouteChildren {
 const WorkRouteChildren: WorkRouteChildren = {
   WorkAuditRoute: WorkAuditRoute,
   WorkLearningRoute: WorkLearningRoute,
+  WorkPortfolioRoute: WorkPortfolioRoute,
   WorkSettingsRoute: WorkSettingsRoute,
   WorkIndexRoute: WorkIndexRoute,
   WorkDecisionsIdRoute: WorkDecisionsIdRoute,

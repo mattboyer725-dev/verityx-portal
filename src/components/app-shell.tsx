@@ -15,6 +15,7 @@ import {
   Users,
   X,
   Layers,
+  PackageCheck,
 } from "lucide-react";
 import { useState, type ComponentType } from "react";
 import { UserButton } from "@/lib/auth/gates";
@@ -30,6 +31,7 @@ const ICONS: Record<string, ComponentType<{ className?: string; strokeWidth?: nu
   "/work": LayoutDashboard,
   "/work/prospects": Users,
   "/work/pilots": ClipboardList,
+  "/work/portfolio": PackageCheck,
   "/work/passports": Layers,
   "/work/decisions": Scale,
   "/work/reports": FileText,
