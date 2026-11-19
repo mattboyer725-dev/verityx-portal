@@ -971,3 +971,181 @@ body {
   background: var(--color-bad);
   color: #fff;
 }
+
+/* ---------- Home: live figures strip ---------- */
+
+.vx-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--color-line);
+  border-left: 1px solid var(--color-line);
+  background: var(--color-graphite);
+}
+
+.vx-strip-cell {
+  padding: 0.85rem 1rem 0.9rem;
+  border-right: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  min-width: 0;
+}
+
+.vx-strip-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-mute);
+}
+
+.vx-strip-value {
+  margin-top: 0.15rem;
+  font-stretch: 112%;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.vx-strip-value.is-warn {
+  color: var(--color-bad);
+}
+
+.vx-strip-value.is-seal::before {
+  content: "";
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.4em;
+  vertical-align: 0.12em;
+  background: var(--color-seal);
+  transform: rotate(45deg);
+}
+
+.vx-strip-note {
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: var(--color-mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .vx-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .vx-strip {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Home: deadline ---------- */
+
+.vx-countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(5.5rem, 14vw, 9.5rem);
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+  color: var(--color-bad);
+}
+
+.vx-countdown span {
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--color-paper);
+}
+
+.vx-changes {
+  display: grid;
+  border-top: 2px solid var(--color-paper);
+}
+
+.vx-changes li {
+  display: grid;
+  gap: 0.4rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.vx-changes h3 {
+  font-weight: 700;
+  font-size: 1.0625rem;
+  font-stretch: 112%;
+}
+
+.vx-changes p {
+  color: var(--color-mist);
+  line-height: 1.6;
+  max-width: 40rem;
+}
+
+@media (min-width: 768px) {
+  .vx-changes li {
+    grid-template-columns: 15rem 1fr;
+    gap: 1.5rem;
+  }
+}
+
+/* ---------- Home: comparison table ---------- */
+
+.vx-compare {
+  border-top: 2px solid var(--color-paper);
+}
+
+.vx-compare-row {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--color-line);
+  line-height: 1.55;
+  color: var(--color-mist);
+  font-size: 0.9375rem;
+}
+
+.vx-compare-who {
+  font-weight: 700;
+  color: var(--color-paper);
+}
+
+.vx-compare-k {
+  display: block;
+  font-style: normal;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-mute);
+}
+
+.vx-compare-head {
+  display: none;
+}
+
+.vx-compare-row.is-us {
+  background: color-mix(in oklab, var(--color-gold) 8%, var(--color-ink));
+  border-bottom: 2px solid var(--color-gold);
+  padding-left: 0.9rem;
+  padding-right: 0.9rem;
+  color: var(--color-paper);
+}
+
+@media (min-width: 900px) {
+  .vx-compare-row {
+    grid-template-columns: 15rem 1fr 1fr;
+    gap: 2rem;
+  }
+  .vx-compare-head {
+    display: grid;
+    padding: 0.7rem 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-mute);
+  }
+  .vx-compare-k {
+    display: none;
+  }
+}

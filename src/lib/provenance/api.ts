@@ -211,3 +211,10 @@ export const getOverview = createServerFn({ method: "GET" })
     const ops = await import("./overview.server");
     return ops.getOverview(context.userId);
   });
+
+// ---------------------------------------------------------------- public data strip
+
+export const getPulse = createServerFn({ method: "GET" }).handler(async () => {
+  const ops = await import("./pulse.server");
+  return ops.getPulse();
+});

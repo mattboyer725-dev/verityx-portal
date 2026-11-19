@@ -4,6 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { PassportLookup } from "@/components/passport-lookup";
 import { PassportSpecimen } from "@/components/passport-specimen";
+import { CompareTable, DeadlinePanel, PulseStrip } from "@/components/home-pulse";
 import { ENTERPRISE, FREE, PAID_PLANS } from "@/lib/provenance/plans";
 
 export const Route = createFileRoute("/")({ component: Home });
@@ -33,9 +34,12 @@ function Home() {
     <main className="min-h-dvh overflow-x-hidden bg-ink text-paper">
       <div className="mx-auto max-w-6xl px-5 pt-4 sm:px-6">
         <SiteNav tone="ink" />
+        <div className="mt-6">
+          <PulseStrip />
+        </div>
       </div>
 
-      <section className="mx-auto grid max-w-6xl gap-14 px-5 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-12 lg:pt-20">
+      <section className="mx-auto grid max-w-6xl gap-14 px-5 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start lg:gap-12 lg:pt-16">
         <div>
           <h1 className="vx-hero-title">Mine to magnet, sealed.</h1>
           <p className="mt-7 max-w-[34rem] text-lg leading-relaxed text-mist">
@@ -68,6 +72,10 @@ function Home() {
         </div>
       </section>
 
+      <div className="border-t border-line">
+        <DeadlinePanel />
+      </div>
+
       <section className="vx-band">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-6">
           <h2 className="font-display max-w-2xl text-3xl leading-tight sm:text-[2.5rem]">
@@ -90,7 +98,9 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-20 sm:px-6">
+      <CompareTable />
+
+      <section className="mx-auto max-w-6xl border-t border-line px-5 py-20 sm:px-6">
         <h2 className="font-display text-3xl leading-tight sm:text-[2.5rem]">Free to check. Paid to publish or to monitor.</h2>
         <div className="mt-12 grid border-y border-line md:grid-cols-2">
           <div className="py-8 md:pr-10">

@@ -210,7 +210,7 @@ function parseNum(raw: string) {
  * for arithmetic. No fallback number: on failure the last good rate is
  * reused and marked STALE, or there is none.
  */
-async function fetchFx(): Promise<LiveBundle["fx"] | null> {
+export async function fetchFx(): Promise<LiveBundle["fx"] | null> {
   if (age(fxCache, 30 * 60_000) && fxCache) return fxCache.value;
   const url = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
   try {
@@ -436,7 +436,7 @@ function emptyOpenSanctions(): LiveBundle["opensanctions"] {
 
 const FX_NONE: LiveBundle["fx"] = { eurUsd: 0, usdEur: 0, date: "", source: ECB_ATTRIBUTION, ts: "" };
 
-function referenceBlocks(): Pick<LiveBundle, "metals" | "rareEarths"> {
+export function referenceBlocks(): Pick<LiveBundle, "metals" | "rareEarths"> {
   const cu = latest("copper");
   const al = latest("aluminium");
   const nd = latest("ndprOxide");
