@@ -868,6 +868,206 @@ body {
   }
 }
 
+/* ---------- Example passport: the working demo ---------- */
+
+.vx-chain-live li {
+  display: block;
+  padding: 0;
+}
+
+.vx-chain-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-areas: "node body country" "node body print";
+  column-gap: 0.9rem;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.6rem 0.35rem 0.6rem 0;
+  text-align: left;
+  border-radius: var(--radius-xs);
+  transition: background-color 120ms ease-out;
+}
+
+.vx-chain-row:hover {
+  background: color-mix(in oklab, var(--color-gold) 6%, transparent);
+}
+
+.vx-chain-row[aria-expanded="true"] {
+  background: color-mix(in oklab, var(--color-gold) 9%, transparent);
+}
+
+.vx-chain-row .vx-chain-stage,
+.vx-chain-row .vx-chain-where {
+  display: block;
+}
+
+@media (min-width: 520px) {
+  .vx-chain-row {
+    grid-template-columns: 12px minmax(0, 1fr) auto 5.5rem;
+    grid-template-areas: "node body country print";
+  }
+}
+
+.vx-chain-detail {
+  margin: 0 0 0.6rem calc(12px + 0.9rem);
+  padding: 0.75rem 0.85rem;
+  border-left: 2px solid var(--color-gold);
+  background: var(--color-ink);
+  font-size: 0.8125rem;
+}
+
+.vx-chain-detail dl {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.vx-chain-detail dl > div {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.vx-chain-detail dt {
+  color: var(--color-mute);
+}
+
+.vx-chain-detail p {
+  margin-top: 0.6rem;
+  color: var(--color-mist);
+  line-height: 1.5;
+  max-width: 34rem;
+}
+
+.vx-hash {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  overflow-wrap: anywhere;
+}
+
+.vx-print-ok,
+.vx-print-bad {
+  font-family: var(--font-sans, inherit);
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.vx-print-ok {
+  color: var(--color-ok);
+}
+
+.vx-print-bad {
+  color: var(--color-bad);
+}
+
+/* Revoked lot: the node empties and turns amber; every lot after it is flagged. */
+.vx-chain-live li.is-revoked .vx-chain-node {
+  background: var(--color-graphite);
+  outline-color: var(--color-warn);
+  animation: none;
+}
+
+.vx-chain-live li.is-revoked .vx-chain-stage {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-warn);
+  text-decoration-thickness: 2px;
+}
+
+.vx-chain-live li.is-revoked .vx-chain-where {
+  color: var(--color-warn);
+  font-weight: 600;
+}
+
+.vx-chain-live li.is-downstream .vx-chain-node {
+  background: var(--color-warn);
+  outline-color: var(--color-warn);
+  animation: none;
+}
+
+.vx-specimen.is-flagged {
+  box-shadow:
+    0 1px 0 color-mix(in oklab, var(--color-magnetite) 6%, transparent),
+    12px 12px 0 color-mix(in oklab, var(--color-warn) 16%, transparent);
+}
+
+.vx-flag svg {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.vx-flag path:first-child {
+  fill: var(--color-warn);
+}
+
+.vx-flag path:last-child {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.vx-specimen-try {
+  padding: 1rem 1.25rem 1.15rem;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-ink);
+}
+
+.vx-specimen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.vx-try-primary,
+.vx-try-quiet {
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.vx-try-primary {
+  background: var(--color-gold);
+  color: #fff;
+}
+
+.vx-try-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--color-gold) 86%, black);
+}
+
+.vx-try-primary:disabled {
+  opacity: 0.75;
+  cursor: progress;
+}
+
+.vx-try-quiet {
+  border: 1px solid var(--color-line);
+  background: var(--color-graphite);
+  color: var(--color-paper);
+}
+
+.vx-try-quiet:hover {
+  border-color: var(--color-warn);
+}
+
+.vx-try-quiet[aria-pressed="true"] {
+  border-color: var(--color-warn);
+  color: var(--color-warn);
+}
+
+.vx-specimen-status {
+  margin-top: 0.7rem;
+  min-height: 2.6em;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-mist);
+}
+
 /* ---------- Home ---------- */
 
 .vx-hero-title {
